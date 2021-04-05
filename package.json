@@ -1,0 +1,104 @@
+{
+  "name": "@wymp/auth-gateway",
+  "version": "1.0.0",
+  "description": "A functioning auth gateway for receiving, authenticating and proxying requests into a system.",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "build": "scripts/build",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://github.com:wymp/auth-gateway.git"
+  },
+  "keywords": [
+    "Authentication",
+    "Authorization",
+    "Gateway",
+    "API Gateway",
+    "APIs"
+  ],
+  "author": "Kael Shipman",
+  "contributors": "Various Contributors (https://github.com/wymp/ts-accounts-module/graphs/contributors)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wymp/auth-gateway/issues"
+  },
+  "homepage": "https://github.com/wymp/auth-gateway#readme",
+  "dependencies": {
+    "@openfinanceio/http-errors": "^1.7.0",
+    "@types/bcryptjs": "^2.4.2",
+    "@types/http-proxy": "^1.17.5",
+    "@types/jsonwebtoken": "^8.5.1",
+    "@types/node": "^14.14.37",
+    "@types/uuid": "^8.3.0",
+    "@wymp/ts-simple-interfaces": "^0.5.1",
+    "@wymp/weenie-framework": "^0.5.1",
+    "bcryptjs": "^2.4.3",
+    "cidr-matcher": "^2.1.1",
+    "http-proxy": "^1.18.1",
+    "jsonwebtoken": "^8.5.1",
+    "nodemailer": "^6.5.0",
+    "rate-limiter-flexible": "^2.2.1",
+    "runtypes": "^6.0.0",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "@wymp/ts-simple-interfaces-testing": "^0.5.0",
+    "husky": "^6.0.0",
+    "jest": "^26.6.3",
+    "prettier": "^2.2.1",
+    "pretty-quick": "^3.1.0",
+    "simple-http-client-rpn": "^0.5.1",
+    "ts-jest": "^26.5.4",
+    "typescript": "^4.2.3"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "trailingComma": "es5"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
+  },
+  "jest": {
+    "projects": [
+      {
+        "displayName": "unit-tests",
+        "testEnvironment": "node",
+        "verbose": true,
+        "testMatch": [
+          "<rootDir>/tests/**/*.spec.ts",
+          "!**/e2e.spec.ts"
+        ],
+        "transform": {
+          "^.+\\.tsx?$": "ts-jest"
+        },
+        "globals": {
+          "ts-jest": {
+            "tsconfig": "tsconfig.test.json"
+          }
+        }
+      },
+      {
+        "displayName": "e2e-tests",
+        "testEnvironment": "node",
+        "verbose": true,
+        "maxWorkers": 1,
+        "testMatch": [
+          "<rootDir>/tests/e2e.spec.ts"
+        ],
+        "transform": {
+          "^.+\\.tsx?$": "ts-jest"
+        },
+        "globals": {
+          "ts-jest": {
+            "tsconfig": "tsconfig.test.json"
+          }
+        }
+      }
+    ]
+  }
+}

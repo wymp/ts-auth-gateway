@@ -1,0 +1,10 @@
+*.sw[op]
+dist
+dist-tests
+build/
+pkg-build
+node_modules
+logs
+shmig.local.conf
+.node-xml*
+config.local.json

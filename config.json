@@ -1,0 +1,63 @@
+{
+  "envType": "dev",
+  "envName": "dev",
+  "serviceName": "auth-gateway",
+  "domain": "auth",
+  "initialJobWaitMs": 50,
+  "maxJobWaitMs": 86400000,
+  "initializationTimeoutMs": 10000,
+  "amqp": {
+    "protocol": "amqp",
+    "hostname": "localhost",
+    "port": 5672,
+    "username": "dev",
+    "password": "dev",
+    "locale": "en_US",
+    "vhost": "dev",
+    "heartbeat": 120
+  },
+  "db": {
+    "host": "localhost",
+    "port": 3306,
+    "user": "dev",
+    "password": "dev",
+    "database": "dev.auth-gateway"
+  },
+  "webservice": {
+    "listeners": [[6546, "localhost"]]
+  },
+  "logger": {
+    "logLevel": "debug",
+    "logFilePath": null
+  },
+  "authHeader": {
+    "sign": true,
+    "ecdsaKey": {
+      "t": "file",
+      "path": "./dev.auth-gateway.ecdsa.pem"
+    }
+  },
+  "expires": {
+    "sessionHour": 24,
+    "sessionTokenMin": 20,
+    "emailVerCodeMin": 20,
+    "loginCodeMin": 10
+  },
+  "emails": {
+    "from": "Wympy Welcomer<welcome@wymp.com>",
+    "templateFiles": {
+      "login": "./emailTemplates/login.json",
+      "emailVerCode": "./emailTemplates/emailVerCode.json"
+    }
+  },
+  "verificationUrls": {
+    "emailVerify": "https://{subdomain}example.com/accounts/email/verify?code={code}",
+    "login": "https://{subdomain}example.com/accounts/login?t=step&step=code&code={code}&state={userGeneratedToken}"
+  },
+  "authn": {
+    "throttle": {
+      "numReqs": 10,
+      "periodSecs": 300
+    }
+  }
+}
