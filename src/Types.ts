@@ -1,6 +1,7 @@
 import * as rt from "runtypes";
 import { SimpleLoggerInterface, SimpleHttpRequestHandlerInterface } from "@wymp/ts-simple-interfaces";
 import * as Weenie from "@wymp/weenie-framework";
+import { IoInterface } from "./Io";
 
 export const AppConfigValidator = rt.Intersect(
   Weenie.baseConfigValidator,
@@ -9,6 +10,7 @@ export const AppConfigValidator = rt.Intersect(
     amqp: Weenie.mqConnectionConfigValidator,
     db: Weenie.databaseConfigValidator,
     domain: rt.Literal("auth"),
+    debugKey: rt.String,
 
     // JWT keys
     authHeader: rt.Union(
@@ -76,4 +78,40 @@ export type AppDeps = {
   config: AppConfig;
   log: SimpleLoggerInterface;
   http: SimpleHttpRequestHandlerInterface;
+  io: IoInterface<ClientRoles, UserRoles>;
+  cache: CacheInterface;
+  rateLimiter?: RateLimiterInterface;
+}
+
+export type UserRoles =
+  // A system administrator
+  | "sysadmin"
+
+  // A regular, unprivileged user
+  | "user";
+
+export type ClientRoles =
+  // A low-level system service using the API as an integral part of the overall system
+  | "system"
+
+  // An "own" client; i.e., any client that you create for your own business
+  | "internal"
+
+  // A client you create for an external partner or user
+  | "external";
+
+export interface CacheInterface {
+  get<T>(k: string, cb: () => Promise<T>, ttl?: number, log?: SimpleLoggerInterface): Promise<T>;
+  get<T>(k: string, cb: () => T, ttl?: number, log?: SimpleLoggerInterface): T;
+  clear(k: string | RegExp): void | unknown;
+}
+
+export interface RateLimiterInterface {
+  consume(client: string): RateLimiterResponse;
+}
+
+export interface RateLimiterResponse {
+  remainingPoints: number;
+  consumedPoints: number;
+  msBeforeNext: number;
 }

@@ -1,5 +1,6 @@
-import { Service, AppConfigValidator, AppConfig } from "../src";
 import * as Weenie from "@wymp/weenie-framework";
+import { Service, AppConfigValidator, AppConfig } from "../src";
+import * as AppWeenie from "./Weenie";
 
 // There are some minimal bootstrap options that you can configure via environment variables:
 // 
@@ -26,14 +27,19 @@ const overrides = process.env["APP_CONFIG_OVERRIDES_FILE"] || "./config.local.js
         : Weenie.configFromFiles<AppConfig>(defaults, overrides, AppConfigValidator)
     )()
   )
+  .and(AppWeenie.mockCache)
   .and(Weenie.serviceManagement)
   .and(Weenie.logger)
   .and(Weenie.httpHandler)
+  .and(Weenie.mysql)
+  .and(AppWeenie.io)
   .done(d => {
     return {
+      cache: d.cache,
       config: d.config,
-      log: d.logger,
       http: d.http,
+      io: d.io,
+      log: d.logger,
       svc: d.svc,
     }
   });

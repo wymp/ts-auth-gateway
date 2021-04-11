@@ -1,5 +1,5 @@
 import * as E from "@openfinanceio/http-errors";
-import { Cors } from "./Modules";
+import { Cors, Gateway } from "./Modules";
 import { AppDeps } from "./Types";
 
 export const start = (r: AppDeps) => {
@@ -21,7 +21,7 @@ export const start = (r: AppDeps) => {
 
   // Run primary gateway middleware for all requests
   r.log.notice(`Adding Gateway middleware for all requests`);
-  //r.http.use(Gateway.middleware(r));
+  r.http.use(Gateway.middleware(r));
 
   // Now that we have CORS headers and we've passed the gateway, we can route accordingly
   //Accounts.register(r);

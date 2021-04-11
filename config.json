@@ -6,6 +6,7 @@
   "initialJobWaitMs": 50,
   "maxJobWaitMs": 86400000,
   "initializationTimeoutMs": 10000,
+  "debugKey": "3725d5fc1da8f35c7903b892e20479b8f01fafd2a258b8672c3265cc1d972b76",
   "amqp": {
     "protocol": "amqp",
     "hostname": "localhost",

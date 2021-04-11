@@ -1,4 +1,7 @@
 import * as Service from "./Service";
 
-export * from "./Types";
 export { Service }
+
+export * from "./Io";
+export * from "./Modules";
+export * from "./Types";

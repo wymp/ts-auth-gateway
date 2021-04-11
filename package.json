@@ -35,6 +35,7 @@
     "@types/uuid": "^8.3.0",
     "@wymp/http-utils": "^1.0.1",
     "@wymp/ts-simple-interfaces": "^0.5.1",
+    "@wymp/types": "^0.1.0-rc",
     "@wymp/weenie-framework": "^0.5.2",
     "bcryptjs": "^2.4.3",
     "cidr-matcher": "^2.1.1",
