@@ -11,9 +11,7 @@ import { AppDeps } from "../Types";
  */
 
 export const handler = (
-  r:
-    & Pick<AppDeps, "log">
-    & { config: { allowCorsCookies?: undefined | null | boolean } }
+  r: Pick<AppDeps, "log"> & { config: { allowCorsCookies?: undefined | null | boolean } }
 ): SimpleHttpServerMiddleware => {
   return (req, res, next) => {
     const log = logger(r.log, req, res);

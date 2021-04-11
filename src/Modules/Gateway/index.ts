@@ -6,7 +6,7 @@ import * as lib from "./Lib";
 
 export type GatewayMiddlewareIo = Pick<
   AppDeps["io"],
-  | "getResource" 
+  | "getResource"
   | "getApiConfig"
   | "getAndValidateClientData"
   | "getAccessRestrictionsForClient"
@@ -20,8 +20,8 @@ type MinReq = {
   get(h: string): string | undefined;
   connection?: {
     remoteAddress?: string;
-  }
-}
+  };
+};
 
 export const middleware = (
   r: Pick<AppDeps, "config" | "log" | "cache" | "rateLimiter"> & { io: GatewayMiddlewareIo }
@@ -99,7 +99,7 @@ export const middleware = (
         } else {
           log.warning(
             `Allowing unidentified access from ip ${ip}, but we have not been giving a rate ` +
-            `limiter! THIS IS A RECIPE FOR A DDOS!`
+              `limiter! THIS IS A RECIPE FOR A DDOS!`
           );
         }
       }

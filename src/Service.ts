@@ -14,9 +14,11 @@ export const start = (r: AppDeps) => {
     if (req.path.match(new RegExp("^/[^/]+/v[0-9]+"))) {
       return next();
     }
-    next(new E.BadRequest(
-      "You must specify an API and version for your request, e.g., `/accounts/v1/...`"
-    ));
+    next(
+      new E.BadRequest(
+        "You must specify an API and version for your request, e.g., `/accounts/v1/...`"
+      )
+    );
   });
 
   // Run primary gateway middleware for all requests
@@ -27,4 +29,3 @@ export const start = (r: AppDeps) => {
   //Accounts.register(r);
   //Proxy.register(r);
 };
-

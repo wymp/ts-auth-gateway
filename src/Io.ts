@@ -1,4 +1,4 @@
-import { createHash, /*randomBytes*/ } from "crypto";
+import { createHash /*randomBytes*/ } from "crypto";
 import { SimpleSqlDbInterface, SimpleLoggerInterface, SqlValue } from "ts-simple-interfaces";
 //import * as uuidv4 from "uuid";
 import { Auth, CollectionParams, CollectionResult } from "@wymp/types";
@@ -17,10 +17,7 @@ export type IoInterface<ClientRoles extends string, UserRoles extends string> = 
  * This class abstracts all io access into generalized or specific declarative method calls
  */
 export class Io<ClientRoles extends string, UserRoles extends string> {
-  public constructor(
-    protected db: SimpleSqlDbInterface,
-    protected cache: CacheInterface,
-  ) {}
+  public constructor(protected db: SimpleSqlDbInterface, protected cache: CacheInterface) {}
 
   /**
    *
@@ -99,9 +96,7 @@ export class Io<ClientRoles extends string, UserRoles extends string> {
         if (typeof params.pg.cursor !== "string") {
           throw new E.BadRequest(e);
         }
-        const cursor = Buffer.from(params.pg.cursor, "base64")
-          .toString("utf8")
-          .split(":");
+        const cursor = Buffer.from(params.pg.cursor, "base64").toString("utf8").split(":");
         if (cursor[0] !== "num") {
           throw new E.BadRequest(e);
         }
@@ -177,11 +172,11 @@ export class Io<ClientRoles extends string, UserRoles extends string> {
         }
 
         // Get the requested version of the API
-        const config = versions.find(v => v.version === version);
+        const config = versions.find((v) => v.version === version);
         if (!config) {
           throw new E.BadRequest(
             `API '${domain}' exists, but not in version '${version}'. Available versions are ${versions
-              .map(v => v.version)
+              .map((v) => v.version)
               .join(", ")}.`
           );
         }
@@ -231,7 +226,7 @@ export class Io<ClientRoles extends string, UserRoles extends string> {
           "SELECT `roleId` FROM `client-roles` WHERE `clientId` = ?",
           [clientId]
         );
-        return { ...rows[0], roles: roles.map(r => r.roleId) };
+        return { ...rows[0], roles: roles.map((r) => r.roleId) };
       },
       undefined,
       log
@@ -346,4 +341,3 @@ export class Io<ClientRoles extends string, UserRoles extends string> {
     );
   }
 }
-

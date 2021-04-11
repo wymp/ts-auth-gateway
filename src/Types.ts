@@ -1,5 +1,8 @@
 import * as rt from "runtypes";
-import { SimpleLoggerInterface, SimpleHttpRequestHandlerInterface } from "@wymp/ts-simple-interfaces";
+import {
+  SimpleLoggerInterface,
+  SimpleHttpRequestHandlerInterface,
+} from "@wymp/ts-simple-interfaces";
 import * as Weenie from "@wymp/weenie-framework";
 import { IoInterface } from "./Io";
 
@@ -25,10 +28,10 @@ export const AppConfigValidator = rt.Intersect(
             t: rt.Literal("env"),
             varname: rt.String,
           })
-        )
+        ),
       }),
       rt.Record({
-        sign: rt.Literal(false)
+        sign: rt.Literal(false),
       })
     ),
 
@@ -67,7 +70,7 @@ export const AppConfigValidator = rt.Intersect(
       throttle: rt.Record({
         numReqs: rt.Union(rt.Number, rt.Undefined),
         periodSecs: rt.Union(rt.Number, rt.Undefined),
-      })
+      }),
     }),
   })
 );
@@ -81,7 +84,7 @@ export type AppDeps = {
   io: IoInterface<ClientRoles, UserRoles>;
   cache: CacheInterface;
   rateLimiter?: RateLimiterInterface;
-}
+};
 
 export type UserRoles =
   // A system administrator

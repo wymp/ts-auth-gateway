@@ -109,7 +109,7 @@ export const enforceAccessRestrictions = (
     // If we've got ip restrictions, enforce them using CIDR notation
     if (accessRestrictions.ip.length > 0) {
       const matcher = new CidrMatcher(
-        accessRestrictions.ip.map(v => {
+        accessRestrictions.ip.map((v) => {
           // Enforce CIDR notation
           if (v.match(/\/[0-9]{1,2}$/)) {
             return v;
@@ -254,7 +254,7 @@ export const validateSession = async (
   const roles = await io.getRolesForUser(session.userId, {}, log);
   return {
     id: session.userId,
-    r: roles.data.map(r => r.roleId),
+    r: roles.data.map((r) => r.roleId),
     s: null,
   };
 };
