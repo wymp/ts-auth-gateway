@@ -1,3 +1,4 @@
+import * as E from "@openfinanceio/http-errors";
 import * as Weenie from "@wymp/weenie-framework";
 import { Service, AppConfigValidator, AppConfig } from "../src";
 import * as AppWeenie from "./Weenie";
@@ -18,6 +19,12 @@ const prefix = process.env["APP_CONFIG_PREFIX"] || "APP";
 const defaults = process.env["APP_CONFIG_DEFAULTS_FILES"] || "./config.json";
 const overrides = process.env["APP_CONFIG_OVERRIDES_FILE"] || "./config.local.json";
 
+const die = (e: any) => {
+  console.error(`Fatal error: `, e);
+  process.exit(1);
+}
+process.on("uncaughtException", die);
+
 (async () => {
   // Start off our dependencies with config, then attach others from here
   const d = await Weenie.Weenie(
@@ -27,12 +34,25 @@ const overrides = process.env["APP_CONFIG_OVERRIDES_FILE"] || "./config.local.js
         : Weenie.configFromFiles<AppConfig>(defaults, overrides, AppConfigValidator)
     )()
   )
+  // Make sure config.http.parseJson is not turned on, since that will cause problems with proxying
+  .and((d: { config: { http: { parseJson?: boolean | null } } }) => {
+    if (d.config.http.parseJson === true) {
+      throw new E.InternalServerError(
+        `Parsing bodies in this service causes proxying to fail. You have requested to enable ` +
+        `JSON body parsing by default via the 'config.http.parseJson' config key. Please ` +
+        `remove this key or set it to null or false to proceed.`
+      );
+    }
+    d.config.http.parseJson = false;
+    return {};
+  })
   .and(AppWeenie.mockCache)
   .and(Weenie.serviceManagement)
   .and(Weenie.logger)
   .and(Weenie.httpHandler)
   .and(Weenie.mysql)
   .and(AppWeenie.io)
+  .and(AppWeenie.proxy)
   .done(d => {
     return {
       cache: d.cache,
@@ -40,6 +60,7 @@ const overrides = process.env["APP_CONFIG_OVERRIDES_FILE"] || "./config.local.js
       http: d.http,
       io: d.io,
       log: d.logger,
+      proxy: d.proxy,
       svc: d.svc,
     }
   });
@@ -50,8 +71,5 @@ const overrides = process.env["APP_CONFIG_OVERRIDES_FILE"] || "./config.local.js
   // Alert everything that the service has been successfully initialized
   d.svc.initialized(true);
 })()
-.catch(e => {
-  console.error(`Fatal error: `, e);
-  process.exit(1);
-});
+.catch(die);
 

@@ -8,3 +8,5 @@ logs
 shmig.local.conf
 .node-xml*
 config.local.json
+jwt-key.prod.ecdsa.pem
+jwt-key.prod.ecdsa.pub.pem

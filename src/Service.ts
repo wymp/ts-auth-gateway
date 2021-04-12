@@ -1,5 +1,5 @@
 import * as E from "@openfinanceio/http-errors";
-import { Cors, Gateway } from "./Modules";
+import { Cors, Gateway, Proxy } from "./Modules";
 import { AppDeps } from "./Types";
 
 export const start = (r: AppDeps) => {
@@ -27,5 +27,5 @@ export const start = (r: AppDeps) => {
 
   // Now that we have CORS headers and we've passed the gateway, we can route accordingly
   //Accounts.register(r);
-  //Proxy.register(r);
+  Proxy.register(r);
 };

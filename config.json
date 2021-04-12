@@ -24,7 +24,7 @@
     "password": "dev",
     "database": "dev.auth-gateway"
   },
-  "webservice": {
+  "http": {
     "listeners": [[6546, "localhost"]]
   },
   "logger": {

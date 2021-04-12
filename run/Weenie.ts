@@ -1,4 +1,5 @@
 import { SimpleSqlDbInterface, SimpleLoggerInterface } from "@wymp/ts-simple-interfaces";
+import * as HttpProxy from "http-proxy";
 import { Io, CacheInterface, ClientRoles, UserRoles } from "../src";
 
 export const io = (r: { sql: SimpleSqlDbInterface; cache: CacheInterface; }) => ({
@@ -18,3 +19,5 @@ export const mockCache = () => ({
     clear(k?: string) {},
   }
 })
+
+export const proxy = () => ({ proxy: HttpProxy.createProxyServer({ xfwd: true }) });

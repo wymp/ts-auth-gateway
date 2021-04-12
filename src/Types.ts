@@ -1,3 +1,4 @@
+import { IncomingMessage, ServerResponse } from "http";
 import * as rt from "runtypes";
 import {
   SimpleLoggerInterface,
@@ -9,7 +10,7 @@ import { IoInterface } from "./Io";
 export const AppConfigValidator = rt.Intersect(
   Weenie.baseConfigValidator,
   rt.Record({
-    webservice: Weenie.webServiceConfigValidator,
+    http: Weenie.webServiceConfigValidator,
     amqp: Weenie.mqConnectionConfigValidator,
     db: Weenie.databaseConfigValidator,
     domain: rt.Literal("auth"),
@@ -19,6 +20,7 @@ export const AppConfigValidator = rt.Intersect(
     authHeader: rt.Union(
       rt.Record({
         sign: rt.Literal(true),
+        // The ECDSA key should be a PEM-format ECDSA private key string
         ecdsaKey: rt.Union(
           rt.Record({
             t: rt.Literal("file"),
@@ -83,6 +85,7 @@ export type AppDeps = {
   http: SimpleHttpRequestHandlerInterface;
   io: IoInterface<ClientRoles, UserRoles>;
   cache: CacheInterface;
+  proxy: ProxyInterface;
   rateLimiter?: RateLimiterInterface;
 };
 
@@ -117,4 +120,13 @@ export interface RateLimiterResponse {
   remainingPoints: number;
   consumedPoints: number;
   msBeforeNext: number;
+}
+
+export interface ProxyInterface {
+  web(
+    req: IncomingMessage,
+    res: ServerResponse,
+    opts: { target: string },
+    cb: (e: Error, eReq: IncomingMessage, eRes: ServerResponse, targetUrl: string) => unknown
+  ): unknown;
 }
