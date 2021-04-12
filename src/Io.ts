@@ -1,6 +1,6 @@
 import { createHash /*randomBytes*/ } from "crypto";
 import { SimpleSqlDbInterface, SimpleLoggerInterface, SqlValue } from "ts-simple-interfaces";
-//import * as uuidv4 from "uuid";
+//import * as uuid from "uuid";
 import { Auth, CollectionParams, CollectionResult } from "@wymp/types";
 import * as E from "@openfinanceio/http-errors";
 import { CacheInterface } from "./Types";

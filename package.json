@@ -6,7 +6,8 @@
   "types": "dist/src/index.d.ts",
   "scripts": {
     "build": "scripts/build",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "husky install"
   },
   "repository": {
     "type": "git",
@@ -33,10 +34,10 @@
     "@types/jsonwebtoken": "^8.5.1",
     "@types/node": "^14.14.37",
     "@types/uuid": "^8.3.0",
-    "@wymp/http-utils": "^1.1.0",
+    "@wymp/http-utils": "^1.1.1",
     "@wymp/ts-simple-interfaces": "^0.5.1",
     "@wymp/types": "^0.1.0-rc",
-    "@wymp/weenie-framework": "^0.5.3",
+    "@wymp/weenie-framework": "^0.5.3-rc",
     "bcryptjs": "^2.4.3",
     "cidr-matcher": "^2.1.1",
     "http-proxy": "^1.18.1",
@@ -44,7 +45,7 @@
     "nodemailer": "^6.5.0",
     "rate-limiter-flexible": "^2.2.1",
     "runtypes": "^6.0.0",
-    "uuid": "^8.3.2"
+    "uuid-with-v6": "^1.1.2"
   },
   "devDependencies": {
     "@wymp/ts-simple-interfaces-testing": "^0.5.0",
@@ -54,16 +55,11 @@
     "pretty-quick": "^3.1.0",
     "simple-http-client-rpn": "^0.5.1",
     "ts-jest": "^26.5.4",
-    "typescript": "^4.2.3"
+    "typescript": "^4.2.4"
   },
   "prettier": {
     "printWidth": 100,
     "trailingComma": "es5"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "pretty-quick --staged"
-    }
   },
   "jest": {
     "projects": [
