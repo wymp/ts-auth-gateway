@@ -1,5 +1,5 @@
 import { Auth } from "@wymp/types";
-import * as E from "@openfinanceio/http-errors";
+import * as E from "@wymp/http-errors";
 import * as CidrMatcher from "cidr-matcher";
 import * as bcrypt from "bcryptjs";
 import { AppDeps, RateLimiterInterface } from "../../Types";
@@ -219,7 +219,7 @@ export const enforceRateLimiting = async (
  */
 export const validateSession = async (
   rawSessionToken: string,
-  io: Pick<AppDeps["io"], "getSessionByToken" | "getRolesForUser">,
+  io: AppDeps["io"],
   log: AppDeps["log"]
 ): Promise<Auth.ReqInfo["u"]> => {
   log.info("Session token has been passed.");
@@ -229,9 +229,9 @@ export const validateSession = async (
   if (!session) {
     throw new E.Unauthorized(`Invalid session: token not found`);
   }
-  if (session.expiresMs < Date.now()) {
+  if (session.expiredMs < Date.now()) {
     throw new E.Unauthorized(
-      `Session expired at ${new Date(session.expiresMs)}. Obtain a new session by submitting a ` +
+      `Session expired at ${new Date(session.expiredMs)}. Obtain a new session by submitting a ` +
         `valid refresh token or by logging in again.`,
       `SESSION-EXPIRED`
     );
@@ -251,7 +251,12 @@ export const validateSession = async (
   }
 
   // Now we know it's valid - get user information
-  const roles = await io.getRolesForUser(session.userId, {}, log);
+  const roles = await io.get(
+    "user-roles",
+    { _t: "filter", userId: session.userId },
+    { __pg: { size: 1000000 } },
+    log
+  );
   return {
     id: session.userId,
     r: roles.data.map((r) => r.roleId),

@@ -1,4 +1,4 @@
-import * as E from "@openfinanceio/http-errors";
+import * as E from "@wymp/http-errors";
 import { Cors, Gateway, Proxy } from "./Modules";
 import { AppDeps } from "./Types";
 

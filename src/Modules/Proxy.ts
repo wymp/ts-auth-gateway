@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as jwt from "jsonwebtoken";
-import * as E from "@openfinanceio/http-errors";
+import * as E from "@wymp/http-errors";
 import * as Http from "@wymp/http-utils";
 import { AppDeps } from "../Types";
 
@@ -29,7 +29,7 @@ export const getProxyMiddleware = (
     config: {
       serviceName: string;
       authHeader: AppDeps["config"]["authHeader"];
-    }
+    };
   }
 ) => {
   // Make sure we have a valid ECDSA key and prepare it
@@ -43,7 +43,7 @@ export const getProxyMiddleware = (
         if (!fs.existsSync(path)) {
           throw new E.InternalServerError(
             `ECDSA key file not found at '${path}'! Please place a standard ECDSA pem file at ` +
-            `that path.`
+              `that path.`
           );
         }
         key = fs.readFileSync(path, "utf8");
@@ -52,23 +52,19 @@ export const getProxyMiddleware = (
         if (!key) {
           throw new E.InternalServerError(
             `Environment variable '${ecdsaConf.varname}' empty. Please set this variable to ` +
-            `your PEM-encoded ECDSA signing key or change your config.`
+              `your PEM-encoded ECDSA signing key or change your config.`
           );
         }
       }
 
       // Test the key
       try {
-        jwt.sign(
-          { testing: "1-2" },
-          key,
-          {
-            algorithm: "ES256",
-            audience: "example.com",
-            expiresIn: 30,
-            issuer: r.config.serviceName,
-          }
-        );
+        jwt.sign({ testing: "1-2" }, key, {
+          algorithm: "ES256",
+          audience: "example.com",
+          expiresIn: 30,
+          issuer: r.config.serviceName,
+        });
       } catch (e) {
         throw new E.InternalServerError(
           `Something is wrong with your ECDSA key (failed to sign test payload): ${e.message}`
@@ -115,19 +111,15 @@ export const getProxyMiddleware = (
 
       // Create a new auth header
       const authHeader = ecdsakey
-        // If we're configured to sign it, make it a JWT
-        ? jwt.sign(
-          req.auth,
-          ecdsakey,
-          {
+        ? // If we're configured to sign it, make it a JWT
+          jwt.sign(req.auth, ecdsakey, {
             algorithm: "ES256",
             audience: target,
             expiresIn: 30,
             issuer: r.config.serviceName,
-          }
-        )
-        // Otherwise, just base64 the JSON representation
-        : Buffer.from(JSON.stringify(req.auth)).toString("base64");
+          })
+        : // Otherwise, just base64 the JSON representation
+          Buffer.from(JSON.stringify(req.auth)).toString("base64");
 
       // And add the auth header
       _req.headers["x-auth-gateway"] = authHeader;
@@ -135,7 +127,7 @@ export const getProxyMiddleware = (
       // Since proxying is a weird use-case for our Simple Request and Response objects, we're
       // casting to "any" here.
       log.notice(`Passing request for ${req.url} on to target: ${target}`);
-      r.proxy.web(<any>req, <any>res, { target }, function(err, errReq, errRes, targetUrl) {
+      r.proxy.web(<any>req, <any>res, { target }, function (err, errReq, errRes, targetUrl) {
         next(
           new E.ServiceUnavailable(
             `Sorry, the ${api} API is currently not responding. Please try again later.`

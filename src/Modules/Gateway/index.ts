@@ -1,18 +1,10 @@
-import * as E from "@openfinanceio/http-errors";
+import * as E from "@wymp/http-errors";
 import { logger } from "@wymp/http-utils";
 import { Auth } from "@wymp/types";
 import { AppDeps, ClientRoles } from "../../Types";
 import * as lib from "./Lib";
 
-export type GatewayMiddlewareIo = Pick<
-  AppDeps["io"],
-  | "getResource"
-  | "getApiConfig"
-  | "getAndValidateClientData"
-  | "getAccessRestrictionsForClient"
-  | "getSessionByToken"
-  | "getRolesForUser"
->;
+export type GatewayMiddlewareIo = AppDeps["io"];
 
 type MinReq = {
   method: string;
@@ -66,9 +58,10 @@ export const middleware = (
         });
 
         // Validate request against access restrictions
-        const { data: restrictions } = await r.io.getAccessRestrictionsForClient(
-          clientId,
-          null,
+        const { data: restrictions } = await r.io.get(
+          "client-access-restrictions",
+          { _t: "filter", clientId },
+          { __pg: { size: 10000000 } },
           log
         );
         lib.enforceAccessRestrictions(restrictions, ip, host, api, log);
@@ -133,12 +126,7 @@ export const middleware = (
 
       // Make sure the given user isn't banned or deleted
       if (sessionUser) {
-        const fullUser = await r.io.getResource<Auth.Db.User, "id">(
-          "users",
-          { t: "id", v: sessionUser.id },
-          log,
-          true
-        );
+        const fullUser = await r.io.get("users", { id: sessionUser.id }, log, true);
         if (fullUser.banned === 1 || fullUser.deleted === 1) {
           throw new E.Forbidden(
             `Sorry, this account has been disabled.`,

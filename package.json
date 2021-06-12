@@ -28,15 +28,15 @@
   },
   "homepage": "https://github.com/wymp/auth-gateway#readme",
   "dependencies": {
-    "@openfinanceio/http-errors": "^1.7.0",
     "@types/bcryptjs": "^2.4.2",
     "@types/http-proxy": "^1.17.5",
     "@types/jsonwebtoken": "^8.5.1",
-    "@types/node": "^14.14.37",
-    "@types/uuid": "^8.3.0",
+    "@types/node": "^14.14.41",
+    "@wymp/http-errors": "^1.7.0",
     "@wymp/http-utils": "^1.1.1",
+    "@wymp/sql": "^1.0.0-beta9",
     "@wymp/ts-simple-interfaces": "^0.5.1",
-    "@wymp/types": "^0.1.0-rc",
+    "@wymp/types": "^0.1.0-rc4",
     "@wymp/weenie-framework": "^0.5.3-rc",
     "bcryptjs": "^2.4.3",
     "cidr-matcher": "^2.1.1",
@@ -44,8 +44,7 @@
     "jsonwebtoken": "^8.5.1",
     "nodemailer": "^6.5.0",
     "rate-limiter-flexible": "^2.2.1",
-    "runtypes": "^6.0.0",
-    "uuid-with-v6": "^1.1.2"
+    "runtypes": "^6.1.0"
   },
   "devDependencies": {
     "@wymp/ts-simple-interfaces-testing": "^0.5.0",
@@ -54,7 +53,7 @@
     "prettier": "^2.2.1",
     "pretty-quick": "^3.1.0",
     "simple-http-client-rpn": "^0.5.1",
-    "ts-jest": "^26.5.4",
+    "ts-jest": "^26.5.5",
     "typescript": "^4.2.4"
   },
   "prettier": {

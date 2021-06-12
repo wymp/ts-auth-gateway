@@ -1,0 +1,116 @@
+import { IdConstraint, Filter, NullFilter } from "@wymp/sql";
+import { Auth } from "@wymp/types";
+
+export const Defaults = {
+  apis: {
+    active: 1 as const,
+    allowUnidentifiedReqs: 0 as const,
+  },
+  organizations: {
+    createdMs: () => Date.now(),
+  },
+  clients: {
+    reqsPerSec: 10,
+    createdMs: () => Date.now(),
+  },
+  "client-access-restrictions": {
+    createdMs: () => Date.now(),
+  },
+  users: {
+    banned: 0 as const,
+    deleted: 0 as const,
+    "2fa": 0 as const,
+    createdMs: () => Date.now(),
+  },
+  emails: {
+    verifiedMs: null,
+    createdMs: () => Date.now(),
+  },
+  "verification-codes": {
+    createdMs: () => Date.now(),
+    expiredMs: (obj: Partial<Auth.Db.VerificationCode>) => (obj.createdMs || Date.now()) + 600,
+    consumedMs: null,
+    invalidatedMs: null,
+  },
+  sessions: {
+    createdMs: () => Date.now(),
+    expiredMs: (obj: Partial<Auth.Db.Session>) => (obj.createdMs || Date.now()) + 600,
+    invalidatedMs: null,
+  },
+  "session-tokens": {
+    createdMs: () => Date.now(),
+    expiredMs: (obj: Partial<Auth.Db.Session>) => (obj.createdMs || Date.now()) + 600,
+    invalidatedMs: null,
+  },
+  "user-roles": {},
+  "client-roles": {},
+};
+
+export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
+  apis: {
+    type: Auth.Db.Api;
+    constraints: IdConstraint;
+    filters: Filter<{ domain: string }>;
+    defaults: typeof Defaults["apis"];
+  };
+  organizations: {
+    type: Auth.Db.Organization;
+    constraints: IdConstraint;
+    filters: NullFilter;
+    defaults: typeof Defaults["organizations"];
+  };
+  clients: {
+    type: Auth.Db.Client;
+    constraints: IdConstraint;
+    filters: NullFilter;
+    defaults: typeof Defaults["clients"];
+  };
+  "client-access-restrictions": {
+    type: Auth.Db.ClientAccessRestriction;
+    constraints: IdConstraint;
+    filters: Filter<{ clientId: string }>;
+    defaults: typeof Defaults["client-access-restrictions"];
+  };
+  users: {
+    type: Auth.Db.User;
+    constraints: IdConstraint;
+    filters: NullFilter;
+    defaults: typeof Defaults["users"];
+  };
+  emails: {
+    type: Auth.Db.Email;
+    constraints: IdConstraint;
+    filters: NullFilter;
+    defaults: typeof Defaults["emails"];
+  };
+  "verification-codes": {
+    type: Auth.Db.VerificationCode;
+    constraints: IdConstraint;
+    filters: NullFilter;
+    defaults: typeof Defaults["verification-codes"];
+  };
+  sessions: {
+    type: Auth.Db.Session;
+    constraints: IdConstraint;
+    filters: NullFilter;
+    defaults: typeof Defaults["sessions"];
+  };
+  "session-tokens": {
+    type: Auth.Db.SessionToken;
+    constraints: IdConstraint;
+    filters: NullFilter;
+    defaults: typeof Defaults["session-tokens"];
+  };
+  "user-roles": {
+    type: Auth.Db.UserRole<UserRoles>;
+    constraints: IdConstraint;
+    filters: { _t: "filter"; userId: string };
+    defaults: typeof Defaults["user-roles"];
+  };
+  "client-roles": {
+    type: Auth.Db.ClientRole<ClientRoles>;
+    constraints: { clientId: string; roleId: string };
+    filters: { _t: "filter"; clientId: string };
+    defaults: typeof Defaults["client-roles"];
+  };
+};

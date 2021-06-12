@@ -5,7 +5,7 @@ import {
   SimpleHttpRequestHandlerInterface,
 } from "@wymp/ts-simple-interfaces";
 import * as Weenie from "@wymp/weenie-framework";
-import { IoInterface } from "./Io";
+import { Io } from "./Io";
 
 export const AppConfigValidator = rt.Intersect(
   Weenie.baseConfigValidator,
@@ -83,28 +83,39 @@ export type AppDeps = {
   config: AppConfig;
   log: SimpleLoggerInterface;
   http: SimpleHttpRequestHandlerInterface;
-  io: IoInterface<ClientRoles, UserRoles>;
+  io: Omit<Io<ClientRoles, UserRoles>, "db" | "cache" | "sqlizeParams">;
   cache: CacheInterface;
   proxy: ProxyInterface;
   rateLimiter?: RateLimiterInterface;
+  authz: {
+    [endpoint in Endpoints]: Array<[ClientRoles | null, boolean | null, UserRoles | null, null]>;
+  };
 };
 
-export type UserRoles =
+// TODO: Replace this with explicit list of keys
+export type Endpoints = string;
+
+export enum UserRoles {
   // A system administrator
-  | "sysadmin"
+  SYSADMIN = "sysadmin",
 
   // A regular, unprivileged user
-  | "user";
+  USER = "user",
 
-export type ClientRoles =
+  // An "insider" of the company
+  EMPLOYEE = "employee",
+}
+
+export enum ClientRoles {
   // A low-level system service using the API as an integral part of the overall system
-  | "system"
+  SYSTEM = "system",
 
   // An "own" client; i.e., any client that you create for your own business
-  | "internal"
+  INTERNAL = "internal",
 
   // A client you create for an external partner or user
-  | "external";
+  EXTERNAL = "external",
+}
 
 export interface CacheInterface {
   get<T>(k: string, cb: () => Promise<T>, ttl?: number, log?: SimpleLoggerInterface): Promise<T>;
