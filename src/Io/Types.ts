@@ -1,4 +1,4 @@
-import { IdConstraint, Filter, NullFilter } from "@wymp/sql";
+import { IdConstraint, Filter, NullFilter, both, strId } from "@wymp/sql";
 import { Auth } from "@wymp/types";
 
 export const Defaults = {
@@ -6,22 +6,22 @@ export const Defaults = {
     active: 1 as const,
     allowUnidentifiedReqs: 0 as const,
   },
-  organizations: {
+  organizations: both(strId, {
     createdMs: () => Date.now(),
-  },
-  clients: {
+  }),
+  clients: both(strId, {
     reqsPerSec: 10,
     createdMs: () => Date.now(),
-  },
-  "client-access-restrictions": {
+  }),
+  "client-access-restrictions": both(strId, {
     createdMs: () => Date.now(),
-  },
-  users: {
+  }),
+  users: both(strId, {
     banned: 0 as const,
     deleted: 0 as const,
     "2fa": 0 as const,
     createdMs: () => Date.now(),
-  },
+  }),
   emails: {
     verifiedMs: null,
     createdMs: () => Date.now(),
@@ -32,11 +32,11 @@ export const Defaults = {
     consumedMs: null,
     invalidatedMs: null,
   },
-  sessions: {
+  sessions: both(strId, {
     createdMs: () => Date.now(),
     expiredMs: (obj: Partial<Auth.Db.Session>) => (obj.createdMs || Date.now()) + 600,
     invalidatedMs: null,
-  },
+  }),
   "session-tokens": {
     createdMs: () => Date.now(),
     expiredMs: (obj: Partial<Auth.Db.Session>) => (obj.createdMs || Date.now()) + 600,

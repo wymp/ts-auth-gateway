@@ -1,5 +1,5 @@
 import * as E from "@wymp/http-errors";
-import { Cors, Gateway, Proxy } from "./Modules";
+import { Accounts, Cors, Gateway, Proxy } from "./Modules";
 import { AppDeps } from "./Types";
 
 export const start = (r: AppDeps) => {
@@ -26,6 +26,6 @@ export const start = (r: AppDeps) => {
   r.http.use(Gateway.middleware(r));
 
   // Now that we have CORS headers and we've passed the gateway, we can route accordingly
-  //Accounts.register(r);
+  Accounts.register(r);
   Proxy.register(r);
 };

@@ -1,53 +1,44 @@
-/*
 import * as rt from "runtypes";
 import { SimpleHttpServerMiddleware } from "@wymp/ts-simple-interfaces";
-import { Api, Auth } from "@wymp/types";
-import * as E from "@wymp/http-errors";
-import { Http } from "@wymp/http-utils";
-import { AppDeps } from "../../Types";
-
-const authorize: typeof Http["authorize"] = Http.authorize;
+import { Auth } from "@wymp/types";
+import * as Http from "@wymp/http-utils";
+import { AppDeps, UserRoles, ClientRoles } from "../../Types";
+import { InvalidBodyError } from "../Lib";
 
 /**
  * This handler handles both GET /organizations and GET /organizations/:id. Permissinioning is the
  * same for both
- * /
-export const getOrganizations = (r: Pick<AppDeps, "log" | "io" | "auth">): SimpleHttpServerMiddleware => {
+ */
+export const getOrganizations = (
+  r: Pick<AppDeps, "log" | "io" | "authz">
+): SimpleHttpServerMiddleware => {
   return async (req, res, next) => {
     try {
       const log = Http.logger(r.log, req, res);
 
       // Authorize
-      authorize(req, r.authz["GET /organizations(/:id)"], log);
+      Http.authorize(req, r.authz["GET /organizations(/:id)"], log);
 
       if (req.params.id) {
         // GET /organizations/:id
-        const response: Auth.Api.Responses["GET /organizations/:id"] = {
+        const response: Auth.Api.Responses<ClientRoles, UserRoles>["GET /organizations/:id"] = {
           t: "single",
-          data: await r.io.get(
-            "organizations",
-            { id: req.params.id },
-            log,
-            true
-          ),
+          data: {
+            type: "organizations",
+            ...(await r.io.get("organizations", { id: req.params.id }, log, true)),
+          },
         };
         return res.send(response);
       } else {
         // GET /organizations
-        const orgs = await r.io.get(
-          "organizations",
-          log
-        );
-        const response: Auth.Api.Responses["GET /organizations"] = {
-          t: "collection",
-          data: orgs,
-          meta: {
-            pg: {
-              size: orgs.length,
-              nextCursor: null,
-              prevCursor: null,
-            }
-          }
+        const orgs = await r.io.get("organizations", Http.getCollectionParams(req.query), log);
+
+        const response: Auth.Api.Responses<ClientRoles, UserRoles>["GET /organizations"] = {
+          ...orgs,
+          data: orgs.data.map((org) => ({
+            type: "organizations",
+            ...org,
+          })),
         };
         return res.send(response);
       }
@@ -58,37 +49,26 @@ export const getOrganizations = (r: Pick<AppDeps, "log" | "io" | "auth">): Simpl
 };
 
 // POST /organizations
-export const postOrganizations = (r: Pick<AppDeps, "log" | "io">): SimpleHttpServerMiddleware => {
+export const postOrganizations = (
+  r: Pick<AppDeps, "log" | "io" | "authz">
+): SimpleHttpServerMiddleware => {
   return async (req, res, next) => {
     try {
       const log = Http.logger(r.log, req, res);
 
       // Authorize
-      assertAuthdReq(req);
-      authorize(
-        req,
-        [
-          [Globals.ClientRoles.SYSTEM, true, null, null],
-          [Globals.ClientRoles.INTERNAL, null, Globals.UserRoles.SYSADMIN, null],
-          [Globals.ClientRoles.INTERNAL, null, Globals.UserRoles.CUSTSERV3, null],
-          [Globals.ClientRoles.INTERNAL, null, Globals.UserRoles.CUSTSERVADMIN, null],
-        ],
-        log
-      );
+      Http.authorize(req, r.authz["POST /organizations"], log);
 
       // Validate
       const validation = PostOrganization.validate(req.body);
       if (!validation.success) {
-        throw new E.BadRequest(
-          `The body of your request does not appear to conform to the documented input for this ` +
-            `endpoint. Please read the docs: https://docs.openfinance.io/system/v3/api.html.\n\n` +
-            `Error: ${validation.key ? `${validation.key}: ` : ``}${validation.message}`
-        );
+        throw InvalidBodyError(validation);
       }
       const postOrganization = validation.value.data;
 
       // Hand back to the functions
-      const newOrganization = await r.io.insertOrganization(
+      const newOrganization = await r.io.save(
+        "organizations",
         { name: postOrganization.name },
         req.auth,
         r.log
@@ -96,10 +76,8 @@ export const postOrganizations = (r: Pick<AppDeps, "log" | "io">): SimpleHttpSer
 
       const response: { data: Auth.Api.Organization } = {
         data: {
-          id: newOrganization.id,
           type: "organizations",
-          name: newOrganization.name,
-          createdMs: newOrganization.createdMs,
+          ...newOrganization,
         },
       };
       return res.status(201).send(response);
@@ -116,4 +94,3 @@ const PostOrganization = rt.Record({
     name: rt.String,
   }),
 });
-*/
