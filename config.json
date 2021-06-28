@@ -25,7 +25,9 @@
     "database": "dev.auth-gateway"
   },
   "http": {
-    "listeners": [[6546, "localhost"]]
+    "listeners": [[6546, "localhost"]],
+    "parseJson": false,
+    "errOnBlankPost": false
   },
   "logger": {
     "logLevel": "debug",
@@ -45,10 +47,10 @@
     "loginCodeMin": 10
   },
   "emails": {
-    "from": "Wympy Welcomer<welcome@wymp.com>",
+    "from": "Wymp Welcomer<welcome@wymp.com>",
     "templateFiles": {
-      "login": "./emailTemplates/login.json",
-      "emailVerCode": "./emailTemplates/emailVerCode.json"
+      "login": "./emailTemplates/login.dev.txt",
+      "emailVerCode": "./emailTemplates/emailVerCode.dev.txt"
     }
   },
   "verificationUrls": {
@@ -60,5 +62,6 @@
       "numReqs": 10,
       "periodSecs": 300
     }
-  }
+  },
+  "emailRegex": "^[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,}$"
 }

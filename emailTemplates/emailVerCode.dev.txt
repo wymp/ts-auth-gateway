@@ -1,0 +1,9 @@
+Welcome!
+
+To verify this email address, please click or copy/paste this
+link: https://example.com/accounts/verify-email?code=${code}
+
+Thanks,
+The Team
+
+

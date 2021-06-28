@@ -74,6 +74,9 @@ export const AppConfigValidator = rt.Intersect(
         periodSecs: rt.Union(rt.Number, rt.Undefined),
       }),
     }),
+
+    // Email regex for validating incoming email addresses
+    emailRegex: rt.String,
   })
 );
 
@@ -90,7 +93,29 @@ export type AppDeps = {
   authz: {
     [endpoint in Endpoints]: Array<[ClientRoles | null, boolean | null, UserRoles | null, null]>;
   };
+  emailer: null | Emailer;
 };
+
+export interface Emailer {
+  send(data: EmailData, log: SimpleLoggerInterface): Promise<void>;
+}
+
+export type TemplateEmailData = {
+  t: "template";
+  from: string;
+  to: string | Array<string>;
+  templateId: string;
+  data: object;
+};
+
+export type SimpleEmailData = {
+  t: "simple";
+  from: string;
+  to: string | Array<string>;
+  text: string;
+};
+
+export type EmailData = TemplateEmailData | SimpleEmailData;
 
 // TODO: Replace this with explicit list of keys
 export type Endpoints = string;

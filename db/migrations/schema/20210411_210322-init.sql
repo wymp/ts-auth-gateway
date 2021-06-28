@@ -115,7 +115,7 @@ BEGIN;
     `userAgent` VARCHAR(255) NOT NULL COMMENT "The user-agent string representing the device from which the user has logged in",
     `ip` VARCHAR(128) NOT NULL COMMENT "The ip address (v4 or v6) from which this session was created.",
     `userId` CHAR(36) NOT NULL,
-    `invalidatedMs` BIGINT UNSIGNED NULL COMMENT "Manually invalidate the session by setting this value to 1",
+    `invalidatedMs` BIGINT UNSIGNED NULL COMMENT "Manually invalidate the session by setting this value",
     `createdMs` BIGINT UNSIGNED NOT NULL COMMENT "The timestamp in MS when this session was created",
     `expiresMs` BIGINT UNSIGNED NOT NULL COMMENT "The timestamp in MS when this session will expire. After this time, the refresh token will no longer work.",
     CONSTRAINT `userFk3` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -128,6 +128,7 @@ BEGIN;
     `sessionId` CHAR(36) NOT NULL,
     `createdMs` BIGINT UNSIGNED NOT NULL,
     `expiresMs` BIGINT UNSIGNED NOT NULL COMMENT "Timestamp in MS when this token will expire",
+    `invalidatedMs` BIGINT UNSIGNED NULL COMMENT "Manually invalidate the token by setting this value",
     CONSTRAINT `sessionFk1` FOREIGN KEY (`sessionId`) REFERENCES `sessions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
   ) ENGINE=InnoDB;
 

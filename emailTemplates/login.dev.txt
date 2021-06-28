@@ -1,0 +1,9 @@
+Welcome back!
+
+To log in, please click or copy/paste this link:
+
+https://example.com/accounts/login?t=step&step=code&code=${code}&state=${state}
+
+Thanks,
+The Team
+

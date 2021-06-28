@@ -229,9 +229,9 @@ export const validateSession = async (
   if (!session) {
     throw new E.Unauthorized(`Invalid session: token not found`);
   }
-  if (session.expiredMs < Date.now()) {
+  if (session.expiresMs < Date.now()) {
     throw new E.Unauthorized(
-      `Session expired at ${new Date(session.expiredMs)}. Obtain a new session by submitting a ` +
+      `Session expired at ${new Date(session.expiresMs)}. Obtain a new session by submitting a ` +
         `valid refresh token or by logging in again.`,
       `SESSION-EXPIRED`
     );

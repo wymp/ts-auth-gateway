@@ -22,27 +22,27 @@ export const Defaults = {
     "2fa": 0 as const,
     createdMs: () => Date.now(),
   }),
+  "user-clients": {
+    createdMs: () => Date.now(),
+  },
+  "user-roles": {},
   emails: {
     verifiedMs: null,
     createdMs: () => Date.now(),
   },
   "verification-codes": {
     createdMs: () => Date.now(),
-    expiredMs: (obj: Partial<Auth.Db.VerificationCode>) => (obj.createdMs || Date.now()) + 600,
     consumedMs: null,
     invalidatedMs: null,
   },
   sessions: both(strId, {
     createdMs: () => Date.now(),
-    expiredMs: (obj: Partial<Auth.Db.Session>) => (obj.createdMs || Date.now()) + 600,
     invalidatedMs: null,
   }),
   "session-tokens": {
     createdMs: () => Date.now(),
-    expiredMs: (obj: Partial<Auth.Db.Session>) => (obj.createdMs || Date.now()) + 600,
     invalidatedMs: null,
   },
-  "user-roles": {},
   "client-roles": {},
 };
 
@@ -77,9 +77,15 @@ export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
     filters: NullFilter;
     defaults: typeof Defaults["users"];
   };
+  "user-clients": {
+    type: Auth.Db.UserClient;
+    constraints: { userId: string; clientId: string };
+    filters: Filter<{ userId: string; clientId: string }>;
+    defaults: typeof Defaults["user-clients"];
+  };
   emails: {
     type: Auth.Db.Email;
-    constraints: IdConstraint;
+    constraints: { email: string };
     filters: NullFilter;
     defaults: typeof Defaults["emails"];
   };

@@ -33,17 +33,33 @@ process.on("uncaughtException", die);
       : Weenie.configFromFiles<AppConfig>(defaults, overrides, AppConfigValidator))()
   )
     // Make sure config.http.parseJson is not turned on, since that will cause problems with proxying
-    .and((d: { config: { http: { parseJson?: boolean | null } } }) => {
-      if (d.config.http.parseJson === true) {
-        throw new E.InternalServerError(
-          `Parsing bodies in this service causes proxying to fail. You have requested to enable ` +
-            `JSON body parsing by default via the 'config.http.parseJson' config key. Please ` +
-            `remove this key or set it to null or false to proceed.`
-        );
+    .and(
+      (d: {
+        config: {
+          http: {
+            parseJson?: boolean | null;
+            errOnBlankPost?: boolean | null;
+          };
+        };
+      }) => {
+        if (d.config.http.parseJson !== false) {
+          throw new E.InternalServerError(
+            `Parsing bodies in this service causes proxying to fail. You have requested to enable ` +
+              `JSON body parsing by default by either omitting or setting to 'true' the ` +
+              `'config.http.parseJson' config key. Please set this key to false to proceed.`
+          );
+        }
+        if (d.config.http.errOnBlankPost !== false) {
+          throw new E.InternalServerError(
+            `Automatically parsing bodies and running checks for blank bodies causes problems with ` +
+              `proxying. You have requested to enable blank body checks by either omitting or ` +
+              `setting to 'true' the 'config.http.errOnBlankPost' config key. Please set this key to ` +
+              `'false' to proceed.`
+          );
+        }
+        return {};
       }
-      d.config.http.parseJson = false;
-      return {};
-    })
+    )
     .and(AppWeenie.mockCache)
     .and(Weenie.serviceManagement)
     .and(Weenie.logger)
@@ -52,6 +68,7 @@ process.on("uncaughtException", die);
     .and(AppWeenie.io)
     .and(AppWeenie.proxy)
     .and(AppWeenie.authz)
+    .and(AppWeenie.emailer)
     .done((d) => {
       return {
         cache: d.cache,
@@ -62,6 +79,7 @@ process.on("uncaughtException", die);
         proxy: d.proxy,
         svc: d.svc,
         authz: d.authz,
+        emailer: d.emailer,
       };
     });
 

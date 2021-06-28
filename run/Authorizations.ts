@@ -1,5 +1,6 @@
 import { ClientRoles, UserRoles, AppDeps } from "../src";
 export const authz: AppDeps["authz"] = {
+  // Organizations
   "GET /organizations(/:id)": [
     [ClientRoles.SYSTEM, true, null, null],
     [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
@@ -15,6 +16,8 @@ export const authz: AppDeps["authz"] = {
     [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
     [ClientRoles.INTERNAL, null, UserRoles.EMPLOYEE, null],
   ],
+
+  // Clients
   "POST /organizations/:id/clients": [
     [ClientRoles.SYSTEM, true, null, null],
     [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
@@ -25,4 +28,12 @@ export const authz: AppDeps["authz"] = {
     [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
     [ClientRoles.INTERNAL, null, UserRoles.EMPLOYEE, null],
   ],
+
+  // Users
+  "GET /users(/:id)": [
+    [ClientRoles.SYSTEM, true, null, null],
+    [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
+    [ClientRoles.INTERNAL, null, UserRoles.EMPLOYEE, null],
+  ],
+  "POST /users": [],
 };
