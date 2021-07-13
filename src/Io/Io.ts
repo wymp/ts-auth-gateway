@@ -1,6 +1,6 @@
 import { createHash /*randomBytes*/ } from "crypto";
 import { SimpleSqlDbInterface, SimpleLoggerInterface } from "ts-simple-interfaces";
-import { AbstractSql } from "@wymp/sql";
+import { AbstractSql, Query } from "@wymp/sql";
 import { Auth } from "@wymp/types";
 import * as E from "@wymp/http-errors";
 import { CacheInterface } from "../Types";
@@ -15,6 +15,20 @@ export class Io<ClientRoles extends string, UserRoles extends string> extends Ab
   protected defaults = Defaults;
   public constructor(protected db: SimpleSqlDbInterface, protected cache: CacheInterface) {
     super();
+  }
+
+  /**
+   * Overriding default filter calculations for certain non-normal filters
+   */
+  protected getSqlForFilterField<T extends keyof TypeMap<ClientRoles, UserRoles>>(
+    t: T,
+    field: string,
+    val: any
+  ): Partial<Query> {
+    if (t === "user-roles" && field === "userIdIn") {
+      return { where: ["`userId` IN (?)"], params: [val] };
+    }
+    return super.getSqlForFilterField(t, field, val);
   }
 
   /**

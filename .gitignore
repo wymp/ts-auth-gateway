@@ -8,11 +8,10 @@ logs
 shmig.local.conf
 .node-xml*
 config.local.json
+tmp
 
-prod.auth-gateway.ecdsa.pem
-prod.auth-gateway.ecdsa.pub.pem
-auth-gateway.ecdsa.pem
-auth-gateway.ecdsa.pub.pem
+./*.pem
+!./dev.auth-gateway*.pem
 
 emailTemplates/*
 !emailTemplates/*.dev.txt

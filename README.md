@@ -31,47 +31,52 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
 #### Accounts Endpoints
 
 * [ ] **Organizations**
-  * [x] GET    /accounts/v3/organizations
-  * [x] POST   /accounts/v3/organizations
-  * [x] GET    /accounts/v3/organizations/:id
-  * [ ] PATCH  /accounts/v3/organizations/:id
-  * [ ] DELETE /accounts/v3/organizations/:id
+  * [x] GET    /accounts/v1/organizations
+  * [x] POST   /accounts/v1/organizations
+  * [x] GET    /accounts/v1/organizations/:id
+  * [ ] PATCH  /accounts/v1/organizations/:id
+  * [ ] DELETE /accounts/v1/organizations/:id
 * [ ] **Users**
-  * [-] GET    /accounts/v3/users
-    * Need to include user roles in return
-  * [x] POST   /accounts/v3/users
-  * [-] GET    /accounts/v3/users/:id
-    * Need to include user roles in return
-  * [ ] PATCH  /accounts/v3/users/:id
-  * [ ] DELETE /accounts/v3/users/:id
-  * [ ] GET    /accounts/v3/users/:id/emails
-  * [ ] POST   /accounts/v3/users/:id/emails
-  * [ ] GET    /accounts/v3/users/:id/roles
-  * [ ] POST   /accounts/v3/users/:id/roles
-  * [ ] DELETE /accounts/v3/users/:id/roles
+  * [x] GET    /accounts/v1/users
+  * [x] POST   /accounts/v1/users
+  * [x] GET    /accounts/v1/users/:id
+  * [ ] PATCH  /accounts/v1/users/:id
+  * [ ] DELETE /accounts/v1/users/:id
+  * [ ] GET    /accounts/v1/users/:id/emails
+  * [ ] POST   /accounts/v1/users/:id/emails
+  * [ ] GET    /accounts/v1/users/:id/roles
+  * [ ] POST   /accounts/v1/users/:id/roles
+  * [ ] DELETE /accounts/v1/users/:id/roles
 * [ ] **Clients**
-  * [ ] GET    /accounts/v3/clients/:id
-  * [ ] PATCH  /accounts/v3/clients/:id
-  * [ ] DELETE /accounts/v3/clients/:id
-  * [ ] GET    /accounts/v3/clients/:id/roles
-  * [ ] POST   /accounts/v3/clients/:id/roles
-  * [ ] DELETE /accounts/v3/clients/:id/roles
-  * [ ] GET    /accounts/v3/clients/:id/access-restrictions
-  * [ ] POST   /accounts/v3/clients/:id/access-restrictions
-  * [ ] DELETE /accounts/v3/clients/:id/access-restrictions
-  * [ ] GET    /accounts/v3/organizations/:id/clients
-  * [ ] POST   /accounts/v3/organizations/:id/clients
+  * [ ] GET    /accounts/v1/clients/:id
+  * [ ] PATCH  /accounts/v1/clients/:id
+  * [ ] DELETE /accounts/v1/clients/:id
+  * [ ] GET    /accounts/v1/clients/:id/roles
+  * [ ] POST   /accounts/v1/clients/:id/roles
+  * [ ] DELETE /accounts/v1/clients/:id/roles
+  * [ ] GET    /accounts/v1/clients/:id/access-restrictions
+  * [ ] POST   /accounts/v1/clients/:id/access-restrictions
+  * [ ] DELETE /accounts/v1/clients/:id/access-restrictions
+  * [ ] GET    /accounts/v1/organizations/:id/clients
+  * [ ] POST   /accounts/v1/organizations/:id/clients
 * [ ] **Memberships**
-  * [ ] GET    /accounts/v3/users/:id/memberships
-  * [ ] GET    /accounts/v3/organizations/:id/memberships
-  * [ ] POST   /accounts/v3/organizations/:id/memberships
+  * [ ] GET    /accounts/v1/users/:id/memberships
+  * [ ] GET    /accounts/v1/organizations/:id/memberships
+  * [ ] POST   /accounts/v1/organizations/:id/memberships
 * [ ] **Sessions**
-  * [ ] GET    /accounts/v3/sessions
-  * [ ] DELETE /accounts/v3/sessions
-  * [ ] GET    /accounts/v3/users/:id/sessions
-  * [ ] POST   /accounts/v3/users/:id/sessions/refresh
+  * [ ] GET    /accounts/v1/sessions
+  * [ ] DELETE /accounts/v1/sessions
+  * [ ] GET    /accounts/v1/users/:id/sessions
+  * [ ] POST   /accounts/v1/users/:id/sessions/refresh
 * [ ] **Authentication**
-  * [ ] POST /accounts/v3/authn
+  * [ ] POST /accounts/v1/authn
+
+#### General
+
+* [ ] Implement API regression tests
+* [ ] Use TypeDoc to create library documentation
+* [ ] Implement hook system that allows for alternate handling and/or system extensibility
+* [ ] Export library functions correctly
 
 #### Later Improvements
 

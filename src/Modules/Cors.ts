@@ -18,14 +18,7 @@ export const handler = (
     log.debug(`Adding CORS headers`);
 
     let supportedMethods = ["GET", "POST", "PUT", "PATCH", "DELETE"];
-    let supportedHeaders = [
-      "Authorization",
-      "Content-Type",
-      "Accept",
-      "X-Auth-Version",
-      "X-Pusher-Token",
-      "X-Id-Token",
-    ];
+    let supportedHeaders = ["Authorization", "Content-Type", "Accept"];
 
     res.set("Access-Control-Allow-Headers", supportedHeaders.join(","));
     res.set("Access-Control-Allow-Methods", supportedMethods.join(","));

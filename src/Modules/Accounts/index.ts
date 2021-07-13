@@ -6,39 +6,35 @@ import { IoInterface } from "./Types";
 import * as Organizations from "./Organizations";
 import * as Users from "./Users";
 
+const json = Parsers.json();
 const parseBody = ((): SimpleHttpServerMiddleware => {
-  // Create a function for generating an error
-  const generateError = (contentType?: string): Error => {
-    return new E.UnsupportedMediaType(
-      `Your request must have a 'Content-Type' header with value 'application/json'.${
-        contentType ? ` You passed ${contentType}.` : ``
-      }`
-    );
-  };
-
-  const json = Parsers.json();
-
   return (req, res, next) => {
-    // Validate that we've _passed_ a content type
+    // Validate that we've passed a content type and that it's correct
     const contentType = req.get("content-type");
-    if (!contentType) {
-      return next(generateError());
+    if (!contentType || contentType.toLowerCase() !== "application/json") {
+      return next(
+        new E.UnsupportedMediaType(
+          `Your request must have a 'Content-Type' header with value 'application/json'.${
+            contentType
+              ? ` You passed '${contentType}'.`
+              : `You did not pass a content-type header.`
+          }`
+        )
+      );
     }
 
     // Use the parser to parse the body
     json(req, res, (e?: any) => {
+      // If there was an error, return it
       if (e) {
         return next(e);
       } else {
-        // Now if there's supposed to be a body, check that we see one
-        if (
-          ["post", "patch", "put"].includes(req.method.toLowerCase()) &&
-          (!req.body || Object.keys(req.body).length === 0)
-        ) {
+        // Otherwise, if there's supposed to be a body, check that we see one
+        if (!req.body || Object.keys(req.body).length === 0) {
           return next(
             new E.BadRequest(
               "The body of your request is blank or does not appear to have been parsed correctly. " +
-                "Please be sure to pass a content-type header specifying the content type of your body. " +
+                "Please be sure to pass a content-type header with the value 'application/json'. " +
                 (contentType
                   ? `You passed 'Content-Type: ${contentType}'.`
                   : `You did not pass a content-type header.`)
@@ -56,13 +52,7 @@ export const register = (
 ) => {
   r.log.notice(`Registering Accounts Module`);
 
-  // Selectively parse JSON and check for blank bodies
-  r.http.use((req, res, next) => {
-    if (["post", "patch", "put"].includes(req.method.toLowerCase())) {
-    }
-    next();
-  });
-
+  // Organizations
   r.log.notice(`HTTP: GET    /accounts/v1/organizations(/:id)`);
   r.http.get(
     ["/accounts/v1/organizations", "/accounts/v1/organizations/:id"],
@@ -71,6 +61,7 @@ export const register = (
   r.log.notice(`HTTP: POST   /accounts/v1/organizations`);
   r.http.post("/accounts/v1/organizations", [parseBody, Organizations.postOrganizations(r)]);
 
+  // Users
   r.log.notice(`HTTP: GET    /accounts/v1/users`);
   r.http.get(`/accounts/v1/users`, Users.getUsers(r));
   r.log.notice(`HTTP: GET    /accounts/v1/users/:id`);
@@ -79,7 +70,7 @@ export const register = (
   r.http.post(`/accounts/v1/users`, [parseBody, Users.postUsers(r)]);
 
   // Catch-all for unhandled accounts endpoints
-  r.log.notice(`HTTP: ALL    /accounts/v1/*`);
+  r.log.notice(`HTTP: Fallthrough handler for accounts module: ALL    /accounts/v1/*`);
   r.http.all(`/accounts/v1/*`, (req, res, next) => {
     next(
       new E.BadRequest(`Unknown Endpoint: ${req.method} ${req.path}`, `ACCOUNTS-UNKNOWN-ENDPOINT`)

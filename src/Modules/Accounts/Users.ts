@@ -35,7 +35,10 @@ export const getUsers = (r: Pick<AppDeps, "log" | "io" | "authz">): SimpleHttpSe
       const users = await r.io.get("users", Http.getCollectionParams(req.query), log);
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["GET /users"] = {
         ...users,
-        data: users.data.map((u) => Translators.Users.dbToApi(u, log)),
+        data: await addRoles(
+          users.data.map((u) => Translators.Users.dbToApi(u, log)),
+          r
+        ),
       };
 
       // Send response
@@ -87,7 +90,7 @@ export const getUserById = (
       const user = await r.io.get("users", { id: userId }, r.log, true);
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["GET /users/:id"] = {
         t: "single",
-        data: T.Users.dbToApi(user),
+        data: await addRoles(T.Users.dbToApi(user), r),
       };
       res.status(200).send(response);
     } catch (e) {
@@ -330,4 +333,28 @@ export const checkPasswordStrength = (pw: string): Array<E.ObstructionInterface>
   }
 
   return o;
+};
+
+/**
+ * Use the database to get one or more users' roles and then add them to the corresponding user
+ * record for return via the API.
+ */
+declare interface AddRoles {
+  (user: Auth.Api.User<UserRoles>, r: Pick<AppDeps, "io" | "log">): Promise<
+    Auth.Api.User<UserRoles>
+  >;
+  (users: Array<Auth.Api.User<UserRoles>>, r: Pick<AppDeps, "io" | "log">): Promise<
+    Array<Auth.Api.User<UserRoles>>
+  >;
+}
+const addRoles: AddRoles = async (userOrUsers, r): Promise<any> => {
+  const userIds = Array.isArray(userOrUsers) ? userOrUsers.map((u) => u.id) : [userOrUsers.id];
+  const roles = await r.io.get("user-roles", { _t: "filter", userIdIn: userIds }, r.log);
+
+  const add = (user: Auth.Api.User<UserRoles>): Auth.Api.User<UserRoles> => {
+    user.roles = roles.data.filter((row) => row.userId === user.id).map((row) => row.roleId);
+    return user;
+  };
+
+  return Array.isArray(userOrUsers) ? userOrUsers.map(add) : add(userOrUsers);
 };

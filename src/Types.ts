@@ -149,7 +149,7 @@ export interface CacheInterface {
 }
 
 export interface RateLimiterInterface {
-  consume(client: string): RateLimiterResponse;
+  consume(client: string): Promise<RateLimiterResponse>;
 }
 
 export interface RateLimiterResponse {
