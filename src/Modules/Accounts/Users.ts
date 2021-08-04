@@ -255,9 +255,6 @@ export const createUser = async (
     {
       name: postUser.name,
       passwordBcrypt,
-      deleted: 0,
-      banned: 0,
-      "2fa": 0,
       createdMs: Date.now(),
     },
     auth,

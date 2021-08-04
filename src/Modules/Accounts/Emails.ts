@@ -51,7 +51,7 @@ export const addEmail = async (
 
   // Send verification code, if we have an emailer to do that with
   if (r.emailer) {
-    await sendCode("verification", email, auth, r);
+    await sendCode("verification", email, null, auth, r);
   } else {
     r.log.warning(`No emailer configured. Not sending verificaiton code for new email.`);
   }

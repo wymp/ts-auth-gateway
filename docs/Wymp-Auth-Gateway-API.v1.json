@@ -1,0 +1,358 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Wymp Auth Gateway API",
+    "version": "1.0",
+    "description": "The reference implementation of the Wymp Authentication/Authorization API Gateway"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:6546",
+      "description": "Dev Server"
+    }
+  ],
+  "paths": {
+    "/accounts/v1/sessions/login/email": {
+      "parameters": [],
+      "post": {
+        "summary": "Obtain a magic email link to use to login",
+        "operationId": "post-accounts-v1-sessions-login-step",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "null",
+                      "nullable": true,
+                      "description": "This endpoint initiates an email-based login flow, so successful responses always return a null object."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint sends a login email to the specified email address. On receipt, the user clicks the link in the email and the UI must then use the URL parameters to compose and send the next step. See [README.md](/README.md) for information on login procedure.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "description": "\"email\" type payload",
+                    "required": ["t", "email", "state"],
+                    "properties": {
+                      "t": {
+                        "type": "string",
+                        "enum": ["email-step"],
+                        "description": "Must be \"email-step\""
+                      },
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "state": {
+                        "type": "string",
+                        "pattern": "^[a-fA-F0-9]{32}$",
+                        "minLength": 32,
+                        "example": "aaaabbbbccccdddd1111222233334444",
+                        "description": "A \"state\" key that identifies this step as part of a given login sequence",
+                        "maxLength": 32
+                      }
+                    }
+                  }
+                },
+                "required": ["data"]
+              },
+              "examples": {}
+            }
+          },
+          "description": ""
+        },
+        "tags": ["Sessions"]
+      }
+    },
+    "/accounts/v1/sessions/login/password": {
+      "post": {
+        "summary": "Log in using a password",
+        "operationId": "post-accounts-v1-sessions-login-password",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/Session"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AuthnStep"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Users may submit an email/password combo via this endpoint. If successful, the next step or a session object is returned. See [README.md](/README.md) for information on login procedure.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "required": ["t", "email", "password", "state"],
+                    "properties": {
+                      "t": {
+                        "type": "string",
+                        "enum": ["password-step"],
+                        "description": "Always `password-step`"
+                      },
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "password": {
+                        "type": "string"
+                      },
+                      "state": {
+                        "type": "string",
+                        "pattern": "^[a-fA-F0-9]{32}$",
+                        "minLength": 32,
+                        "maxLength": 32,
+                        "description": "The value that you initially sent with the previous step to identify your login request, or a new value to identify this flow if this is your first request."
+                      }
+                    }
+                  }
+                },
+                "required": ["data"]
+              }
+            }
+          }
+        },
+        "tags": ["Sessions"]
+      }
+    },
+    "/accounts/v1/sessions/login/code": {
+      "post": {
+        "summary": "Submit a login code from a magic email link",
+        "operationId": "post-accounts-v1-sessions-login-code",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/Session"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AuthnStep"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint is used to submit the login code that a user receives via email after using the \"email\" step. If successful, the next step or a session object is returned. See [README.md](/README.md) for information on login procedure.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "required": ["t", "code", "state"],
+                    "properties": {
+                      "t": {
+                        "type": "string",
+                        "description": "Always `code-step`",
+                        "enum": ["code-step"]
+                      },
+                      "code": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$",
+                        "minLength": 64,
+                        "maxLength": 64,
+                        "description": "The login code that the user received via email after submitting the \"email\" step."
+                      },
+                      "state": {
+                        "type": "string",
+                        "pattern": "^[a-fA-F0-9]{32}$",
+                        "minLength": 32,
+                        "maxLength": 32,
+                        "description": "The value that you initially sent with the previous step to identify your login request."
+                      }
+                    }
+                  }
+                },
+                "required": ["data"]
+              }
+            }
+          }
+        },
+        "tags": ["Sessions"]
+      }
+    },
+    "/accounts/v1/sessions/login/totp": {
+      "post": {
+        "summary": "Submit a TOTP (second auth factor)",
+        "operationId": "post-accounts-v1-sessions-login-totp",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/Session"
+                        },
+                        {
+                          "$ref": "#/components/schemas/AuthnStep"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint is used to submit a TOTP from an authenticator app such as Google Authenticator. If successful, the next step or a session object is returned. See [README.md](/README.md) for information on login procedure.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "required": ["t", "totp", "state"],
+                    "properties": {
+                      "t": {
+                        "type": "string",
+                        "description": "Always `totp-step`",
+                        "enum": ["totp-step"]
+                      },
+                      "totp": {
+                        "type": "string",
+                        "description": "A TOTP from an authenticator app such as Google Authenticator"
+                      },
+                      "state": {
+                        "type": "string",
+                        "pattern": "^[a-fA-F0-9]{32}$",
+                        "minLength": 32,
+                        "maxLength": 32,
+                        "description": "The value that you initially sent with the previous step to identify your login request."
+                      }
+                    }
+                  }
+                },
+                "required": ["data"]
+              }
+            }
+          }
+        },
+        "tags": ["Sessions"]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Session": {
+        "title": "AuthnSession",
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": "string",
+            "enum": ["session"],
+            "description": "Always `session`"
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "minLength": 64,
+            "maxLength": 64,
+            "description": "The session token. This is to be used for every authenticated request."
+          },
+          "refresh": {
+            "type": "string",
+            "description": "The refresh token. This is to be used to obtain a new set of tokens when the session token expires",
+            "pattern": "^[a-f0-9]{64}$",
+            "minLength": 64,
+            "maxLength": 64
+          }
+        },
+        "required": ["t", "token", "refresh"]
+      },
+      "AuthnStep": {
+        "title": "AuthnStep",
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": "string",
+            "enum": ["step"],
+            "description": "Always \"step\""
+          },
+          "step": {
+            "type": "string",
+            "enum": ["email", "password", "totp", "code"],
+            "description": "The next step to be submitted. You can append this value to the login url, `/accounts/v1/sessions/login/`"
+          },
+          "state": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{32}$",
+            "minLength": 32,
+            "maxLength": 32,
+            "description": "The value that you initially sent with the previous step to identify your login request. This value should be submitted to the next step."
+          }
+        },
+        "required": ["t", "step", "state"]
+      }
+    },
+    "securitySchemes": {
+      "ClientID/Secret": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "Your client ID and optional secret. Not all APIs will require your secret, and some may not even require a client ID. Most, however, will require at least the Client ID."
+      },
+      "Session Token": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Your raw session token, preceded by the string `session:`. For example, if your session token is `abcde12345`, then your auth header might look like this: `Authorization: bearer session:abcde12345`."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Sessions",
+      "description": "Operations pertaining to sessions, including login, refresh and logout"
+    }
+  ]
+}

@@ -17,9 +17,9 @@ export const Defaults = {
     createdMs: () => Date.now(),
   }),
   users: both(strId, {
-    banned: 0 as const,
-    deleted: 0 as const,
     "2fa": 0 as const,
+    bannedMs: null,
+    deletedMs: null,
     createdMs: () => Date.now(),
   }),
   "user-clients": {
@@ -98,7 +98,10 @@ export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
   sessions: {
     type: Auth.Db.Session;
     constraints: IdConstraint;
-    filters: NullFilter;
+    filters: Filter<{
+      userId?: string;
+      createdMs?: { op: "lt" | "gt" | "eq" | "lte" | "gte" | "ne"; val: number };
+    }>;
     defaults: typeof Defaults["sessions"];
   };
   "session-tokens": {

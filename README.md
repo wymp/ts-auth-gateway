@@ -9,7 +9,43 @@ the following functions:
 * Registers new users
 * Validates user data (session token or oauth (TODO)), if passed
 * Generates new session credentials for users on valid authentication (including optional 2fa)
+* Enforces configurable restrictions on clients
+* Manages relationships between organizations, clients and users.
 * TODO: Generates new oauth credentials on valid request
+
+### Authentication
+
+Every authentication system will have its own flow. Following is a detailed description of the flow
+presented by this system:
+
+* Authentication is a multistep process where the next step is returned in response to the last
+  submission until a session is finally returned. Steps are submitted via the
+  [`POST /accounts/v1/sessions/login/:step` endpoint](/docs/api.v1.html#tag/Sessions).
+* If the submission returns a response with type `sessions`, then it is a session and no further
+  steps are required.
+* The first step you submit will usually be either [`email`](/docs/api.v1.html#operation/post-accounts-v1-sessions-login-step)
+  or [`password`](/docs/api.v1.html#operation/post-accounts-v1-sessions-login-password).
+* A "step" response is identified by a `t` value which is `"steps"`, while a "session" response is
+  identified by a `t` value which is `"sessions"`. In the event of an error, the `t` value is
+  `"error"`. When a "step" response is received, the `step` parameter will contain the next
+  step to submit. Clients are responsible for knowing the necessary parameters to submit for each
+  step.
+
+### Using Session and Reset Tokens
+
+Successful authentication results in a `sessions` object containing a `token` value and a `refresh`
+value. The `token` value is to be used to make requests against the API, while the `refresh` value
+is to be used to obtain new values when the token expires.
+
+Additionally, the `token` value may be used to log out (i.e., invalidate) a session.
+
+To refresh a session using a refresh token, submit a payload to the `POST /accounts/v1/sessions/refresh`
+endpoint as indicated in the [API docs](/docs/api.v1.html#operation/post-accounts-v1-sessions-refresh).
+The response will be a session object with new refresh and "token" values.
+
+To log out of a session, submit a request to the `POST /accounts/v1/sessions/logout` endpoint in
+accordance with the [API docs](/docs/api.v1.html#operation/post-accounts-v1-sessions-logout).
+
 
 ### Running
 
@@ -64,12 +100,14 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
   * [ ] GET    /accounts/v1/organizations/:id/memberships
   * [ ] POST   /accounts/v1/organizations/:id/memberships
 * [ ] **Sessions**
-  * [ ] GET    /accounts/v1/sessions
-  * [ ] DELETE /accounts/v1/sessions
-  * [ ] GET    /accounts/v1/users/:id/sessions
-  * [ ] POST   /accounts/v1/users/:id/sessions/refresh
-* [ ] **Authentication**
-  * [ ] POST /accounts/v1/authn
+  * [x] GET    /accounts/v1/sessions
+  * [x] GET    /accounts/v1/users/:id/sessions
+  * [-] POST   /accounts/v1/sessions/login/email
+  * [ ] POST   /accounts/v1/sessions/login/password
+  * [ ] POST   /accounts/v1/sessions/login/code
+  * [ ] POST   /accounts/v1/sessions/login/totp
+  * [ ] POST   /accounts/v1/sessions/refresh
+  * [ ] POST   /accounts/v1/sessions/logout
 
 #### General
 

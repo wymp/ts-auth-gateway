@@ -64,10 +64,10 @@ BEGIN;
     `id` CHAR(36) NOT NULL PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL COMMENT 'The user''s full legal name. This will be passed back on creation to other systems.',
     `passwordBcrypt` VARCHAR(255) NULL COMMENT 'A bcrypt hash of the user''s password.',
-    `deleted` TINYINT(1) NOT NULL DEFAULT 0,
-    `banned` TINYINT(1) NOT NULL DEFAULT 0,
     `2fa` TINYINT(1) NOT NULL DEFAULT 0 COMMENT "Whether or not 2-factor authentication is enabled for this user",
-    `createdMs` BIGINT UNSIGNED NOT NULL
+    `createdMs` BIGINT UNSIGNED NOT NULL,
+    `deletedMs` BIGINT NULL,
+    `bannedMs` BIGINT NULL
   ) ENGINE=InnoDB;
 
   CREATE TABLE `emails` (

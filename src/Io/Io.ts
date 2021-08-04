@@ -28,6 +28,28 @@ export class Io<ClientRoles extends string, UserRoles extends string> extends Ab
     if (t === "user-roles" && field === "userIdIn") {
       return { where: ["`userId` IN (?)"], params: [val] };
     }
+    if (t === "sessions" && field === "createdMs") {
+      // Validate operator
+      const ops = { lt: "<", gt: ">", eq: "=", lte: "<=", gte: ">=", ne: "!=" };
+      const op: keyof typeof ops = val.op;
+      if (!op || !ops[op]) {
+        throw new E.InternalServerError(
+          `Problem with filter value for filter sessions::createdMs - Missing or invalid 'op' ` +
+            `field: '${op}'. Acceptable options are ${JSON.stringify(Object.keys(ops))}`
+        );
+      }
+
+      // Validate timestamp
+      const timestamp = val.val;
+      if (typeof timestamp !== "number") {
+        throw new E.InternalServerError(
+          `Problem with filter value for filter sessions::createdMs - Missing or invalid ` +
+            `'val' field: '${val.val}'. This field should be an integer timestamp in MS.`
+        );
+      }
+
+      return { where: ["`createdMs` " + ops[op] + " ?"], params: [val.val] };
+    }
     return super.getSqlForFilterField(t, field, val);
   }
 

@@ -36,4 +36,8 @@ export const authz: AppDeps["authz"] = {
     [ClientRoles.INTERNAL, null, UserRoles.EMPLOYEE, null],
   ],
   "POST /users": [],
+
+  // Sessions
+  "GET /sessions": [[ClientRoles.INTERNAL, true, UserRoles.SYSADMIN, null]],
+  "GET /users/:id/sessions": [[ClientRoles.INTERNAL, true, UserRoles.SYSADMIN, null]],
 };

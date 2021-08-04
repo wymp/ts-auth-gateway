@@ -127,10 +127,10 @@ export const middleware = (
       // Make sure the given user isn't banned or deleted
       if (sessionUser) {
         const fullUser = await r.io.get("users", { id: sessionUser.id }, log, true);
-        if (fullUser.banned === 1 || fullUser.deleted === 1) {
+        if (fullUser.bannedMs !== null || fullUser.deletedMs !== null) {
           throw new E.Forbidden(
             `Sorry, this account has been disabled.`,
-            fullUser.deleted === 1 ? `USER-DELETED` : `USER-BANNED`
+            fullUser.deletedMs !== null ? `USER-DELETED` : `USER-BANNED`
           );
         }
       }

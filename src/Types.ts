@@ -70,8 +70,8 @@ export const AppConfigValidator = rt.Intersect(
     // Authentication flow throttling config
     authn: rt.Record({
       throttle: rt.Record({
-        numReqs: rt.Union(rt.Number, rt.Undefined),
-        periodSecs: rt.Union(rt.Number, rt.Undefined),
+        numReqs: rt.Number,
+        periodSecs: rt.Number,
       }),
     }),
 
@@ -96,26 +96,25 @@ export type AppDeps = {
   emailer: null | Emailer;
 };
 
+/**
+ * For anyone who wants to implement the email flow, they can pass an emailer as a dependency that
+ * will take care of actually sending the email. The service itself will be responsible for
+ * generating the login code and passing the code into the emailer to be sent.
+ */
 export interface Emailer {
-  send(data: EmailData, log: SimpleLoggerInterface): Promise<void>;
+  sendEmailVerificationCode(
+    codeHex: string,
+    fromEmail: string,
+    toEmail: string,
+    log: SimpleLoggerInterface
+  ): Promise<void>;
+  sendLoginCode(
+    codeHex: string,
+    fromEmail: string,
+    toEmail: string,
+    log: SimpleLoggerInterface
+  ): Promise<void>;
 }
-
-export type TemplateEmailData = {
-  t: "template";
-  from: string;
-  to: string | Array<string>;
-  templateId: string;
-  data: object;
-};
-
-export type SimpleEmailData = {
-  t: "simple";
-  from: string;
-  to: string | Array<string>;
-  text: string;
-};
-
-export type EmailData = TemplateEmailData | SimpleEmailData;
 
 // TODO: Replace this with explicit list of keys
 export type Endpoints = string;
