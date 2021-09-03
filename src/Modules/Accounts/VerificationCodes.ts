@@ -28,7 +28,7 @@ export const generateCode = async (
   email: string,
   userGeneratedToken: string | null,
   auth: Auth.ReqInfo,
-  r: Pick<AppDeps, "log" | "emailer" | "config" | "io">
+  r: Pick<AppDeps, "log" | "config" | "io">
 ): Promise<string> => {
   r.log.notice(`Generating a new code for ${type}`);
 

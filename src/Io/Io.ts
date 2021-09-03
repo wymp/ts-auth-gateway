@@ -7,6 +7,11 @@ import { CacheInterface } from "../Types";
 import { TypeMap, Defaults } from "./Types";
 
 /**
+ * Convenience definition
+ */
+type SessionAndToken = Auth.Db.Session & { token: Auth.Db.SessionToken };
+
+/**
  * This class abstracts all io access into generalized or specific declarative method calls
  */
 export class Io<ClientRoles extends string, UserRoles extends string> extends AbstractSql<
@@ -15,6 +20,9 @@ export class Io<ClientRoles extends string, UserRoles extends string> extends Ab
   protected defaults = Defaults;
   public constructor(protected db: SimpleSqlDbInterface, protected cache: CacheInterface) {
     super();
+    this.primaryKeys["session-tokens"] = "tokenSha256";
+    this.primaryKeys["verification-codes"] = "codeSha256";
+    this.convertBuffersAndHex = false;
   }
 
   /**
@@ -137,23 +145,33 @@ export class Io<ClientRoles extends string, UserRoles extends string> extends Ab
    * Get session from a raw session token passed in by a user
    */
   public async getSessionByToken(
-    token: string | undefined | null,
+    tokenStr: string | undefined | null,
     log: SimpleLoggerInterface
-  ): Promise<(Auth.Db.Session & { tokenExpiresMs: number }) | undefined> {
-    if (!token) {
+  ): Promise<SessionAndToken | undefined> {
+    if (!tokenStr) {
       return undefined;
     }
-    return this.cache.get<(Auth.Db.Session & { tokenExpiresMs: number }) | undefined>(
-      `session-by-token-${token}`,
+    return this.cache.get<SessionAndToken | undefined>(
+      `session-by-token-${tokenStr}`,
       async () => {
-        // prettier-ignore
-        const { rows } = await this.db.query<Auth.Db.Session & { tokenExpiresMs: number }>(
-          "SELECT `s`.*, `t`.`expiresMs` as `tokenExpiresMs` " +
-          "FROM `sessions` `s` JOIN `session-tokens` `t` ON (`s`.`id` = `t`.`sessionId`)" +
-          "WHERE `tokenSha256` = ?",
-          [ createHash("sha256").update(token).digest() ]
-        );
-        return rows[0];
+        const tokenSha256 = createHash("sha256").update(tokenStr).digest();
+
+        const [{ rows: sessions }, token] = await Promise.all([
+          this.db.query<Auth.Db.Session>(
+            "SELECT `s`.* " +
+              "FROM `sessions` `s` JOIN `session-tokens` `t` ON (`s`.`id` = `t`.`sessionId`)" +
+              "WHERE `tokenSha256` = ?",
+            [tokenSha256]
+          ),
+          this.get("session-tokens", { tokenSha256 }, log, false),
+        ]);
+
+        const session = sessions[0];
+        if (!session || !token) {
+          return undefined;
+        }
+
+        return { ...session, token };
       },
 
       // Clear out of cache after 20 minutes, since these tokens are only supposed to be 20-minute

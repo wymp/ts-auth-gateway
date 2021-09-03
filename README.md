@@ -31,17 +31,17 @@ presented by this system:
   step to submit. Clients are responsible for knowing the necessary parameters to submit for each
   step.
 
-### Using Session and Reset Tokens
+### Using Session and Refresh Tokens
 
 Successful authentication results in a `sessions` object containing a `token` value and a `refresh`
 value. The `token` value is to be used to make requests against the API, while the `refresh` value
 is to be used to obtain new values when the token expires.
 
-Additionally, the `token` value may be used to log out (i.e., invalidate) a session.
+Additionally, either value may be used to log out (i.e., invalidate) a session.
 
 To refresh a session using a refresh token, submit a payload to the `POST /accounts/v1/sessions/refresh`
 endpoint as indicated in the [API docs](/docs/api.v1.html#operation/post-accounts-v1-sessions-refresh).
-The response will be a session object with new refresh and "token" values.
+The response will be a session object with new "refresh" and "token" values.
 
 To log out of a session, submit a request to the `POST /accounts/v1/sessions/logout` endpoint in
 accordance with the [API docs](/docs/api.v1.html#operation/post-accounts-v1-sessions-logout).
@@ -83,6 +83,7 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
   * [ ] GET    /accounts/v1/users/:id/roles
   * [ ] POST   /accounts/v1/users/:id/roles
   * [ ] DELETE /accounts/v1/users/:id/roles
+  * [ ] POST   /accounts/v1/users/:id/change-password
 * [ ] **Clients**
   * [ ] GET    /accounts/v1/clients/:id
   * [ ] PATCH  /accounts/v1/clients/:id
@@ -99,18 +100,19 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
   * [ ] GET    /accounts/v1/users/:id/memberships
   * [ ] GET    /accounts/v1/organizations/:id/memberships
   * [ ] POST   /accounts/v1/organizations/:id/memberships
-* [ ] **Sessions**
+* [-] **Sessions**
   * [x] GET    /accounts/v1/sessions
   * [x] GET    /accounts/v1/users/:id/sessions
   * [-] POST   /accounts/v1/sessions/login/email
-  * [ ] POST   /accounts/v1/sessions/login/password
-  * [ ] POST   /accounts/v1/sessions/login/code
-  * [ ] POST   /accounts/v1/sessions/login/totp
-  * [ ] POST   /accounts/v1/sessions/refresh
-  * [ ] POST   /accounts/v1/sessions/logout
+  * [x] POST   /accounts/v1/sessions/login/password
+  * [x] POST   /accounts/v1/sessions/login/code
+  * [-] POST   /accounts/v1/sessions/login/totp
+  * [x] POST   /accounts/v1/sessions/refresh
+  * [x] POST   /accounts/v1/sessions/logout
 
 #### General
 
+* [ ] Implement TOTP flow and infrastructure
 * [ ] Implement API regression tests
 * [ ] Use TypeDoc to create library documentation
 * [ ] Implement hook system that allows for alternate handling and/or system extensibility
@@ -119,4 +121,15 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
 #### Later Improvements
 
 * [ ] Implement data transactions in database for things like user creation
+* [ ] Fix lots of things around `verification-codes`. We need to refactor around the idea that the
+      `state` parameter passed in by a user represents a certain login flow execution, rather than
+      having it be somewhat tangential. This flows into login code and totp authn flows.
+  * [ ] Currently they require an email address, but in some cases we would prefer to associated a
+        userId
+  * [ ] We've switched back to calling the user generated token "state", and we should reflect that
+        in the database.
+* [ ] Refactor `session-tokens` to have `tokenSha256` and `refreshTokenSha256` all together. When a
+      refresh token is consumed or invalidated, the associated session token should also be consumed
+      or invalidated, and that should be verified by the gateway. I.e., users should not be able to
+      use session tokens associated with consumed refresh tokens to successfully make requests.
 

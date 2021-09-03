@@ -126,6 +126,7 @@ export const middleware = (
 
       // Make sure the given user isn't banned or deleted
       if (sessionUser) {
+        log.info(`User passed; ensuring they're not banned or deleted.`);
         const fullUser = await r.io.get("users", { id: sessionUser.id }, log, true);
         if (fullUser.bannedMs !== null || fullUser.deletedMs !== null) {
           throw new E.Forbidden(
@@ -157,6 +158,7 @@ export const middleware = (
       (req as any).auth = auth;
 
       // Pass it on to the next middleware
+      log.info(`Auth gateway passed. Moving on to next module.`);
       next();
     } catch (e) {
       next(e);

@@ -41,6 +41,7 @@ export const Defaults = {
   }),
   "session-tokens": {
     createdMs: () => Date.now(),
+    consumedMs: null,
     invalidatedMs: null,
   },
   "client-roles": {},
@@ -91,7 +92,7 @@ export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
   };
   "verification-codes": {
     type: Auth.Db.VerificationCode;
-    constraints: IdConstraint;
+    constraints: { codeSha256: Buffer };
     filters: NullFilter;
     defaults: typeof Defaults["verification-codes"];
   };
@@ -106,7 +107,7 @@ export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
   };
   "session-tokens": {
     type: Auth.Db.SessionToken;
-    constraints: IdConstraint;
+    constraints: { tokenSha256: Buffer };
     filters: NullFilter;
     defaults: typeof Defaults["session-tokens"];
   };

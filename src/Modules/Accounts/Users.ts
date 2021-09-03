@@ -199,6 +199,14 @@ export const createUser = async (
       },
     });
   }
+  if (postUser.email.length > 255) {
+    obstructions.push({
+      code: "Email Too Long",
+      text:
+        "Sorry, while your email address is probably valid, it won't fit in our database. " +
+        "Please try with an email address less than 255 characters in length.",
+    });
+  }
 
   if (postUser.password) {
     // Strength

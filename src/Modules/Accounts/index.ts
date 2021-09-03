@@ -8,7 +8,7 @@ import * as Users from "./Users";
 import * as Sessions from "./Sessions";
 
 const json = Parsers.json();
-const parseBody = ((): SimpleHttpServerMiddleware => {
+const getParseBodyFunc = (allowBlankBodies: boolean): SimpleHttpServerMiddleware => {
   return (req, res, next) => {
     // Validate that we've passed a content type and that it's correct
     const contentType = req.get("content-type");
@@ -31,7 +31,7 @@ const parseBody = ((): SimpleHttpServerMiddleware => {
         return next(e);
       } else {
         // Otherwise, if there's supposed to be a body, check that we see one
-        if (!req.body || Object.keys(req.body).length === 0) {
+        if (!allowBlankBodies && (!req.body || Object.keys(req.body).length === 0)) {
           return next(
             new E.BadRequest(
               "The body of your request is blank or does not appear to have been parsed correctly. " +
@@ -46,7 +46,9 @@ const parseBody = ((): SimpleHttpServerMiddleware => {
       next();
     });
   };
-})();
+};
+const parseBody = getParseBodyFunc(false);
+const parseBodyAllowBlank = getParseBodyFunc(true);
 
 export const register = (
   r: Pick<AppDeps, "http" | "log" | "io" | "authz" | "config" | "emailer"> & { io: IoInterface }
@@ -98,7 +100,10 @@ export const register = (
   r.log.notice(`HTTP: POST   /accounts/v1/sessions/refresh`);
   r.http.post(`/accounts/v1/sessions/refresh`, [parseBody, Sessions.handlePostSessionsRefresh(r)]);
   r.log.notice(`HTTP: POST   /accounts/v1/sessions/logout`);
-  r.http.post(`/accounts/v1/sessions/logout`, [parseBody, Sessions.handlePostSessionsLogout(r)]);
+  r.http.post(`/accounts/v1/sessions/logout`, [
+    parseBodyAllowBlank,
+    Sessions.handlePostSessionsLogout(r),
+  ]);
 
   // Catch-all for unhandled accounts endpoints
   r.log.notice(`HTTP: Fallthrough handler for accounts module: ALL    /accounts/v1/*`);

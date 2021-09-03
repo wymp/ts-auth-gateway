@@ -34,6 +34,21 @@
                 }
               }
             }
+          },
+          "": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "null",
+                      "description": "This endpoint always returns `null`, since the next step is coming via email"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "description": "This endpoint sends a login email to the specified email address. On receipt, the user clicks the link in the email and the UI must then use the URL parameters to compose and send the next step. See [README.md](/README.md) for information on login procedure.",
@@ -46,11 +61,17 @@
                   "data": {
                     "type": "object",
                     "description": "\"email\" type payload",
-                    "required": ["t", "email", "state"],
+                    "required": [
+                      "t",
+                      "email",
+                      "state"
+                    ],
                     "properties": {
                       "t": {
                         "type": "string",
-                        "enum": ["email-step"],
+                        "enum": [
+                          "email-step"
+                        ],
                         "description": "Must be \"email-step\""
                       },
                       "email": {
@@ -68,14 +89,18 @@
                     }
                   }
                 },
-                "required": ["data"]
+                "required": [
+                  "data"
+                ]
               },
               "examples": {}
             }
           },
           "description": ""
         },
-        "tags": ["Sessions"]
+        "tags": [
+          "Sessions"
+        ]
       }
     },
     "/accounts/v1/sessions/login/password": {
@@ -115,11 +140,18 @@
                 "properties": {
                   "data": {
                     "type": "object",
-                    "required": ["t", "email", "password", "state"],
+                    "required": [
+                      "t",
+                      "email",
+                      "password",
+                      "state"
+                    ],
                     "properties": {
                       "t": {
                         "type": "string",
-                        "enum": ["password-step"],
+                        "enum": [
+                          "password-step"
+                        ],
                         "description": "Always `password-step`"
                       },
                       "email": {
@@ -139,12 +171,16 @@
                     }
                   }
                 },
-                "required": ["data"]
+                "required": [
+                  "data"
+                ]
               }
             }
           }
         },
-        "tags": ["Sessions"]
+        "tags": [
+          "Sessions"
+        ]
       }
     },
     "/accounts/v1/sessions/login/code": {
@@ -184,12 +220,18 @@
                 "properties": {
                   "data": {
                     "type": "object",
-                    "required": ["t", "code", "state"],
+                    "required": [
+                      "t",
+                      "code",
+                      "state"
+                    ],
                     "properties": {
                       "t": {
                         "type": "string",
                         "description": "Always `code-step`",
-                        "enum": ["code-step"]
+                        "enum": [
+                          "code-step"
+                        ]
                       },
                       "code": {
                         "type": "string",
@@ -208,12 +250,16 @@
                     }
                   }
                 },
-                "required": ["data"]
+                "required": [
+                  "data"
+                ]
               }
             }
           }
         },
-        "tags": ["Sessions"]
+        "tags": [
+          "Sessions"
+        ]
       }
     },
     "/accounts/v1/sessions/login/totp": {
@@ -253,12 +299,18 @@
                 "properties": {
                   "data": {
                     "type": "object",
-                    "required": ["t", "totp", "state"],
+                    "required": [
+                      "t",
+                      "totp",
+                      "state"
+                    ],
                     "properties": {
                       "t": {
                         "type": "string",
                         "description": "Always `totp-step`",
-                        "enum": ["totp-step"]
+                        "enum": [
+                          "totp-step"
+                        ]
                       },
                       "totp": {
                         "type": "string",
@@ -274,12 +326,164 @@
                     }
                   }
                 },
-                "required": ["data"]
+                "required": [
+                  "data"
+                ]
               }
             }
           }
         },
-        "tags": ["Sessions"]
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/accounts/v1/sessions/refresh": {
+      "post": {
+        "summary": "Refresh a session using a refresh token",
+        "operationId": "post-accounts-v1-sessions-refresh",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Session"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "refresh"
+                            ],
+                            "example": "refresh"
+                          },
+                          "refreshToken": {
+                            "type": "string",
+                            "pattern": "^[a-fA-F0-9]{64}$",
+                            "minLength": 64,
+                            "maxLength": 64,
+                            "example": "44819D570101D9D70E3F762DF9868F4CC2DE3BE38BA13231C3A70E89C1870F8A"
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "refreshToken"
+                        ]
+                      },
+                      {
+                        "properties": {
+                          "t": {
+                            "type": "string",
+                            "enum": [
+                              "token"
+                            ],
+                            "example": "token"
+                          },
+                          "sessionToken": {
+                            "type": "string",
+                            "pattern": "^[a-fA-F0-9]{64}",
+                            "minLength": 64,
+                            "maxLength": 64,
+                            "example": "FAD0AA546813692154C2AC1A2411188F7114EFD286D9567294C9E971AC039C2C"
+                          }
+                        },
+                        "required": [
+                          "t",
+                          "sessionToken"
+                        ]
+                      }
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "data"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/v1/sessions/logout": {
+      "post": {
+        "summary": "",
+        "operationId": "post-accounts-v1-sessions-logout",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "null",
+                      "description": "Always returns `null`, since success for this operation is a full logout."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint may be used by a user to log out their own session, or by an administrator to log out one or more user sessions. For end-users, it is not necessary to submit a body for this request.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "t": {
+                          "type": "string",
+                          "enum": [
+                            "session-tokens",
+                            "refresh-tokens",
+                            "sessions"
+                          ],
+                          "example": "sessions"
+                        },
+                        "value": {
+                          "type": "string",
+                          "example": "aaaabbbbcccc-dddd-eeee-ffff-0000111122223333",
+                          "description": "A session token, refresh token, or session id, according to the `t` parameter."
+                        }
+                      },
+                      "required": [
+                        "t",
+                        "value"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -291,7 +495,9 @@
         "properties": {
           "t": {
             "type": "string",
-            "enum": ["session"],
+            "enum": [
+              "session"
+            ],
             "description": "Always `session`"
           },
           "token": {
@@ -309,7 +515,11 @@
             "maxLength": 64
           }
         },
-        "required": ["t", "token", "refresh"]
+        "required": [
+          "t",
+          "token",
+          "refresh"
+        ]
       },
       "AuthnStep": {
         "title": "AuthnStep",
@@ -317,12 +527,19 @@
         "properties": {
           "t": {
             "type": "string",
-            "enum": ["step"],
+            "enum": [
+              "step"
+            ],
             "description": "Always \"step\""
           },
           "step": {
             "type": "string",
-            "enum": ["email", "password", "totp", "code"],
+            "enum": [
+              "email",
+              "password",
+              "totp",
+              "code"
+            ],
             "description": "The next step to be submitted. You can append this value to the login url, `/accounts/v1/sessions/login/`"
           },
           "state": {
@@ -333,7 +550,11 @@
             "description": "The value that you initially sent with the previous step to identify your login request. This value should be submitted to the next step."
           }
         },
-        "required": ["t", "step", "state"]
+        "required": [
+          "t",
+          "step",
+          "state"
+        ]
       }
     },
     "securitySchemes": {

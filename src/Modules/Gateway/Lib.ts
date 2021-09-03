@@ -229,6 +229,14 @@ export const validateSession = async (
   if (!session) {
     throw new E.Unauthorized(`Invalid session: token not found`);
   }
+  if (session.token.type === "refresh") {
+    throw new E.BadRequest(
+      `You've passed a refresh token, rather than a session token. The refresh token may only be ` +
+        `used to obtain a new set of tokens - not to make requests. Please use a session token ` +
+        `instead.`,
+      `REFRESH-TOKEN-PASSED`
+    );
+  }
   if (session.expiresMs < Date.now()) {
     throw new E.Unauthorized(
       `Session expired at ${new Date(session.expiresMs)}. Obtain a new session by submitting a ` +
@@ -236,9 +244,9 @@ export const validateSession = async (
       `SESSION-EXPIRED`
     );
   }
-  if (session.tokenExpiresMs < Date.now()) {
+  if (session.token.expiresMs < Date.now()) {
     throw new E.Unauthorized(
-      `This session token expired at ${new Date(session.tokenExpiresMs)}. Obtain a new token by ` +
+      `This session token expired at ${new Date(session.token.expiresMs)}. Obtain a new token by ` +
         `submitting a valid refresh token or by logging in again.`,
       `SESSION-TOKEN-EXPIRED`
     );
@@ -258,6 +266,7 @@ export const validateSession = async (
     log
   );
   return {
+    sid: session.id,
     id: session.userId,
     r: roles.data.map((r) => r.roleId),
     s: null,

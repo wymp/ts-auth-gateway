@@ -128,6 +128,7 @@ BEGIN;
     `sessionId` CHAR(36) NOT NULL,
     `createdMs` BIGINT UNSIGNED NOT NULL,
     `expiresMs` BIGINT UNSIGNED NOT NULL COMMENT "Timestamp in MS when this token will expire",
+    `consumedMs` BIGINT UNSIGNED NULL COMMENT "For refresh tokens only: Each token may only be used once.",
     `invalidatedMs` BIGINT UNSIGNED NULL COMMENT "Manually invalidate the token by setting this value",
     CONSTRAINT `sessionFk1` FOREIGN KEY (`sessionId`) REFERENCES `sessions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
   ) ENGINE=InnoDB;

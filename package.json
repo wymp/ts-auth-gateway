@@ -6,8 +6,10 @@
   "types": "dist/src/index.d.ts",
   "scripts": {
     "build": "scripts/build",
-    "build-docs": "npx redoc-cli bundle -o docs/api.v1.html docs/Wymp-Auth-Gateway-API.v1.json",
-    "test": "jest"
+    "docgen": "npx redoc-cli bundle -o docs/api.v1.html docs/Wymp-Auth-Gateway-API.v1.json",
+    "test": "jest",
+    "compile-start": "npx -p typescript tsc && node ./dist/run/app.js",
+    "start": "node ./dist/run/app.js"
   },
   "repository": {
     "type": "git",
@@ -30,32 +32,32 @@
   "dependencies": {
     "@types/bcryptjs": "^2.4.2",
     "@types/http-proxy": "^1.17.7",
-    "@types/jsonwebtoken": "^8.5.4",
-    "@types/node": "^14.17.5",
+    "@types/jsonwebtoken": "^8.5.5",
+    "@types/node": "^14.17.14",
     "@wymp/http-errors": "^1.7.0",
-    "@wymp/http-utils": "^1.4.0",
+    "@wymp/http-utils": "^1.5.0",
     "@wymp/sql": "^1.0.0-beta10",
     "@wymp/ts-simple-interfaces": "^0.5.2",
-    "@wymp/types": "0.1.0-rc6",
+    "@wymp/types": "0.1.0-rc7",
     "@wymp/weenie-framework": "^0.5.5",
     "bcryptjs": "^2.4.3",
     "cidr-matcher": "^2.1.1",
     "http-proxy": "^1.18.1",
     "jsonwebtoken": "^8.5.1",
-    "rate-limiter-flexible": "^2.2.3",
-    "runtypes": "^6.3.1"
+    "rate-limiter-flexible": "^2.2.4",
+    "runtypes": "^6.3.2"
   },
   "devDependencies": {
     "@types/jest": "^26.0.24",
     "@wymp/ts-simple-interfaces-testing": "^0.5.1",
     "husky": "^6.0.0",
-    "jest": "^27.0.0",
+    "jest": "^27.1.0",
     "prettier": "^2.3.2",
     "pretty-quick": "^3.1.1",
-    "redoc-cli": "^0.12.2",
+    "redoc-cli": "^0.12.3",
     "simple-http-client-rpn": "^0.5.1",
-    "ts-jest": "^27.0.0",
-    "typescript": "^4.3.5"
+    "ts-jest": "^27.0.5",
+    "typescript": "^4.4.2"
   },
   "prettier": {
     "printWidth": 100,
