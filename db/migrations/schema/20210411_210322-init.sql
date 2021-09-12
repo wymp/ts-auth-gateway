@@ -133,12 +133,29 @@ BEGIN;
     CONSTRAINT `sessionFk1` FOREIGN KEY (`sessionId`) REFERENCES `sessions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
   ) ENGINE=InnoDB;
 
+
+  --
+  -- Organization memberships
+  --
+  CREATE TABLE `org-memberships` (
+    `id` CHAR(36) NOT NULL PRIMARY KEY,
+    `organizationId` CHAR(36) NOT NULL,
+    `userId` CHAR(36) NOT NULL,
+    `read` TINYINT(1) NOT NULL DEFAULT 1,
+    `edit` TINYINT(1) NOT NULL DEFAULT 1,
+    `manage` TINYINT(1) NOT NULL DEFAULT 0,
+    `delete` TINYINT(1) NOT NULL DEFAULT 0,
+    CONSTRAINT `orgFk2` FOREIGN KEY (`organizationId`) REFERENCES `organizations` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `userFk4` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  ) ENGINE=InnoDB;
+
 COMMIT;
 
 -- ==== DOWN ====
 
 BEGIN;
 
+  DROP TABLE `org-memberships`;
   DROP TABLE `session-tokens`;
   DROP TABLE `sessions`;
   DROP TABLE `user-clients`;

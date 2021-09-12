@@ -7,6 +7,7 @@ import { SimpleHttpServerMiddleware } from "@wymp/ts-simple-interfaces";
 import { Auth } from "@wymp/types";
 import { Throttle } from "../../Throttle";
 import { AppDeps, ClientRoles, UserRoles } from "../../Types";
+import * as Common from "./Common";
 import { sendCode, generateCode } from "./VerificationCodes";
 
 /**
@@ -622,12 +623,7 @@ export const invalidateSession = async (
   r.log.notice(`Attempting to log out ${payload.length} session(s)`);
 
   // Make sure auth object is the right paradigm
-  if (auth.t !== 0) {
-    throw new E.InternalServerError(
-      `Bad configuration: auth object is bitwise-type, but should be string-type`,
-      `BAD-AUTH-OBJECT-ROLE-TYPE`
-    );
-  }
+  Common.assertAuth(auth);
 
   // Parallelize invalidation operations
   const p: Array<Promise<unknown>> = payload.map(async (val) => {
@@ -674,23 +670,8 @@ export const invalidateSession = async (
 
     // Make sure the requesting user owns the session or, if not, that the requesting user has
     // adequate permissions
-    let proceed: boolean = false;
     r.log.info(`Validating persmissions for logout of session id ${sessionId}`);
-    r.log.info(`Checking for internal, authenticated system client`);
-    if (auth.r.includes(ClientRoles.SYSTEM) && auth.r.includes(ClientRoles.INTERNAL)) {
-      r.log.info(`Client IS an internal system client. Checking authenticity.`);
-      if (!auth.a) {
-        r.log.notice(`Client is not authenticated and therefore cannot log out sessions.`);
-      } else {
-        r.log.notice(`Client is authorized to invalidate sessions. Proceeding.`);
-        proceed = true;
-      }
-    } else {
-      r.log.notice(
-        `Client IS NOT an internal system client. Client does not have sufficient roles to log ` +
-          `out sessions.`
-      );
-    }
+    let proceed = Common.isInternalSystemClient(auth.r, auth.a, r.log);
 
     // If we haven't been green-lighted by the client, maybe the user still has permission
     if (!proceed && auth.u) {

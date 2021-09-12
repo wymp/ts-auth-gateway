@@ -9,6 +9,12 @@ export const Defaults = {
   organizations: both(strId, {
     createdMs: () => Date.now(),
   }),
+  "org-memberships": both(strId, {
+    read: 1 as const,
+    edit: 1 as const,
+    manage: 0 as const,
+    delete: 0 as const,
+  }),
   clients: both(strId, {
     reqsPerSec: 10,
     createdMs: () => Date.now(),
@@ -59,6 +65,12 @@ export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
     constraints: IdConstraint;
     filters: NullFilter;
     defaults: typeof Defaults["organizations"];
+  };
+  "org-memberships": {
+    type: Auth.Db.OrgMembership;
+    constraints: IdConstraint | { organizationId: string; userId: string };
+    filters: Filter<{ userId: string }> | Filter<{ organizationId: string }>;
+    defaults: typeof Defaults["org-memberships"];
   };
   clients: {
     type: Auth.Db.Client;

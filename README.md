@@ -66,12 +66,12 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
 
 #### Accounts Endpoints
 
-* [ ] **Organizations**
+* [x] **Organizations**
   * [x] GET    /accounts/v1/organizations
   * [x] POST   /accounts/v1/organizations
   * [x] GET    /accounts/v1/organizations/:id
-  * [ ] PATCH  /accounts/v1/organizations/:id
-  * [ ] DELETE /accounts/v1/organizations/:id
+  * [x] PATCH  /accounts/v1/organizations/:id
+  * [x] DELETE /accounts/v1/organizations/:id
 * [ ] **Users**
   * [x] GET    /accounts/v1/users
   * [x] POST   /accounts/v1/users
@@ -100,6 +100,7 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
   * [ ] GET    /accounts/v1/users/:id/memberships
   * [ ] GET    /accounts/v1/organizations/:id/memberships
   * [ ] POST   /accounts/v1/organizations/:id/memberships
+  * [ ] DELETE /accounts/v1/organizations/:id/memberships
 * [-] **Sessions**
   * [x] GET    /accounts/v1/sessions
   * [x] GET    /accounts/v1/users/:id/sessions

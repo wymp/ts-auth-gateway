@@ -63,6 +63,10 @@ export const register = (
   );
   r.log.notice(`HTTP: POST   /accounts/v1/organizations`);
   r.http.post("/accounts/v1/organizations", [parseBody, Organizations.postOrganizations(r)]);
+  r.log.notice(`HTTP: PATCH  /accounts/v1/organizations/:id`);
+  r.http.patch("/accounts/v1/organizations/:id", [parseBody, Organizations.patchOrganization(r)]);
+  r.log.notice(`HTTP: DELETE /accounts/v1/organizations/:id`);
+  r.http.delete("/accounts/v1/organizations/:id", Organizations.deleteOrganizationHandler(r));
 
   // Users
   r.log.notice(`HTTP: GET    /accounts/v1/users`);
@@ -71,6 +75,9 @@ export const register = (
   r.http.get(`/accounts/v1/users/:id`, Users.getUserById(r));
   r.log.notice(`HTTP: POST   /accounts/v1/users`);
   r.http.post(`/accounts/v1/users`, [parseBody, Users.postUsers(r)]);
+
+  // OrgMemberships
+  // RESUME: Implement organization memberships endpoints
 
   // Sessions
   r.log.notice(`HTTP: GET    /accounts/v1/sessions`);
