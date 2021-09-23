@@ -76,8 +76,15 @@ export const register = (
   r.http.get(`/accounts/v1/users/:id`, Users.getUserById(r));
   r.log.notice(`HTTP: POST   /accounts/v1/users`);
   r.http.post(`/accounts/v1/users`, [parseBody, Users.postUsers(r)]);
+
+  // OrgMemberships
   r.log.notice(`HTTP: GET    /accounts/v1/users/:id/memberships`);
   r.http.get(`/accounts/v1/users/:id/memberships`, OrgMemberships.getByUserIdHandler(r));
+  r.log.notice(`HTTP: GET    /accounts/v1/organizations/:id/memberships`);
+  r.http.get(
+    `/accounts/v1/organizations/:id/memberships`,
+    OrgMemberships.getByOrganizationIdHandler(r)
+  );
 
   // Sessions
   r.log.notice(`HTTP: GET    /accounts/v1/sessions`);
