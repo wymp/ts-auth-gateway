@@ -4,6 +4,7 @@ import { Parsers } from "@wymp/weenie-framework";
 import { AppDeps } from "../../Types";
 import { IoInterface } from "./Types";
 import * as Organizations from "./Organizations";
+import * as OrgMemberships from "./OrgMemberships";
 import * as Users from "./Users";
 import * as Sessions from "./Sessions";
 
@@ -75,9 +76,8 @@ export const register = (
   r.http.get(`/accounts/v1/users/:id`, Users.getUserById(r));
   r.log.notice(`HTTP: POST   /accounts/v1/users`);
   r.http.post(`/accounts/v1/users`, [parseBody, Users.postUsers(r)]);
-
-  // OrgMemberships
-  // RESUME: Implement organization memberships endpoints
+  r.log.notice(`HTTP: GET    /accounts/v1/users/:id/memberships`);
+  r.http.get(`/accounts/v1/users/:id/memberships`, OrgMemberships.getByUserIdHandler(r));
 
   // Sessions
   r.log.notice(`HTTP: GET    /accounts/v1/sessions`);

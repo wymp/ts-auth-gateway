@@ -1,7 +1,7 @@
 import * as E from "@wymp/http-errors";
 import { SimpleLoggerInterface } from "@wymp/ts-simple-interfaces";
 import { Auth } from "@wymp/types";
-import { ClientRoles } from "../../Types";
+import { ClientRoles, UserRoles } from "../../Types";
 
 export function assertAuth(auth: Auth.ReqInfo): asserts auth is Auth.ReqInfoString {
   if (auth.t !== 0) {
@@ -12,6 +12,9 @@ export function assertAuth(auth: Auth.ReqInfo): asserts auth is Auth.ReqInfoStri
   }
 }
 
+/**
+ * Check to see if the client being used to make this call is an authenticated internal system client
+ */
 export const isInternalSystemClient = (
   roles: Array<string>,
   authenticated: boolean,
@@ -33,5 +36,38 @@ export const isInternalSystemClient = (
         `operation.`
     );
   }
+  return proceed;
+};
+
+/**
+ * Check to see if the calling user is the owner of the given resource or is a member of a
+ * privileged group.
+ */
+export const callerIsOwnerOrPrivilegedUser = (
+  ownerId: string,
+  auth: Auth.ReqInfoString,
+  _privilegedRoles: Array<string> | null | undefined,
+  log: SimpleLoggerInterface
+): boolean => {
+  // Default to sysadmin and employee
+  const privilegedRoles = _privilegedRoles || [UserRoles.SYSADMIN, UserRoles.EMPLOYEE];
+
+  let proceed: boolean = false;
+  if (auth.u) {
+    log.info(`Request made with user session attached. Checking permissions.`);
+    if (auth.u.id === ownerId) {
+      log.notice(`Resource owned by calling user. Proceeding with operation.`);
+      proceed = true;
+    } else {
+      log.info(`Resource not owned by calling user. Checking caller permissions.`);
+      if (auth.u.r.find((role) => privilegedRoles.includes(role))) {
+        log.notice(`Calling user is sufficiently privileged. Proceeding.`);
+        proceed = true;
+      } else {
+        log.notice(`Calling user is not sufficiently privileged. Not proceeding.`);
+      }
+    }
+  }
+
   return proceed;
 };

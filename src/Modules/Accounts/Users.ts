@@ -4,7 +4,6 @@ import { SimpleHttpServerMiddleware } from "@wymp/ts-simple-interfaces";
 import { Auth } from "@wymp/types";
 import * as E from "@wymp/http-errors";
 import * as Http from "@wymp/http-utils";
-import * as Translators from "../../Translators";
 import { AppDeps, UserRoles, ClientRoles } from "../../Types";
 import * as T from "../../Translators";
 import { InvalidBodyError } from "../Lib";
@@ -36,7 +35,7 @@ export const getUsers = (r: Pick<AppDeps, "log" | "io" | "authz">): SimpleHttpSe
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["GET /users"] = {
         ...users,
         data: await addRoles(
-          users.data.map((u) => Translators.Users.dbToApi(u, log)),
+          users.data.map((u) => T.Users.dbToApi(u, log)),
           r
         ),
       };
@@ -70,8 +69,7 @@ export const getUserById = (
       // Require valid userId
       if (!userId) {
         throw new E.InternalServerError(
-          `Programmer: this functionality is expecting req.params.userId to be set, but it is ` +
-            `not.`
+          `Programmer: this functionality is expecting req.params.id to be set, but it is ` + `not.`
         );
       }
 

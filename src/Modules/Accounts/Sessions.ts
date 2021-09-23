@@ -671,24 +671,9 @@ export const invalidateSession = async (
     // Make sure the requesting user owns the session or, if not, that the requesting user has
     // adequate permissions
     r.log.info(`Validating persmissions for logout of session id ${sessionId}`);
-    let proceed = Common.isInternalSystemClient(auth.r, auth.a, r.log);
-
-    // If we haven't been green-lighted by the client, maybe the user still has permission
-    if (!proceed && auth.u) {
-      r.log.info(`Request made with user session attached. Checking permissions.`);
-      if (auth.u.id === session.userId) {
-        r.log.notice(`Session ${sessionId} owned by calling user. Proceeding to invalidate.`);
-        proceed = true;
-      } else {
-        r.log.info(`Session ${sessionId} not owned by calling user. Checking permissions.`);
-        if (auth.u.r.includes(UserRoles.SYSADMIN) || auth.u.r.includes(UserRoles.EMPLOYEE)) {
-          r.log.notice(`Calling user is a sysadmin or employee. Proceeding.`);
-          proceed = true;
-        } else {
-          r.log.notice(`Calling user is not a sysadmin or employee.`);
-        }
-      }
-    }
+    const proceed =
+      Common.isInternalSystemClient(auth.r, auth.a, r.log) ||
+      (auth.u && Common.callerIsOwnerOrPrivilegedUser(session.userId, auth, null, r.log));
 
     // If we don't have permissions, then don't proceed
     if (!proceed) {

@@ -35,7 +35,7 @@
     "@types/jsonwebtoken": "^8.5.5",
     "@types/node": "^14.17.14",
     "@wymp/http-errors": "^1.7.0",
-    "@wymp/http-utils": "^1.5.0",
+    "@wymp/http-utils": "^2.0.0",
     "@wymp/sql": "^1.0.0-beta10",
     "@wymp/ts-simple-interfaces": "^0.5.2",
     "@wymp/types": "0.1.0-rc7",
