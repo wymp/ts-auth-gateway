@@ -85,6 +85,11 @@ export const register = (
     `/accounts/v1/organizations/:id/memberships`,
     OrgMemberships.getByOrganizationIdHandler(r)
   );
+  r.log.notice(`HTTP: POST   /accounts/v1/users/:id/memberships`);
+  r.http.post(`/accounts/v1/organizations/:id/memberships`, [
+    parseBody,
+    OrgMemberships.postOrgMembershipHandler(r),
+  ]);
 
   // Sessions
   r.log.notice(`HTTP: GET    /accounts/v1/sessions`);

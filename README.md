@@ -99,8 +99,9 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
 * [ ] **Memberships**
   * [x] GET    /accounts/v1/users/:id/memberships
   * [x] GET    /accounts/v1/organizations/:id/memberships
-  * [ ] POST   /accounts/v1/organizations/:id/memberships
-  * [ ] DELETE /accounts/v1/organizations/:id/memberships
+  * [x] POST   /accounts/v1/organizations/:id/memberships
+  * [ ] DELETE /accounts/v1/org-memberships/:id
+  * [ ] PATCH /accounts/v1/org-memberships/:id
 * [-] **Sessions**
   * [x] GET    /accounts/v1/sessions
   * [x] GET    /accounts/v1/users/:id/sessions

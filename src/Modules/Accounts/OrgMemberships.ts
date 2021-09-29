@@ -1,11 +1,11 @@
-//import * as rt from "runtypes";
+import * as rt from "runtypes";
 import * as E from "@wymp/http-errors";
 import * as Http from "@wymp/http-utils";
 import { SimpleHttpServerMiddleware } from "@wymp/ts-simple-interfaces";
 import { Api, Auth } from "@wymp/types";
 import * as T from "../../Translators";
 import { AppDeps, UserRoles, ClientRoles } from "../../Types";
-//import { InvalidBodyError } from "../Lib";
+import { InvalidBodyError } from "../Lib";
 import * as Common from "./Common";
 
 /**
@@ -118,14 +118,13 @@ export const getByOrganizationIdHandler = (
       Common.assertAuth(auth);
 
       // Validate user id (will throw 404 if not found)
-      const organization = await r.io.get("organizations", { id: organizationId }, log, true);
+      await r.io.get("organizations", { id: organizationId }, log, true);
 
       // Get response
       const memberships = await getByOrganizationId(
         organizationId,
         auth,
         Http.getCollectionParams(req.query),
-        organization,
         {
           ...r,
           log,
@@ -150,11 +149,173 @@ export const getByOrganizationId = async (
   organizationId: string,
   auth: Auth.ReqInfoString,
   collectionParams: Api.CollectionParams,
-  organization: Auth.Db.Organization | null,
   r: Pick<AppDeps, "io" | "log">
 ): Promise<Api.CollectionResponse<Auth.Db.OrgMembership, any>> => {
   // Authorize - must be an authenticated internal system client, or the calling user must be a
   // sysadmin or employee, or the calling user must be a privileged memeber of the organization
+  await authorizeForRole(organizationId, auth, "read", r);
+
+  // If we've got permissions, get the memberships
+  return await r.io.get(
+    "org-memberships",
+    { _t: "filter", organizationId },
+    collectionParams,
+    r.log
+  );
+};
+
+/**
+ *
+ *
+ *
+ *
+ * POST /accounts/v1/organizations/:id/memberships
+ * You can POST membership objects one at a time. The payload must be a full membership object.
+ *
+ *
+ *
+ *
+ */
+
+export const postOrgMembershipHandler = (
+  r: Pick<AppDeps, "log" | "io">
+): SimpleHttpServerMiddleware => {
+  return async (req, res, next) => {
+    try {
+      const log = Http.logger(r.log, req, res);
+
+      // Get organization id
+      let organizationId = req.params.id;
+
+      // Require valid userId
+      if (!organizationId) {
+        throw new E.InternalServerError(
+          `Programmer: this functionality is expecting req.params.id to be set, but it is not.`
+        );
+      }
+
+      // Validate request object
+      Http.assertAuthdReq(req);
+      const auth = req.auth;
+      Common.assertAuth(auth);
+
+      // Validate user id (will throw 404 if not found)
+      await r.io.get("organizations", { id: organizationId }, log, true);
+
+      // Validate body
+      const validation = PostOrgMembership.validate(req.body);
+      if (!validation.success) {
+        throw InvalidBodyError(validation);
+      }
+      const postOrgMembership = validation.value.data;
+
+      // Hand back to the functions
+      await addNewOrgMembership(organizationId, postOrgMembership, auth, { ...r, log });
+
+      // Return new collection of memberships
+      const memberships = await getByOrganizationId(organizationId, auth, {}, { ...r, log });
+      const response: Auth.Api.Responses<
+        ClientRoles,
+        UserRoles
+      >["GET /organizations/:id/memberships"] = {
+        ...memberships,
+        data: memberships.data.map((m) => T.OrgMemberships.dbToApi(m)),
+      };
+      res.status(201).send(response);
+    } catch (e) {
+      return next(e);
+    }
+  };
+};
+
+/**
+ * POST /organizations type checking
+ */
+const PostOrgMembership = rt.Record({
+  data: rt.Record({
+    type: rt.Literal("org-memberships"),
+    user: rt.Record({ type: rt.Literal("users"), id: rt.String }),
+    read: rt.Boolean,
+    edit: rt.Boolean,
+    manage: rt.Boolean,
+    delete: rt.Boolean,
+  }),
+});
+
+const addNewOrgMembership = async (
+  organizationId: string,
+  incoming: rt.Static<typeof PostOrgMembership>["data"],
+  auth: Auth.ReqInfoString,
+  r: Pick<AppDeps, "io" | "log">
+): Promise<Auth.Db.OrgMembership> => {
+  // Authorize
+  await authorizeForRole(organizationId, auth, "manage", r);
+
+  // Check to see if membership already exists
+  let membership = await r.io.get(
+    "org-memberships",
+    { userId: incoming.user.id, organizationId },
+    r.log,
+    false
+  );
+
+  if (membership) {
+    r.log.info(`Membership already exists for this user. Updating it.`);
+    membership = await r.io.update(
+      "org-memberships",
+      membership.id,
+      {
+        read: incoming.read ? 1 : 0,
+        edit: incoming.edit ? 1 : 0,
+        manage: incoming.manage ? 1 : 0,
+        delete: incoming.delete ? 1 : 0,
+      },
+      auth,
+      r.log
+    );
+  } else {
+    r.log.info(`Membership does not already exist for this user. Creating.`);
+    membership = await r.io.save(
+      "org-memberships",
+      {
+        organizationId,
+        userId: incoming.user.id,
+        read: incoming.read ? 1 : 0,
+        edit: incoming.edit ? 1 : 0,
+        manage: incoming.manage ? 1 : 0,
+        delete: incoming.delete ? 1 : 0,
+      },
+      auth,
+      r.log
+    );
+  }
+
+  // Return membership
+  return membership;
+};
+
+/**
+ *
+ *
+ *
+ *
+ * Misc
+ *
+ *
+ *
+ *
+ */
+
+/** An array of privileged users to make authorization easier */
+const privilegedUsers: Array<string> = [UserRoles.SYSADMIN, UserRoles.EMPLOYEE];
+
+/** Authorize for the given org role */
+const authorizeForRole = async (
+  organizationId: string,
+  auth: Auth.ReqInfoString,
+  role: "read" | "edit" | "manage" | "delete",
+  r: Pick<AppDeps, "io" | "log">
+): Promise<void> => {
   let proceed = Common.isInternalSystemClient(auth.r, auth.a, r.log);
   if (!proceed && auth.u) {
     r.log.info(`Checking to see if caller is sysadmin or employee`);
@@ -169,11 +330,21 @@ export const getByOrganizationId = async (
         r.log,
         false
       );
-      if (membership && membership.read) {
-        r.log.info(`User has "read" privileges on the organization. Proceeding.`);
-        proceed = true;
+      if (membership) {
+        const perms = {
+          read: membership.read,
+          edit: membership.edit,
+          manage: membership.manage,
+          delete: membership.delete,
+        };
+        if (perms[role] === 1) {
+          r.log.info(`User has "read" privileges on the organization. Proceeding.`);
+          proceed = true;
+        } else {
+          r.log.info(`User does not have "read" privileges on the organization.`);
+        }
       } else {
-        r.log.info(`User does not have "read" privileges on the organization.`);
+        r.log.info(`User is not a member of the organization`);
       }
     }
   }
@@ -184,14 +355,4 @@ export const getByOrganizationId = async (
       `GET-MEMBERSHIPS-BY-ORG-ID_INSUFFICIENT-PERMISSIONS`
     );
   }
-
-  // If we've got permissions, get the memberships
-  return await r.io.get(
-    "org-memberships",
-    { _t: "filter", organizationId },
-    collectionParams,
-    r.log
-  );
 };
-
-const privilegedUsers: Array<string> = [UserRoles.SYSADMIN, UserRoles.EMPLOYEE];
