@@ -153,7 +153,7 @@ export const getByOrganizationId = async (
 ): Promise<Api.CollectionResponse<Auth.Db.OrgMembership, any>> => {
   // Authorize - must be an authenticated internal system client, or the calling user must be a
   // sysadmin or employee, or the calling user must be a privileged memeber of the organization
-  await authorizeForRole(organizationId, auth, "read", r);
+  await authorizeCallerForRole(organizationId, auth, "read", r);
 
   // If we've got permissions, get the memberships
   return await r.io.get(
@@ -199,7 +199,7 @@ export const postOrgMembershipHandler = (
       const auth = req.auth;
       Common.assertAuth(auth);
 
-      // Validate user id (will throw 404 if not found)
+      // Validate org id (will throw 404 if not found)
       await r.io.get("organizations", { id: organizationId }, log, true);
 
       // Validate body
@@ -217,7 +217,7 @@ export const postOrgMembershipHandler = (
       const response: Auth.Api.Responses<
         ClientRoles,
         UserRoles
-      >["GET /organizations/:id/memberships"] = {
+      >["POST /organizations/:id/memberships"] = {
         ...memberships,
         data: memberships.data.map((m) => T.OrgMemberships.dbToApi(m)),
       };
@@ -249,7 +249,7 @@ const addNewOrgMembership = async (
   r: Pick<AppDeps, "io" | "log">
 ): Promise<Auth.Db.OrgMembership> => {
   // Authorize
-  await authorizeForRole(organizationId, auth, "manage", r);
+  await authorizeCallerForRole(organizationId, auth, "manage", r);
 
   // Check to see if membership already exists
   let membership = await r.io.get(
@@ -299,6 +299,114 @@ const addNewOrgMembership = async (
  *
  *
  *
+ * PATCH /accounts/v1/org-memberships/:id
+ *
+ *
+ *
+ *
+ */
+
+export const patchOrgMembershipHandler = (
+  r: Pick<AppDeps, "log" | "io">
+): SimpleHttpServerMiddleware => {
+  return async (req, res, next) => {
+    try {
+      const log = Http.logger(r.log, req, res);
+
+      // Get organization id
+      let membershipId = req.params.id;
+
+      // Require valid userId
+      if (!membershipId) {
+        throw new E.InternalServerError(
+          `Programmer: this functionality is expecting req.params.id to be set, but it is not.`
+        );
+      }
+
+      // Validate request object
+      Http.assertAuthdReq(req);
+      const auth = req.auth;
+      Common.assertAuth(auth);
+
+      // Validate body
+      const validation = PatchOrgMembership.validate(req.body);
+      if (!validation.success) {
+        throw InvalidBodyError(validation);
+      }
+      const patchOrgMembership = validation.value.data;
+
+      // Hand back to the functions
+      const membership = await updateOrgMembership(membershipId, patchOrgMembership, auth, {
+        ...r,
+        log,
+      });
+
+      // Return new collection of memberships
+      const response: Auth.Api.Responses<ClientRoles, UserRoles>["PATCH /org-memberships/:id"] = {
+        t: "single",
+        data: T.OrgMemberships.dbToApi(membership),
+      };
+      res.status(200).send(response);
+    } catch (e) {
+      return next(e);
+    }
+  };
+};
+
+/**
+ * PATCH /org-membership/:id type checking
+ */
+const PatchOrgMembership = rt.Record({
+  data: rt.Record({
+    type: rt.Literal("org-memberships"),
+    id: rt.String,
+    read: rt.Optional(rt.Boolean),
+    edit: rt.Optional(rt.Boolean),
+    manage: rt.Optional(rt.Boolean),
+    delete: rt.Optional(rt.Boolean),
+  }),
+});
+
+const updateOrgMembership = async (
+  membershipId: string,
+  incoming: rt.Static<typeof PatchOrgMembership>["data"],
+  auth: Auth.ReqInfoString,
+  r: Pick<AppDeps, "io" | "log">
+): Promise<Auth.Db.OrgMembership> => {
+  // Get membership
+  let membership = await r.io.get("org-memberships", { id: membershipId }, r.log, true);
+
+  // Authorize if the caller is not the owner of the membership
+  if (!auth.u || auth.u.id !== membership.userId) {
+    r.log.info(
+      `Caller is not the membership owner. Verifying that caller has 'manage' permissions on ` +
+        `this organization.`
+    );
+    await authorizeCallerForRole(membership.organizationId, auth, "manage", r);
+  }
+
+  membership = await r.io.update(
+    "org-memberships",
+    membership.id,
+    {
+      ...(incoming.read === undefined ? {} : { read: incoming.read ? 1 : 0 }),
+      ...(incoming.edit === undefined ? {} : { edit: incoming.edit ? 1 : 0 }),
+      ...(incoming.manage === undefined ? {} : { manage: incoming.manage ? 1 : 0 }),
+      ...(incoming.delete === undefined ? {} : { delete: incoming.delete ? 1 : 0 }),
+    },
+    auth,
+    r.log
+  );
+
+  // Return membership
+  return membership;
+};
+
+/**
+ *
+ *
+ *
+ *
  * Misc
  *
  *
@@ -309,24 +417,27 @@ const addNewOrgMembership = async (
 /** An array of privileged users to make authorization easier */
 const privilegedUsers: Array<string> = [UserRoles.SYSADMIN, UserRoles.EMPLOYEE];
 
-/** Authorize for the given org role */
-const authorizeForRole = async (
+/**
+ * Ensure the caller is either A) an internal system client; B) a sysadmin or employee user; or C)
+ * a member of the organization who has the given role.
+ */
+const authorizeCallerForRole = async (
   organizationId: string,
-  auth: Auth.ReqInfoString,
+  caller: { r: Array<string>; a: boolean; u?: { id: string; r: Array<string> } },
   role: "read" | "edit" | "manage" | "delete",
   r: Pick<AppDeps, "io" | "log">
 ): Promise<void> => {
-  let proceed = Common.isInternalSystemClient(auth.r, auth.a, r.log);
-  if (!proceed && auth.u) {
+  let proceed = Common.isInternalSystemClient(caller.r, caller.a, r.log);
+  if (!proceed && caller.u) {
     r.log.info(`Checking to see if caller is sysadmin or employee`);
-    if (auth.u.r.find((role) => privilegedUsers.includes(role))) {
+    if (caller.u.r.find((role) => privilegedUsers.includes(role))) {
       r.log.info(`Caller is sysadmin or employee. Proceeding.`);
       proceed = true;
     } else {
       r.log.info(`Checking to see if user is a privileged member of the organization.`);
       const membership = await r.io.get(
         "org-memberships",
-        { userId: auth.u.id, organizationId },
+        { userId: caller.u.id, organizationId },
         r.log,
         false
       );
