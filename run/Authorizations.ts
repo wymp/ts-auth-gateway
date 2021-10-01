@@ -6,11 +6,7 @@ export const authz: AppDeps["authz"] = {
     [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
     [ClientRoles.INTERNAL, null, UserRoles.EMPLOYEE, null],
   ],
-  "POST /organizations": [
-    [ClientRoles.SYSTEM, true, null, null],
-    [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
-    [ClientRoles.INTERNAL, null, UserRoles.EMPLOYEE, null],
-  ],
+  "POST /organizations": [],
   "PATCH /organizations/:id": [
     [ClientRoles.SYSTEM, true, null, null],
     [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
