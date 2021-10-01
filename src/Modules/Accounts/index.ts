@@ -90,6 +90,10 @@ export const register = (
     parseBody,
     OrgMemberships.postOrgMembershipHandler(r),
   ]);
+  r.log.notice(`HTTP: PATCH  /accounts/v1/org-memberships/:id`);
+  r.http.patch(`/accounts/v1/org-memberships/:id`, OrgMemberships.patchOrgMembershipHandler(r));
+  r.log.notice(`HTTP: DELETE /accounts/v1/org-memberships/:id`);
+  r.http.delete(`/accounts/v1/org-memberships/:id`, OrgMemberships.deleteOrgMembershipHandler(r));
 
   // Sessions
   r.log.notice(`HTTP: GET    /accounts/v1/sessions`);

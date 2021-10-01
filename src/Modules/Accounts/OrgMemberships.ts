@@ -407,6 +407,80 @@ const updateOrgMembership = async (
  *
  *
  *
+ * DELETE /accounts/v1/org-memberships/:id
+ *
+ *
+ *
+ *
+ */
+
+export const deleteOrgMembershipHandler = (
+  r: Pick<AppDeps, "log" | "io">
+): SimpleHttpServerMiddleware => {
+  return async (req, res, next) => {
+    try {
+      const log = Http.logger(r.log, req, res);
+
+      // Get organization id
+      let membershipId = req.params.id;
+
+      // Require valid userId
+      if (!membershipId) {
+        throw new E.InternalServerError(
+          `Programmer: this functionality is expecting req.params.id to be set, but it is not.`
+        );
+      }
+
+      // Validate request object
+      Http.assertAuthdReq(req);
+      const auth = req.auth;
+      Common.assertAuth(auth);
+
+      // Hand back to the functions
+      await deleteOrgMembership(membershipId, auth, { ...r, log });
+
+      // Return new collection of memberships
+      const response: Auth.Api.Responses<ClientRoles, UserRoles>["DELETE /org-memberships/:id"] = {
+        data: null,
+      };
+      res.status(200).send(response);
+    } catch (e) {
+      return next(e);
+    }
+  };
+};
+
+/**
+ * Delete the given membership.
+ *
+ * Note that the caller must be a system client, a user with employee or sysadmin privileges,
+ * the owner of the membership, or a user with "delete" privileges on the organization.
+ */
+const deleteOrgMembership = async (
+  membershipId: string,
+  auth: Auth.ReqInfoString,
+  r: Pick<AppDeps, "io" | "log">
+): Promise<void> => {
+  // Get membership
+  const membership = await r.io.get("org-memberships", { id: membershipId }, r.log, true);
+
+  // Authorize if the caller is not the owner of the membership
+  if (!auth.u || auth.u.id !== membership.userId) {
+    r.log.info(
+      `Caller is not the membership owner. Verifying that caller has 'delete' permissions on ` +
+        `this organization.`
+    );
+    await authorizeCallerForRole(membership.organizationId, auth, "delete", r);
+  }
+
+  await r.io.delete("org-memberships", membership.id, auth, r.log);
+};
+
+/**
+ *
+ *
+ *
+ *
  * Misc
  *
  *
