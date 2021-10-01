@@ -95,14 +95,10 @@ export const postOrganizations = (
       const postOrganization = validation.value.data;
 
       // Hand back to the functions
-      const newOrganization = await r.io.save(
-        "organizations",
-        { name: postOrganization.name },
-        req.auth,
-        r.log
-      );
+      const newOrganization = await createOrganization(postOrganization, req.auth, { ...r, log });
 
-      const response: { data: Auth.Api.Organization } = {
+      const response: Auth.Api.Responses<ClientRoles, UserRoles>["POST /organizations"] = {
+        t: "single",
         data: {
           type: "organizations",
           ...newOrganization,
@@ -124,6 +120,38 @@ const PostOrganization = rt.Record({
     name: rt.String,
   }),
 });
+
+/**
+ * Create an organization
+ *
+ * Any user may create an organization. The calling user (if present) is automatically added as an
+ * admin on the organization.
+ */
+export const createOrganization = async (
+  incoming: rt.Static<typeof PostOrganization>["data"],
+  auth: Auth.ReqInfo,
+  r: Pick<AppDeps, "log" | "io">
+): Promise<Auth.Db.Organization> => {
+  const organization = await r.io.save("organizations", { name: incoming.name }, auth, r.log);
+
+  if (auth.u) {
+    await r.io.save(
+      "org-memberships",
+      {
+        organizationId: organization.id,
+        userId: auth.u.id,
+        read: 1,
+        edit: 1,
+        manage: 1,
+        delete: 1,
+      },
+      auth,
+      r.log
+    );
+  }
+
+  return organization;
+};
 
 /**
  *
