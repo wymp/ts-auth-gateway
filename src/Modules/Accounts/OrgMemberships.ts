@@ -40,6 +40,19 @@ export const getByUserIdHandler = (r: Pick<AppDeps, "io" | "log">): SimpleHttpSe
       const auth = req.auth;
       Common.assertAuth(auth);
 
+      // Possibly de-alias
+      if (userId === "current") {
+        const uid = req.auth.u?.id;
+        if (!uid) {
+          throw new E.BadRequest(
+            `You must send this request with a session token in order to use the 'current' alias`,
+            `CURRENT-ALIAS-NO-USER`
+          );
+        }
+        userId = uid;
+        log.info(`De-aliasing 'current' user id to '${userId}'`);
+      }
+
       // Validate user id (will throw 404 if not found)
       await r.io.get("users", { id: userId }, log, true);
 
