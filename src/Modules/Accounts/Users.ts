@@ -80,7 +80,7 @@ export const getUserById = (
       }
 
       // If the user is not requesting their own user object, then this requires authorization
-      if (userId !== undefined && userId !== req.auth.u.id) {
+      if (userId !== undefined && userId !== req.auth.u?.id) {
         Http.authorize(req, r.authz["GET /users(/:id)"], log);
       }
 
@@ -157,6 +157,77 @@ export const patchUsers = (r: Pick<AppDeps, "log">): SimpleHttpServerMiddleware 
     next(new E.NotImplemented(`${req.method} ${req.path} is not yet implemented`));
   };
 };
+
+/**
+ * POST /users/:id/change-password
+ */
+export const postChangePasswordHandler = (
+  r: Pick<AppDeps, "io" | "log">
+): SimpleHttpServerMiddleware => {
+  return async (req, res, next) => {
+    const log = Http.logger(r.log, req, res);
+    try {
+      Http.assertAuthdReq(req);
+
+      // Get user id
+      let userId = req.params.id;
+
+      // Require valid userId
+      if (!userId) {
+        throw new E.InternalServerError(
+          `Programmer: this functionality is expecting req.params.id to be set, but it is not.`
+        );
+      }
+
+      // Possibly de-alias
+      if (userId === "current") {
+        const uid = req.auth.u?.id;
+        if (!uid) {
+          throw new E.BadRequest(
+            `You must send this request with a session token in order to use the 'current' alias`,
+            `CURRENT-ALIAS-NO-USER`
+          );
+        }
+        userId = uid;
+        log.info(`De-aliasing 'current' user id to '${userId}'`);
+      }
+
+      // If the user is not requesting their own user object, then this requires authorization
+      if (userId !== undefined && userId !== req.auth.u?.id) {
+        // This operation is only available to sysadmin users
+        Http.authorize(req, [[null, null, UserRoles.SYSADMIN, null]], log);
+      }
+
+      // Validate body
+      const validation = PostChangePasswordValidator.validate(req.body);
+      if (!validation.success) {
+        throw InvalidBodyError(validation);
+      }
+      const payload = validation.value.data;
+
+      // Hand back to function
+      await changeUserPassword(userId, payload, req.auth, { ...r, log });
+
+      res.send({ data: null });
+    } catch (e) {
+      next(e);
+    }
+  };
+};
+
+const ForgotPasswordValidator = rt.Record({
+  type: rt.Literal("forgot-password"),
+  token: rt.String,
+  newPassword: rt.String,
+});
+const ChangePasswordValidator = rt.Record({
+  type: rt.Literal("change-password"),
+  currentPassword: rt.Union(rt.String, rt.Null),
+  newPassword: rt.Union(rt.String, rt.Null),
+});
+const PostChangePasswordValidator = rt.Record({
+  data: rt.Union(ForgotPasswordValidator, ChangePasswordValidator),
+});
 
 /**
  *
@@ -336,6 +407,47 @@ export const checkPasswordStrength = (pw: string): Array<E.ObstructionInterface>
   }
 
   return o;
+};
+
+/**
+ * Change the given user's password
+ */
+export const changeUserPassword = async (
+  userId: string,
+  payload: rt.Static<typeof PostChangePasswordValidator>["data"],
+  auth: Auth.ReqInfo,
+  r: Pick<AppDeps, "log" | "io">
+): Promise<void> => {
+  const user = await r.io.get("users", { id: userId }, r.log, true);
+
+  if (payload.type === "forgot-password") {
+    // "Forgot password" flow
+    throw new E.NotImplemented(`The "forgot password" flow is not yet implemented.`);
+  } else {
+    // "Change password" flow
+    // Check to see if the current password is correct
+    const check =
+      user.passwordBcrypt === null
+        ? payload.currentPassword === null || payload.currentPassword === ""
+        : payload.currentPassword !== null &&
+          (await bcrypt.compare(payload.currentPassword, user.passwordBcrypt));
+    if (!check) {
+      throw new E.Unauthorized(
+        `You did pass the correct existing password`,
+        `CHANGE-PASSWORD_INCORRECT-CURRENT-PASSWORD`
+      );
+    }
+  }
+
+  // Hash password
+  let passwordBcrypt: string | null = null;
+  if (payload.newPassword !== null && payload.newPassword !== "") {
+    r.log.debug(`Hashing password`);
+    passwordBcrypt = await bcrypt.hash(payload.newPassword, 10);
+  }
+
+  // Update records
+  await r.io.update("users", userId, { passwordBcrypt }, auth, r.log);
 };
 
 /**
