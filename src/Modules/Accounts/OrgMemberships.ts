@@ -7,6 +7,7 @@ import * as T from "../../Translators";
 import { AppDeps, UserRoles, ClientRoles } from "../../Types";
 import { InvalidBodyError } from "../Lib";
 import * as Common from "./Common";
+import { getDealiasedUserIdFromReq } from "./Users";
 
 /**
  *
@@ -22,36 +23,15 @@ import * as Common from "./Common";
 
 export const getByUserIdHandler = (r: Pick<AppDeps, "io" | "log">): SimpleHttpServerMiddleware => {
   return async (req, res, next) => {
+    const log = Http.logger(r.log, req, res);
     try {
-      const log = Http.logger(r.log, req, res);
-
-      // Get user id
-      let userId = req.params.id;
-
-      // Require valid userId
-      if (!userId) {
-        throw new E.InternalServerError(
-          `Programmer: this functionality is expecting req.params.id to be set, but it is not.`
-        );
-      }
-
       // Validate request object
       Http.assertAuthdReq(req);
       const auth = req.auth;
       Common.assertAuth(auth);
 
-      // Possibly de-alias
-      if (userId === "current") {
-        const uid = req.auth.u?.id;
-        if (!uid) {
-          throw new E.BadRequest(
-            `You must send this request with a session token in order to use the 'current' alias`,
-            `CURRENT-ALIAS-NO-USER`
-          );
-        }
-        userId = uid;
-        log.info(`De-aliasing 'current' user id to '${userId}'`);
-      }
+      // Get user id
+      const userId = getDealiasedUserIdFromReq(req, log);
 
       // Validate user id (will throw 404 if not found)
       await r.io.get("users", { id: userId }, log, true);

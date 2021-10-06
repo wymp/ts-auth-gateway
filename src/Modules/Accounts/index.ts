@@ -76,6 +76,8 @@ export const register = (
   r.http.get(`/accounts/v1/users/:id`, Users.getUserById(r));
   r.log.notice(`HTTP: POST   /accounts/v1/users`);
   r.http.post(`/accounts/v1/users`, [parseBody, Users.postUsers(r)]);
+  r.log.notice(`HTTP: PATCH  /accounts/v1/users`);
+  r.http.patch(`/accounts/v1/users`, [parseBody, Users.patchUsers(r)]);
   r.log.notice(`HTTP: POST   /accounts/v1/users/:id/change-password`);
   r.http.post(`/accounts/v1/users/:id/change-password`, [
     parseBody,

@@ -64,20 +64,7 @@ export const getUserById = (
       }
 
       // Get user id
-      let userId = req.params.id;
-
-      // Require valid userId
-      if (!userId) {
-        throw new E.InternalServerError(
-          `Programmer: this functionality is expecting req.params.id to be set, but it is ` + `not.`
-        );
-      }
-
-      // Possibly de-alias
-      if (userId === "current") {
-        userId = req.auth.u?.id;
-        log.info(`De-aliasing 'current' user id to '${userId}'`);
-      }
+      const userId = getDealiasedUserIdFromReq(req, log);
 
       // If the user is not requesting their own user object, then this requires authorization
       if (userId !== undefined && userId !== req.auth.u?.id) {
@@ -153,8 +140,8 @@ export const postUsers = (
 
 /** PATCH /users/:id */
 export const patchUsers = (r: Pick<AppDeps, "log">): SimpleHttpServerMiddleware => {
-  return (req, res, next) => {
-    next(new E.NotImplemented(`${req.method} ${req.path} is not yet implemented`));
+  return async (req, res, next) => {
+    next(new E.NotImplemented("Not implemented"));
   };
 };
 
@@ -170,27 +157,7 @@ export const postChangePasswordHandler = (
       Http.assertAuthdReq(req);
 
       // Get user id
-      let userId = req.params.id;
-
-      // Require valid userId
-      if (!userId) {
-        throw new E.InternalServerError(
-          `Programmer: this functionality is expecting req.params.id to be set, but it is not.`
-        );
-      }
-
-      // Possibly de-alias
-      if (userId === "current") {
-        const uid = req.auth.u?.id;
-        if (!uid) {
-          throw new E.BadRequest(
-            `You must send this request with a session token in order to use the 'current' alias`,
-            `CURRENT-ALIAS-NO-USER`
-          );
-        }
-        userId = uid;
-        log.info(`De-aliasing 'current' user id to '${userId}'`);
-      }
+      const userId = getDealiasedUserIdFromReq(req, log);
 
       // If the user is not requesting their own user object, then this requires authorization
       if (userId !== undefined && userId !== req.auth.u?.id) {
@@ -472,4 +439,39 @@ const addRoles: AddRoles = async (userOrUsers, r): Promise<any> => {
   };
 
   return Array.isArray(userOrUsers) ? userOrUsers.map(add) : add(userOrUsers);
+};
+
+/**
+ * Use data from an Authd Request to get a de-aliased user id. This expects the endpoint to be set
+ * up with the id in a param called `id`.
+ *
+ * This is an operation that is repeated for various endpoints, so it makes sense to abstract it.
+ */
+export const getDealiasedUserIdFromReq = (
+  req: Auth.AuthdReq<{ params: { id?: string } }>,
+  log: AppDeps["log"]
+): string => {
+  let userId = req.params.id;
+
+  // Require valid userId
+  if (!userId) {
+    throw new E.InternalServerError(
+      `Programmer: this functionality is expecting req.params.id to be set, but it is not.`
+    );
+  }
+
+  // Possibly de-alias
+  if (userId === "current") {
+    const uid = req.auth.u?.id;
+    if (!uid) {
+      throw new E.BadRequest(
+        `You must send this request with a session token in order to use the 'current' alias`,
+        `CURRENT-ALIAS-NO-USER`
+      );
+    }
+    userId = uid;
+    log.info(`De-aliasing 'current' user id to '${userId}'`);
+  }
+
+  return userId;
 };
