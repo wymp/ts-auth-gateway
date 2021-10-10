@@ -77,14 +77,16 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
   * [x] POST   /accounts/v1/users
   * [x] GET    /accounts/v1/users/:id
   * [x] PATCH  /accounts/v1/users/:id
-  * [ ] DELETE /accounts/v1/users/:id
-  * [ ] GET    /accounts/v1/users/:id/emails
-  * [ ] POST   /accounts/v1/users/:id/emails
-  * [ ] DELETE /accounts/v1/users/:id/emails/:email
+  * [x] DELETE /accounts/v1/users/:id
   * [ ] GET    /accounts/v1/users/:id/roles
   * [ ] POST   /accounts/v1/users/:id/roles
   * [ ] DELETE /accounts/v1/users/:id/roles
   * [x] POST   /accounts/v1/users/:id/change-password
+* [ ] **Emails**
+  * [ ] GET    /accounts/v1/users/:id/emails
+  * [ ] POST   /accounts/v1/users/:id/emails
+  * [ ] DELETE /accounts/v1/emails/:id
+  * [ ] POST   /accounts/v1/emails/:id/verify
 * [ ] **Clients**
   * [ ] GET    /accounts/v1/clients/:id
   * [ ] PATCH  /accounts/v1/clients/:id
@@ -136,4 +138,7 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
       or invalidated, and that should be verified by the gateway. I.e., users should not be able to
       use session tokens associated with consumed refresh tokens to successfully make requests.
 * [ ] Protect email addresses as PII
+* [ ] Implemented generalized multi-step process for dangerous operations (e.g., DELETE user). This
+      would mean, for example, any endpoint could return an `auth-step` or something, and an auth
+      flow would ensue, resulting in completion of the operation being attempted.
 

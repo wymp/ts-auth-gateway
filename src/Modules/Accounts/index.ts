@@ -76,13 +76,15 @@ export const register = (
   r.http.get(`/accounts/v1/users/:id`, Users.getUserById(r));
   r.log.notice(`HTTP: POST   /accounts/v1/users`);
   r.http.post(`/accounts/v1/users`, [parseBody, Users.postUsers(r)]);
-  r.log.notice(`HTTP: PATCH  /accounts/v1/users`);
-  r.http.patch(`/accounts/v1/users`, [parseBody, Users.patchUsers(r)]);
+  r.log.notice(`HTTP: PATCH  /accounts/v1/users/:id`);
+  r.http.patch(`/accounts/v1/users/:id`, [parseBody, Users.patchUsers(r)]);
   r.log.notice(`HTTP: POST   /accounts/v1/users/:id/change-password`);
   r.http.post(`/accounts/v1/users/:id/change-password`, [
     parseBody,
     Users.postChangePasswordHandler(r),
   ]);
+  r.log.notice(`HTTP: DELETE /accounts/v1/users/:id`);
+  r.http.delete(`/accounts/v1/users/:id`, Users.deleteUsers(r));
 
   // OrgMemberships
   r.log.notice(`HTTP: GET    /accounts/v1/users/:id/memberships`);

@@ -243,6 +243,36 @@ const PostChangePasswordValidator = rt.Record({
   data: rt.Union(ForgotPasswordValidator, ChangePasswordValidator),
 });
 
+/** DELETE /users/:id */
+export const deleteUsers = (r: Pick<AppDeps, "log" | "io">): SimpleHttpServerMiddleware => {
+  return async (req, res, next) => {
+    const log = Http.logger(r.log, req, res);
+    try {
+      Http.assertAuthdReq(req);
+
+      // Get user id
+      const userId = getDealiasedUserIdFromReq(req, log);
+
+      // If the user is not requesting their own user object, then this requires authorization
+      if (userId !== undefined && userId !== req.auth.u?.id) {
+        // This operation is only available to sysadmin users
+        Http.authorize(req, [[null, null, UserRoles.SYSADMIN, null]], log);
+      }
+
+      // Do the deletion
+      await r.io.update("users", userId, { deletedMs: Date.now() }, req.auth, log);
+
+      // Return response
+      const response: Auth.Api.Responses<ClientRoles, UserRoles>["DELETE /users/:id"] = {
+        data: null,
+      };
+      res.send(response);
+    } catch (e) {
+      next(e);
+    }
+  };
+};
+
 /**
  *
  *
