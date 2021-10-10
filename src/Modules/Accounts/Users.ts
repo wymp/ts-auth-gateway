@@ -139,11 +139,58 @@ export const postUsers = (
 };
 
 /** PATCH /users/:id */
-export const patchUsers = (r: Pick<AppDeps, "log">): SimpleHttpServerMiddleware => {
+export const patchUsers = (r: Pick<AppDeps, "log" | "io">): SimpleHttpServerMiddleware => {
   return async (req, res, next) => {
-    next(new E.NotImplemented("Not implemented"));
+    const log = Http.logger(r.log, req, res);
+    try {
+      Http.assertAuthdReq(req);
+
+      // Get user id
+      const userId = getDealiasedUserIdFromReq(req, log);
+
+      // If the user is not requesting their own user object, then this requires authorization
+      if (userId !== undefined && userId !== req.auth.u?.id) {
+        // This operation is only available to sysadmin users
+        Http.authorize(req, [[null, null, UserRoles.SYSADMIN, null]], log);
+      }
+
+      // Validate body
+      const validation = PatchUserValidator.validate(req.body);
+      if (!validation.success) {
+        throw InvalidBodyError(validation);
+      }
+      const payload = validation.value.data;
+
+      const user = await r.io.update(
+        "users",
+        userId,
+        {
+          // Name and 2fa are the only two editable attributes, so we're just adding them directly
+          // to avoid dirty payloads
+          ...(payload.name ? { name: payload.name } : {}),
+          ...(payload["2fa"] !== undefined ? { "2fa": Number(payload["2fa"]) as 0 | 1 } : {}),
+        },
+        req.auth,
+        log
+      );
+
+      const response: Auth.Api.Responses<ClientRoles, UserRoles>["PATCH /users/:id"] = {
+        t: "single",
+        data: await addRoles(T.Users.dbToApi(user), { ...r, log }),
+      };
+      res.send(response);
+    } catch (e) {
+      next(e);
+    }
   };
 };
+
+const PatchUserValidator = rt.Record({
+  data: rt.Record({
+    name: rt.Optional(rt.String),
+    "2fa": rt.Optional(rt.String),
+  }),
+});
 
 /**
  * POST /users/:id/change-password
@@ -271,7 +318,7 @@ export const createUser = async (
   }
 
   // Check to see if user already exists
-  if (await r.io.get("emails", { email: postUser.email }, r.log)) {
+  if (await r.io.get("emails", { id: postUser.email }, r.log)) {
     const e = new E.DuplicateResource("A user with this email already exists", "DUPLICATE");
     e.obstructions = [
       {

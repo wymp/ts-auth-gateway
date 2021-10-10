@@ -40,7 +40,7 @@ export const addEmail = async (
   r.io.save(
     "emails",
     {
-      email,
+      id: email,
       userId,
       verifiedMs: null,
       createdMs: Date.now(),

@@ -76,10 +76,11 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
   * [x] GET    /accounts/v1/users
   * [x] POST   /accounts/v1/users
   * [x] GET    /accounts/v1/users/:id
-  * [ ] PATCH  /accounts/v1/users/:id
+  * [x] PATCH  /accounts/v1/users/:id
   * [ ] DELETE /accounts/v1/users/:id
   * [ ] GET    /accounts/v1/users/:id/emails
   * [ ] POST   /accounts/v1/users/:id/emails
+  * [ ] DELETE /accounts/v1/users/:id/emails/:email
   * [ ] GET    /accounts/v1/users/:id/roles
   * [ ] POST   /accounts/v1/users/:id/roles
   * [ ] DELETE /accounts/v1/users/:id/roles
@@ -134,4 +135,5 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
       refresh token is consumed or invalidated, the associated session token should also be consumed
       or invalidated, and that should be verified by the gateway. I.e., users should not be able to
       use session tokens associated with consumed refresh tokens to successfully make requests.
+* [ ] Protect email addresses as PII
 

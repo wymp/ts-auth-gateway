@@ -771,7 +771,7 @@ export const logInWithEmailCode = async (
   if (user["2fa"] === 1) {
     // If 2fa enabled, generate a code and send back a step
     r.log.info(`2fa enabled for user. Sending back totp step.`);
-    const code = await generateCode("login", email.email, payload.state, auth, r);
+    const code = await generateCode("login", email.id, payload.state, auth, r);
     return {
       data: {
         t: "step",
@@ -801,7 +801,7 @@ const getAndValidateUserForEmail = async (
   r: Pick<AppDeps, "io" | "log">
 ): Promise<Auth.Db.User> => {
   // Verify that the email exists
-  const email = await r.io.get("emails", { email: _email }, r.log);
+  const email = await r.io.get("emails", { id: _email }, r.log);
   if (!email) {
     throw new E.BadRequest(
       `Email '${_email}' not found. Please register before trying to log in.`,
@@ -886,7 +886,7 @@ const getAndValidateUserForLoginCode = async (
   }
 
   // Get the email object for the code
-  const email = await r.io.get("emails", { email: code.email }, r.log, true);
+  const email = await r.io.get("emails", { id: code.email }, r.log, true);
   const user = await r.io.get("users", { id: email.userId }, r.log, true);
 
   // Validate that the user is not banned or deleted

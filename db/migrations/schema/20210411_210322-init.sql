@@ -71,7 +71,7 @@ BEGIN;
   ) ENGINE=InnoDB;
 
   CREATE TABLE `emails` (
-    `email` VARCHAR(255) NOT NULL PRIMARY KEY,
+    `id` VARCHAR(255) NOT NULL PRIMARY KEY COMMENT 'The user''s email address',
     `userId` CHAR(36) NOT NULL,
     `verifiedMs` BIGINT UNSIGNED,
     `createdMs` BIGINT UNSIGNED NOT NULL,
@@ -87,7 +87,7 @@ BEGIN;
     `expiresMs` BIGINT UNSIGNED NOT NULL,
     `consumedMs` BIGINT UNSIGNED,
     `invalidatedMs` BIGINT UNSIGNED,
-    CONSTRAINT `emailFK2` FOREIGN KEY (`email`) REFERENCES `emails` (`email`) ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT `emailFK2` FOREIGN KEY (`email`) REFERENCES `emails` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
   ) ENGINE=InnoDB;
 
   CREATE TABLE `user-roles` (
