@@ -58,11 +58,6 @@ export const getUserById = (
       // Make sure it's an authd request so we can access the auth object
       Http.assertAuthdReq(req);
 
-      // Require user for this call
-      if (!req.auth.u) {
-        throw new E.Forbidden(`You must log in to view user data.`);
-      }
-
       // Get user id
       const userId = getDealiasedUserIdFromReq(req, log);
 

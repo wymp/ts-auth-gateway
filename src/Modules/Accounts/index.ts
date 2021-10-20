@@ -6,6 +6,7 @@ import { IoInterface } from "./Types";
 import * as Organizations from "./Organizations";
 import * as OrgMemberships from "./OrgMemberships";
 import * as Users from "./Users";
+import * as UserRoles from "./UserRoles";
 import * as Sessions from "./Sessions";
 
 const json = Parsers.json();
@@ -85,6 +86,14 @@ export const register = (
   ]);
   r.log.notice(`HTTP: DELETE /accounts/v1/users/:id`);
   r.http.delete(`/accounts/v1/users/:id`, Users.deleteUsers(r));
+
+  // User Roles
+  r.log.notice(`HTTP: GET    /accounts/v1/users/:id/roles`);
+  r.http.get(`/accounts/v1/users/:id/roles`, UserRoles.getUserRoles(r));
+  r.log.notice(`HTTP: POST   /accounts/v1/users/:id/roles`);
+  r.http.post(`/accounts/v1/users/:id/roles`, [parseBody, UserRoles.postUserRoles(r)]);
+  r.log.notice(`HTTP: DELETE /accounts/v1/users/:id/roles/:roleId`);
+  r.http.post(`/accounts/v1/users/:id/roles/:roleId`, UserRoles.deleteUserRoles(r));
 
   // OrgMemberships
   r.log.notice(`HTTP: GET    /accounts/v1/users/:id/memberships`);

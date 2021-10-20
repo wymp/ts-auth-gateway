@@ -80,7 +80,7 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
   * [x] DELETE /accounts/v1/users/:id
   * [ ] GET    /accounts/v1/users/:id/roles
   * [ ] POST   /accounts/v1/users/:id/roles
-  * [ ] DELETE /accounts/v1/users/:id/roles
+  * [ ] DELETE /accounts/v1/users/:id/roles/:roleId
   * [x] POST   /accounts/v1/users/:id/change-password
 * [ ] **Emails**
   * [ ] GET    /accounts/v1/users/:id/emails
