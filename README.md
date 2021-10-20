@@ -1,6 +1,9 @@
 Auth Gateway
 =========================================================================
 
+**WARNING: THIS IS AN EXPERIMENT IN EARLY DEVELOPMENT. IT IS SUBJECT TO FREQUENT BREAKING CHANGES,
+AND IS NOT GUARANTEED TO WORK WELL OR EVEN AT ALL.**
+
 This is a library and reference implementation for a production-grade Authn/z gateway. It performs
 the following functions:
 
@@ -12,6 +15,22 @@ the following functions:
 * Enforces configurable restrictions on clients
 * Manages relationships between organizations, clients and users.
 * TODO: Generates new oauth credentials on valid request
+
+It is intended to be used as a front door to a collection of microservices. For example, say you
+have an exchange service, a market data service, a currencies service and a monitoring service. You
+would access all of those separate services through an instance of this gateway via urls such as
+`/exchange/v1`, `/market-data/v1`, `/currencies/v1` and `/monitoring/v1`. You can maintain separate
+versions of each service by using different version specifiers (which you would configure in the
+database for this service to route to separate instances), and each service would get a uniform
+[Request Info object](https://github.com/wymp/ts-types/blob/c186ce316dc689cd7b913abde3ceb4bb562b7da4/src/Auth.ts#L4)
+containing information about the request such as the client from which the request was issued and
+its associated roles, and the user that made the request and their roles.
+
+This service has built endpoints for account management at `/accounts/v1`. Those endpoints facilitate
+things like user creation, login, organization management, etc.
+
+At the time of this writing, basic user creation and authentication works correctly, meaning you can
+create a user and log in and log out of a session for that user.
 
 ### Authentication
 
