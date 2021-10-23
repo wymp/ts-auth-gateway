@@ -26,11 +26,28 @@ database for this service to route to separate instances), and each service woul
 containing information about the request such as the client from which the request was issued and
 its associated roles, and the user that made the request and their roles.
 
-This service has built endpoints for account management at `/accounts/v1`. Those endpoints facilitate
-things like user creation, login, organization management, etc.
+This service has built-in endpoints for account management at `/accounts/v1`. Those endpoints
+facilitate things like user creation, login, organization management, etc.
 
 At the time of this writing, basic user creation and authentication works correctly, meaning you can
 create a user and log in and log out of a session for that user.
+
+
+### Purpose of This Codebase
+
+This codebase is intended to be an API gateway that is (eventually) usable out of the box.
+
+If you were to use it out of the box, you would download the source code; use the migrations in the
+`db` folder to set up the database, loading whatever seed data in that is appropriate for your use
+case (e.g., your organization, a sysadmin user, and some back-end services in the `apis` table);
+compile the source code into JS files; then deploy the built files however you wish to a server of
+your choice.
+
+However, authentication and user management is _very_ domain specific, so it's very likely that it
+won't quite work for your specific needs out of the box. With that in mind, it is also intended to
+be documented and built well enough, that you would be able to relatively easily fork the repo and
+modify it for your specific needs.
+
 
 ### Authentication
 
@@ -49,6 +66,7 @@ presented by this system:
   `"error"`. When a "step" response is received, the `step` parameter will contain the next
   step to submit. Clients are responsible for knowing the necessary parameters to submit for each
   step.
+
 
 ### Using Session and Refresh Tokens
 
@@ -91,15 +109,15 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
   * [x] GET    /accounts/v1/organizations/:id
   * [x] PATCH  /accounts/v1/organizations/:id
   * [x] DELETE /accounts/v1/organizations/:id
-* [ ] **Users**
+* [x] **Users**
   * [x] GET    /accounts/v1/users
   * [x] POST   /accounts/v1/users
   * [x] GET    /accounts/v1/users/:id
   * [x] PATCH  /accounts/v1/users/:id
   * [x] DELETE /accounts/v1/users/:id
-  * [ ] GET    /accounts/v1/users/:id/roles
-  * [ ] POST   /accounts/v1/users/:id/roles
-  * [ ] DELETE /accounts/v1/users/:id/roles/:roleId
+  * [x] GET    /accounts/v1/users/:id/roles
+  * [x] POST   /accounts/v1/users/:id/roles
+  * [x] DELETE /accounts/v1/users/:id/roles/:roleId
   * [x] POST   /accounts/v1/users/:id/change-password
 * [ ] **Emails**
   * [ ] GET    /accounts/v1/users/:id/emails
@@ -116,6 +134,7 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
   * [ ] GET    /accounts/v1/clients/:id/access-restrictions
   * [ ] POST   /accounts/v1/clients/:id/access-restrictions
   * [ ] DELETE /accounts/v1/clients/:id/access-restrictions
+  * [ ] POST   /accounts/v1/clients/:id/change-secret
   * [ ] GET    /accounts/v1/organizations/:id/clients
   * [ ] POST   /accounts/v1/organizations/:id/clients
 * [x] **Memberships**
