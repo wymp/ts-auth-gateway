@@ -34,6 +34,7 @@
     "logFilePath": null
   },
   "authHeader": {
+    "headerName": "x-auth-info",
     "sign": true,
     "ecdsaKey": {
       "t": "file",

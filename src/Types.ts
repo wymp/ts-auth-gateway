@@ -19,6 +19,7 @@ export const AppConfigValidator = rt.Intersect(
     // JWT keys
     authHeader: rt.Union(
       rt.Record({
+        headerName: rt.String,
         sign: rt.Literal(true),
         // The ECDSA key should be a PEM-format ECDSA private key string
         ecdsaKey: rt.Union(
@@ -33,6 +34,7 @@ export const AppConfigValidator = rt.Intersect(
         ),
       }),
       rt.Record({
+        headerName: rt.String,
         sign: rt.Literal(false),
       })
     ),

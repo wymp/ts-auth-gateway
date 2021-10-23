@@ -110,10 +110,11 @@ export const getProxyMiddleware = (
       delete _req.headers.authorization;
 
       // Create a new auth header
+      const algorithm: jwt.Algorithm = "ES256";
       const authHeader = ecdsakey
         ? // If we're configured to sign it, make it a JWT
           jwt.sign(req.auth, ecdsakey, {
-            algorithm: "ES256",
+            algorithm,
             audience: target,
             expiresIn: 30,
             issuer: r.config.serviceName,
@@ -122,7 +123,9 @@ export const getProxyMiddleware = (
           Buffer.from(JSON.stringify(req.auth)).toString("base64");
 
       // And add the auth header
-      _req.headers["x-auth-gateway"] = authHeader;
+      _req.headers[`${r.config.authHeader.headerName}-signed`] = String(Number(!!ecdsakey));
+      _req.headers[`${r.config.authHeader.headerName}-algorithm`] = algorithm;
+      _req.headers[r.config.authHeader.headerName] = authHeader;
 
       // Since proxying is a weird use-case for our Simple Request and Response objects, we're
       // casting to "any" here.
