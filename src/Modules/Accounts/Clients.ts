@@ -46,21 +46,44 @@ export const getClientsForOrgHandler = (
       // Make sure org exists
       await r.io.get("organizations", { id: organizationId }, log, true);
 
-      // Authorize - must be an authenticated internal system client, or the calling user must be a
-      // sysadmin or employee, or the calling user must be a privileged memeber of the organization
+      // Possibly get client id
+      const clientId = req.params.id;
+
+      // Authorize
       await authorizeCallerForRole(organizationId, auth, "read", r);
 
-      // Get clients and send response
-      const clients = await r.io.get("clients", { _t: "filter", organizationId }, log);
-      const response: Auth.Api.Responses<ClientRoles, UserRoles>["GET /organizations/:id/clients"] =
-        {
+      if (clientId) {
+        // Sending a singular response
+        const client = await r.io.get("clients", { id: clientId }, log, true);
+        if (client.organizationId !== organizationId) {
+          throw new E.NotFound(
+            `The client id you've requested was not found in our system.`,
+            `GET-CLIENT_CLIENT-NOT-FOUND`
+          );
+        }
+        const response: Auth.Api.Responses<
+          ClientRoles,
+          UserRoles
+        >["GET /organizations/:id/clients/:id"] = {
+          t: "single",
+          data: await addRoles(T.Clients.dbToApi(client, log), { ...r, log }),
+        };
+        res.status(200).send(response);
+      } else {
+        // Get clients and send response
+        const clients = await r.io.get("clients", { _t: "filter", organizationId }, log);
+        const response: Auth.Api.Responses<
+          ClientRoles,
+          UserRoles
+        >["GET /organizations/:id/clients"] = {
           ...clients,
           data: await addRoles(
             clients.data.map((row) => T.Clients.dbToApi(row, log)),
             { ...r, log }
           ),
         };
-      res.status(200).send(response);
+        res.status(200).send(response);
+      }
     } catch (e) {
       next(e);
     }

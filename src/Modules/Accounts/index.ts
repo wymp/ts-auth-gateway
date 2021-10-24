@@ -73,8 +73,11 @@ export const register = (
   r.http.delete("/accounts/v1/organizations/:id", Organizations.deleteOrganizationHandler(r));
 
   // Clients
-  r.log.notice(`HTTP: GET    /accounts/v1/organizations/:id/clients`);
-  r.http.get("/accounts/v1/organizations/:orgId/clients", Clients.getClientsForOrgHandler(r));
+  r.log.notice(`HTTP: GET    /accounts/v1/organizations/:id/clients(/:id)`);
+  r.http.get(
+    ["/accounts/v1/organizations/:orgId/clients", "/accounts/v1/organizations/:orgId/clients/:id"],
+    Clients.getClientsForOrgHandler(r)
+  );
 
   // Users
   r.log.notice(`HTTP: GET    /accounts/v1/users`);
