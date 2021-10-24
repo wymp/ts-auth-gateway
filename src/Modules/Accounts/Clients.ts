@@ -364,6 +364,68 @@ export const deleteClientHandler = (
 };
 
 /**
+ * POST /organizations/:id/clients/:id/refresh-secret
+ */
+export const refreshSecretHandler = (
+  r: Pick<AppDeps, "log" | "io" | "authz">
+): SimpleHttpServerMiddleware => {
+  return async (req, res, next) => {
+    const log = Http.logger(r.log, req, res);
+    try {
+      // Make sure it's an authd request so we can access the auth object
+      Http.assertAuthdReq(req);
+      const auth = req.auth;
+      Common.assertAuth(auth);
+
+      // Get organization and client ids from params and verify
+      const organizationId = req.params.orgId;
+      const clientId = req.params.id;
+      if (!organizationId || !clientId) {
+        throw new E.InternalServerError(
+          `Programmer: This endpoint is not set up correctly. Expecting 'orgId' and 'clientId' ` +
+            `url parameters, but one or both were missing.`,
+          `PATCH-CLIENTS-BAD-PARAMS`
+        );
+      }
+
+      // Make sure org and client exist
+      await r.io.get("organizations", { id: organizationId }, log, true);
+      const existing = await r.io.get("clients", { id: clientId }, log, true);
+
+      // Authorize
+      await authorizeCallerForRole(organizationId, auth, "manage", r);
+
+      // Make sure the client belongs to the org and is not already deleted
+      if (existing.organizationId !== organizationId || existing.deletedMs !== null) {
+        throw new E.BadRequest(
+          `The given client is not owned by the given organization. Please use the correct ids.`,
+          `REFRESH-CLIENT-SECRET_ID-MISMATCH`
+        );
+      }
+
+      // Generate new secret and save
+      r.log.debug(`Generating new client secret`);
+      const secret = randomBytes(32).toString("hex");
+      const secretBcrypt = await bcrypt.hash(secret, 10);
+      const client = await r.io.update("clients", clientId, { secretBcrypt }, auth, log);
+
+      const finishedClient = await addRoles(T.Clients.dbToApi(client, log), { ...r, log });
+
+      const response: Auth.Api.Responses<
+        ClientRoles,
+        UserRoles
+      >["POST /organizations/:id/clients/:id/refresh-secret"] = {
+        t: "single",
+        data: { ...finishedClient, secret },
+      };
+      res.status(200).send(response);
+    } catch (e) {
+      next(e);
+    }
+  };
+};
+
+/**
  * Use the database to get one or more clients' roles and then add them to the corresponding client
  * record for return via the API.
  */

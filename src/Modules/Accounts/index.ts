@@ -83,13 +83,18 @@ export const register = (
     parseBody,
     Clients.postClientHandler(r),
   ]);
-  r.log.notice(`HTTP: PATCH   /accounts/v1/organizations/:id/clients/:id`);
+  r.log.notice(`HTTP: PATCH  /accounts/v1/organizations/:id/clients/:id`);
   r.http.patch("/accounts/v1/organizations/:orgId/clients/:id", [
     parseBody,
     Clients.patchClientHandler(r),
   ]);
-  r.log.notice(`HTTP: DELETE  /accounts/v1/organizations/:id/clients/:id`);
+  r.log.notice(`HTTP: DELETE /accounts/v1/organizations/:id/clients/:id`);
   r.http.delete("/accounts/v1/organizations/:orgId/clients/:id", Clients.deleteClientHandler(r));
+  r.log.notice(`HTTP: POST   /accounts/v1/organizations/:id/clients/:id/refresh-secret`);
+  r.http.post(
+    "/accounts/v1/organizations/:orgId/clients/:id/refresh-secret",
+    Clients.refreshSecretHandler(r)
+  );
 
   // Users
   r.log.notice(`HTTP: GET    /accounts/v1/users`);
