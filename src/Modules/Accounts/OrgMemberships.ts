@@ -33,6 +33,8 @@ export const getByUserIdHandler = (r: Pick<AppDeps, "io" | "log">): SimpleHttpSe
       // Get user id
       const userId = getDealiasedUserIdFromReq(req, log);
 
+      // Authorization happens in the actual "get" function below
+
       // Validate user id (will throw 404 if not found)
       await r.io.get("users", { id: userId }, log, true);
 
@@ -98,7 +100,7 @@ export const getByOrganizationIdHandler = (
       // Get organization id
       let organizationId = req.params.id;
 
-      // Require valid userId
+      // Require valid orgId
       if (!organizationId) {
         throw new E.InternalServerError(
           `Programmer: this functionality is expecting req.params.id to be set, but it is not.`
@@ -110,10 +112,10 @@ export const getByOrganizationIdHandler = (
       const auth = req.auth;
       Common.assertAuth(auth);
 
-      // Validate user id (will throw 404 if not found)
+      // Validate org id (will throw 404 if not found)
       await r.io.get("organizations", { id: organizationId }, log, true);
 
-      // Get response
+      // Get response (validations are performed by this function)
       const memberships = await getByOrganizationId(
         organizationId,
         auth,
@@ -488,7 +490,7 @@ const privilegedUsers: Array<string> = [UserRoles.SYSADMIN, UserRoles.EMPLOYEE];
  * Ensure the caller is either A) an internal system client; B) a sysadmin or employee user; or C)
  * a member of the organization who has the given role.
  */
-const authorizeCallerForRole = async (
+export const authorizeCallerForRole = async (
   organizationId: string,
   caller: { r: Array<string>; a: boolean; u?: { id: string; r: Array<string> } },
   role: "read" | "edit" | "manage" | "delete",

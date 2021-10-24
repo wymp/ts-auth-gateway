@@ -27,7 +27,7 @@ export const isInternalSystemClient = (
     if (!authenticated) {
       log.notice(`Client is not authenticated; cannot proceed`);
     } else {
-      log.notice(`Client is authenticated and authorized. Proceeding.`);
+      log.notice(`Client is an authenticated and authorized. Proceeding.`);
       proceed = true;
     }
   } else {

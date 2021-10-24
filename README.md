@@ -126,18 +126,20 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
   * [x] POST   /accounts/v1/users/:id/emails/:id/generate-verification
   * [x] POST   /accounts/v1/users/:id/emails/:id/verify
 * [ ] **Clients**
-  * [ ] GET    /accounts/v1/clients/:id
-  * [ ] PATCH  /accounts/v1/clients/:id
-  * [ ] DELETE /accounts/v1/clients/:id
-  * [ ] GET    /accounts/v1/clients/:id/roles
-  * [ ] POST   /accounts/v1/clients/:id/roles
-  * [ ] DELETE /accounts/v1/clients/:id/roles
-  * [ ] GET    /accounts/v1/clients/:id/access-restrictions
-  * [ ] POST   /accounts/v1/clients/:id/access-restrictions
-  * [ ] DELETE /accounts/v1/clients/:id/access-restrictions
-  * [ ] POST   /accounts/v1/clients/:id/change-secret
-  * [ ] GET    /accounts/v1/organizations/:id/clients
+  * [x] GET    /accounts/v1/organizations/:id/clients
   * [ ] POST   /accounts/v1/organizations/:id/clients
+  * [ ] GET    /accounts/v1/organizations/:id/clients/:id
+  * [ ] PATCH  /accounts/v1/organizations/:id/clients/:id
+  * [ ] DELETE /accounts/v1/organizations/:id/clients/:id
+  * [ ] POST   /accounts/v1/organizations/:id/clients/:id/change-secret
+* [ ] **Client Roles**
+  * [ ] GET    /accounts/v1/organizations/:id/clients/:id/roles
+  * [ ] POST   /accounts/v1/organizations/:id/clients/:id/roles
+  * [ ] DELETE /accounts/v1/organizations/:id/clients/:id/roles/:id
+* [ ] **Client Access Restrictions**
+  * [ ] GET    /accounts/v1/organizations/:id/clients/:id/access-restrictions
+  * [ ] POST   /accounts/v1/organizations/:id/clients/:id/access-restrictions
+  * [ ] DELETE /accounts/v1/organizations/:id/clients/:id/access-restrictions/:id
 * [x] **Memberships**
   * [x] GET    /accounts/v1/users/:id/memberships
   * [x] GET    /accounts/v1/organizations/:id/memberships
@@ -160,7 +162,10 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
 * [ ] Implement API regression tests
 * [ ] Use TypeDoc to create library documentation
 * [ ] Implement hook system that allows for alternate handling and/or system extensibility
-* [ ] Export library functions correctly
+* [ ] Export library functions correctly. In many cases, this may include refactoring functionality
+      between endpoint handlers and functions.
+* [ ] Improve logging in various areas of the code
+  * [ ] Emails module
 
 #### Later Improvements
 
@@ -177,7 +182,11 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
       or invalidated, and that should be verified by the gateway. I.e., users should not be able to
       use session tokens associated with consumed refresh tokens to successfully make requests.
 * [ ] Protect email addresses as PII
-* [ ] Implemented generalized multi-step process for dangerous operations (e.g., DELETE user). This
+* [ ] Implement generalized multi-step process for dangerous operations (e.g., DELETE user). This
       would mean, for example, any endpoint could return an `auth-step` or something, and an auth
       flow would ensue, resulting in completion of the operation being attempted.
+* [ ] Possibly refactor endpoits? I'm starting to question my original philosophies. Perhaps it's
+      fine, but I believe at very least there are some inconsistencies that can be resolved. E.g.,
+      When do we force access through a hierarchical endpoint vs a flat one (e.g.,
+      `/organizations/:id/clients/:id` vs `/clients/:id`)?
 

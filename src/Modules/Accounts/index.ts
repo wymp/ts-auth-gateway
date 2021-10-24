@@ -3,6 +3,7 @@ import { SimpleHttpServerMiddleware } from "@wymp/ts-simple-interfaces";
 import { Parsers } from "@wymp/weenie-framework";
 import { AppDeps } from "../../Types";
 import { IoInterface } from "./Types";
+import * as Clients from "./Clients";
 import * as Emails from "./Emails";
 import * as Organizations from "./Organizations";
 import * as OrgMemberships from "./OrgMemberships";
@@ -70,6 +71,10 @@ export const register = (
   r.http.patch("/accounts/v1/organizations/:id", [parseBody, Organizations.patchOrganization(r)]);
   r.log.notice(`HTTP: DELETE /accounts/v1/organizations/:id`);
   r.http.delete("/accounts/v1/organizations/:id", Organizations.deleteOrganizationHandler(r));
+
+  // Clients
+  r.log.notice(`HTTP: GET    /accounts/v1/organizations/:id/clients`);
+  r.http.get("/accounts/v1/organizations/:orgId/clients", Clients.getClientsForOrgHandler(r));
 
   // Users
   r.log.notice(`HTTP: GET    /accounts/v1/users`);

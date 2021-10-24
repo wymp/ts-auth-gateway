@@ -75,7 +75,7 @@ export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
   clients: {
     type: Auth.Db.Client;
     constraints: IdConstraint;
-    filters: NullFilter;
+    filters: Filter<{ organizationId: string }>;
     defaults: typeof Defaults["clients"];
   };
   "client-access-restrictions": {
@@ -132,7 +132,7 @@ export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
   "client-roles": {
     type: Auth.Db.ClientRole<ClientRoles>;
     constraints: { clientId: string; roleId: string };
-    filters: { _t: "filter"; clientId: string };
+    filters: Filter<{ clientId: string }> | Filter<{ clientIdIn: Array<string> }>;
     defaults: typeof Defaults["client-roles"];
   };
 };

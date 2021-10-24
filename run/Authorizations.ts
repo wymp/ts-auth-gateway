@@ -47,6 +47,10 @@ export const authz: AppDeps["authz"] = {
     [ClientRoles.SYSTEM, true, null, null],
     [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
   ],
+  "GET /users/:id/memberships": [
+    [ClientRoles.SYSTEM, true, null, null],
+    [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
+  ],
 
   // Emails
   "GET /users/:id/emails": [

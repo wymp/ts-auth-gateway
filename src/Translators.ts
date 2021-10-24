@@ -1,6 +1,6 @@
 import { Translator as T } from "@wymp/http-utils";
 import { Auth } from "@wymp/types";
-import { UserRoles } from "./Types";
+import { ClientRoles, UserRoles } from "./Types";
 
 export const Organizations = new T.Translator<Auth.Db.Organization, Auth.Api.Organization>(
   "/accounts/v1",
@@ -44,7 +44,7 @@ export const Emails = new T.Translator<Auth.Db.Email, Auth.Api.Email>("/accounts
  * function. This object should be tested!!
  */
 export const OrgMemberships = new T.Translator<Auth.Db.OrgMembership, Auth.Api.OrgMembership>(
-  "/accounts/v1/org-memberships",
+  "/accounts/v1",
   "org-memberships",
   {
     read: "attr",
@@ -59,5 +59,44 @@ export const OrgMemberships = new T.Translator<Auth.Db.OrgMembership, Auth.Api.O
       return from === "db" ? Boolean(val) : Number(val);
     }
     return val;
+  }
+);
+
+/**
+ * Client translator
+ */
+export const Clients = new T.Translator<Auth.Db.Client, Auth.Api.Client<ClientRoles>>(
+  "/accounts/v1/",
+  "clients",
+  {
+    name: "attr",
+    reqsPerSec: "attr",
+    roles: "attr",
+    createdMs: "attr",
+    organization: ["organizationId", "organizations"],
+  }
+);
+
+/**
+ * Client Access Restrictions translator
+ */
+export const ClientAccessRestrictions = new T.Translator<
+  Auth.Db.ClientAccessRestriction,
+  Auth.Api.ClientAccessRestriction
+>(
+  "/accounts/v1",
+  "client-access-restrictions",
+  {
+    client: ["clientId", "clients"],
+    value: "attr",
+    createdMs: "attr",
+  },
+  (from: "db" | "api", fieldName: string, _val: unknown) => {
+    // for client access restrictions, we need to munge the type field
+    if (fieldName === "type") {
+      const val = <string>_val;
+      return from === "db" ? `${val}-access-restrictions` : val.substring(0, val.indexOf("-"));
+    }
+    return _val;
   }
 );
