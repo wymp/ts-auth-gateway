@@ -37,7 +37,9 @@ BEGIN;
     `reqsPerSec` INT NOT NULL COMMENT "The rate-limit (per second) for this client. -1 indicates no limit.",
     `organizationId` CHAR(36) NOT NULL COMMENT "The organization that this client belongs to.",
     `createdMs` BIGINT UNSIGNED NOT NULL,
-    CONSTRAINT `orgFk` FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON DELETE CASCADE ON UPDATE CASCADE
+    `deletedMs` BIGINT UNSIGNED NULL COMMENT "If not null, marks the moment at which this client was deleted.",
+    CONSTRAINT `orgFk` FOREIGN KEY (`organizationId`) REFERENCES `organizations`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX `deletedIdx` (`deletedMs`)
   ) ENGINE=InnoDB;
 
   CREATE TABLE `client-access-restrictions` (

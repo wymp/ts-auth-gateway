@@ -39,6 +39,9 @@ export class Io<ClientRoles extends string, UserRoles extends string> extends Ab
     if (t === "client-roles" && field === "clientIdIn") {
       return { where: ["`clientId` IN (?)"], params: [val] };
     }
+    if (t === "clients" && field === "deleted") {
+      return { where: [val ? "`deletedMs` IS NOT NULL" : "`deletedMs` IS NULL"] };
+    }
     if (t === "sessions" && field === "createdMs") {
       // Validate operator
       const ops = { lt: "<", gt: ">", eq: "=", lte: "<=", gte: ">=", ne: "!=" };
@@ -93,51 +96,6 @@ export class Io<ClientRoles extends string, UserRoles extends string> extends Ab
         }
 
         return config;
-      },
-      undefined,
-      log
-    );
-  }
-
-  /**
-   * Get and return Client data, throwing specific errors if not found
-   */
-  public async getAndValidateClientData(
-    clientId: string | null,
-    log: SimpleLoggerInterface
-  ): Promise<Auth.Db.Client & { roles: Array<ClientRoles> }> {
-    log.debug(`Getting and validating client id ${clientId}`);
-
-    // If null, throw
-    if (clientId === null) {
-      throw new E.Forbidden(
-        "You must pass a client id and (optional) secret via a standard Authorization header using " +
-          "the 'Basic' scheme."
-      );
-    }
-
-    return await this.cache.get<Auth.Db.Client & { roles: Array<ClientRoles> }>(
-      `client-${clientId}`,
-      async () => {
-        // First get the Client
-        const { rows } = await this.db.query<Auth.Db.Client>(
-          "SELECT * FROM `clients` WHERE `id` = ?",
-          [clientId]
-        );
-
-        // If nothing, throw
-        if (rows.length === 0) {
-          throw new E.Unauthorized(
-            `The Client ID you passed ('${clientId}') is not known to our system.`
-          );
-        }
-
-        // Now get this client's roles, attach and return
-        const { rows: roles } = await this.db.query<{ roleId: ClientRoles }>(
-          "SELECT `roleId` FROM `client-roles` WHERE `clientId` = ?",
-          [clientId]
-        );
-        return { ...rows[0], roles: roles.map((r) => r.roleId) };
       },
       undefined,
       log

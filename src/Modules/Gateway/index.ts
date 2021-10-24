@@ -48,8 +48,22 @@ export const middleware = (
       const rateLimiter = r.rateLimiter;
       if (clientId) {
         // Get Client data, throwing errors if not found
-        const clientData = await r.io.getAndValidateClientData(clientId, log);
-        clientRoles = clientData.roles;
+        log.debug(`Getting and validating client id ${clientId}`);
+
+        // First get the Client
+        const clientData = await r.io.get("clients", { id: clientId }, log, false);
+
+        // If nothing (or deleted), throw
+        if (!clientData || clientData.deletedMs !== null) {
+          throw new E.Unauthorized(
+            `The Client ID you passed ('${clientId}') is not known to our system.`
+          );
+        }
+
+        // Now get this client's roles, attach and return
+        clientRoles = (await r.io.get("client-roles", { _t: "filter", clientId }, log)).data.map(
+          (row) => row.roleId
+        );
 
         // Authenticate, if requested
         authenticated = await lib.authenticateCredentials(secret, clientData.secretBcrypt, {

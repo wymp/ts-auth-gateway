@@ -18,6 +18,7 @@ export const Defaults = {
   clients: both(strId, {
     reqsPerSec: 10,
     createdMs: () => Date.now(),
+    deletedMs: null,
   }),
   "client-access-restrictions": both(strId, {
     createdMs: () => Date.now(),
@@ -75,7 +76,7 @@ export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
   clients: {
     type: Auth.Db.Client;
     constraints: IdConstraint;
-    filters: Filter<{ organizationId: string }>;
+    filters: Filter<{ organizationId: string; deleted?: boolean }>;
     defaults: typeof Defaults["clients"];
   };
   "client-access-restrictions": {

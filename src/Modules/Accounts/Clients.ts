@@ -57,7 +57,7 @@ export const getClientsForOrgHandler = (
       if (clientId) {
         // Sending a singular response
         const client = await r.io.get("clients", { id: clientId }, log, true);
-        if (client.organizationId !== organizationId) {
+        if (client.organizationId !== organizationId || client.deletedMs !== null) {
           throw new E.NotFound(
             `The client id you've requested was not found in our system.`,
             `GET-CLIENT_CLIENT-NOT-FOUND`
@@ -73,7 +73,11 @@ export const getClientsForOrgHandler = (
         res.status(200).send(response);
       } else {
         // Get clients and send response
-        const clients = await r.io.get("clients", { _t: "filter", organizationId }, log);
+        const clients = await r.io.get(
+          "clients",
+          { _t: "filter", organizationId, deleted: false },
+          log
+        );
         const response: Auth.Api.Responses<
           ClientRoles,
           UserRoles
@@ -240,6 +244,9 @@ export const patchClientHandler = (
       await r.io.get("organizations", { id: organizationId }, log, true);
       const existing = await r.io.get("clients", { id: clientId }, log, true);
 
+      // Authorize
+      await authorizeCallerForRole(organizationId, auth, "manage", r);
+
       // Make sure the client belongs to the org
       if (existing.organizationId !== organizationId) {
         throw new E.BadRequest(
@@ -247,9 +254,6 @@ export const patchClientHandler = (
           `PATCH-CLIENT_ID-MISMATCH`
         );
       }
-
-      // Authorize
-      await authorizeCallerForRole(organizationId, auth, "manage", r);
 
       // Only allow reqsPerSec parameter if caller is sysadmin or employee
       if (clientData.reqsPerSec !== undefined) {
@@ -304,6 +308,60 @@ const PatchClientValidator = rt.Record({
     reqsPerSec: rt.Optional(rt.Number),
   }),
 });
+
+/**
+ * DELETE /organizations/:id/clients/:id
+ */
+export const deleteClientHandler = (
+  r: Pick<AppDeps, "log" | "io" | "authz">
+): SimpleHttpServerMiddleware => {
+  return async (req, res, next) => {
+    const log = Http.logger(r.log, req, res);
+    try {
+      // Make sure it's an authd request so we can access the auth object
+      Http.assertAuthdReq(req);
+      const auth = req.auth;
+      Common.assertAuth(auth);
+
+      // Get organization and client ids from params and verify
+      const organizationId = req.params.orgId;
+      const clientId = req.params.id;
+      if (!organizationId || !clientId) {
+        throw new E.InternalServerError(
+          `Programmer: This endpoint is not set up correctly. Expecting 'orgId' and 'clientId' ` +
+            `url parameters, but one or both were missing.`,
+          `PATCH-CLIENTS-BAD-PARAMS`
+        );
+      }
+
+      // Make sure org and client exist
+      await r.io.get("organizations", { id: organizationId }, log, true);
+      const existing = await r.io.get("clients", { id: clientId }, log, true);
+
+      // Authorize
+      await authorizeCallerForRole(organizationId, auth, "manage", r);
+
+      // Make sure the client belongs to the org and is not already deleted
+      if (existing.organizationId !== organizationId || existing.deletedMs !== null) {
+        throw new E.BadRequest(
+          `The given client is not owned by the given organization. Please use the correct ids.`,
+          `PATCH-CLIENT_ID-MISMATCH`
+        );
+      }
+
+      // Mark client deleted
+      await r.io.update("clients", clientId, { deletedMs: Date.now() }, auth, log);
+
+      const response: Auth.Api.Responses<
+        ClientRoles,
+        UserRoles
+      >["DELETE /organizations/:id/clients/:id"] = { data: null };
+      res.status(200).send(response);
+    } catch (e) {
+      next(e);
+    }
+  };
+};
 
 /**
  * Use the database to get one or more clients' roles and then add them to the corresponding client

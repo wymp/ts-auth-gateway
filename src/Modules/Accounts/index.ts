@@ -88,6 +88,8 @@ export const register = (
     parseBody,
     Clients.patchClientHandler(r),
   ]);
+  r.log.notice(`HTTP: DELETE  /accounts/v1/organizations/:id/clients/:id`);
+  r.http.delete("/accounts/v1/organizations/:orgId/clients/:id", Clients.deleteClientHandler(r));
 
   // Users
   r.log.notice(`HTTP: GET    /accounts/v1/users`);
