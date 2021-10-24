@@ -19,7 +19,7 @@ export const authz: AppDeps["authz"] = {
     [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
     [ClientRoles.INTERNAL, null, UserRoles.EMPLOYEE, null],
   ],
-  "GET /clients/:id": [
+  "PATCH /organizations/:id/clients/:id": [
     [ClientRoles.SYSTEM, true, null, null],
     [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
     [ClientRoles.INTERNAL, null, UserRoles.EMPLOYEE, null],

@@ -83,6 +83,11 @@ export const register = (
     parseBody,
     Clients.postClientHandler(r),
   ]);
+  r.log.notice(`HTTP: PATCH   /accounts/v1/organizations/:id/clients/:id`);
+  r.http.patch("/accounts/v1/organizations/:orgId/clients/:id", [
+    parseBody,
+    Clients.patchClientHandler(r),
+  ]);
 
   // Users
   r.log.notice(`HTTP: GET    /accounts/v1/users`);

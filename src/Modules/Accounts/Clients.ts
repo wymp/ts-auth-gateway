@@ -95,7 +95,9 @@ export const getClientsForOrgHandler = (
 /**
  * POST /organizations/:id/clients
  */
-export const postClientHandler = (r: Pick<AppDeps, "log" | "io">): SimpleHttpServerMiddleware => {
+export const postClientHandler = (
+  r: Pick<AppDeps, "log" | "io" | "authz">
+): SimpleHttpServerMiddleware => {
   return async (req, res, next) => {
     const log = Http.logger(r.log, req, res);
     try {
@@ -110,7 +112,7 @@ export const postClientHandler = (r: Pick<AppDeps, "log" | "io">): SimpleHttpSer
         throw new E.InternalServerError(
           `Programmer: This endpoint is not set up correctly. Expecting 'orgId' url parameter, ` +
             `but it was missing.`,
-          `GET-CLIENTS-BAD-PARAMS`
+          `POST-CLIENTS-BAD-PARAMS`
         );
       }
 
@@ -119,7 +121,7 @@ export const postClientHandler = (r: Pick<AppDeps, "log" | "io">): SimpleHttpSer
       if (!validation.success) {
         throw InvalidBodyError(validation);
       }
-      const clientName = validation.value.data.name;
+      const clientData = validation.value.data;
 
       // Make sure org exists
       await r.io.get("organizations", { id: organizationId }, log, true);
@@ -127,8 +129,26 @@ export const postClientHandler = (r: Pick<AppDeps, "log" | "io">): SimpleHttpSer
       // Authorize
       await authorizeCallerForRole(organizationId, auth, "manage", r);
 
+      // Only allow reqsPerSec parameter if caller is sysadmin or employee
+      if (clientData.reqsPerSec !== undefined) {
+        try {
+          Http.authorize(req, r.authz["POST /organizations/:id/clients"], log);
+        } catch (e) {
+          // The native error isn't exactly what we want to convey, so wrap it in language that's
+          // more appropriate
+          throw new E.BadRequest(
+            `You are not authorized to set the 'reqsPerSec' field.`,
+            `POST-CLIENTS_UNAUTHORIZED-FIELD`
+          );
+        }
+      }
+
       // Create a new client
-      const client = await createClient({ organizationId, name: clientName }, auth, { ...r, log });
+      const client = await createClient(
+        { organizationId, name: clientData.name, reqsPerSec: clientData.reqsPerSec || 10 },
+        auth,
+        { ...r, log }
+      );
 
       const finishedClient = await addRoles(T.Clients.dbToApi(client, log), { ...r, log });
 
@@ -150,11 +170,12 @@ const PostClientValidator = rt.Record({
   data: rt.Record({
     type: rt.Literal("clients"),
     name: rt.String,
+    reqsPerSec: rt.Optional(rt.Number),
   }),
 });
 
 export const createClient = async (
-  newClient: { organizationId: string; name: string },
+  newClient: { organizationId: string; name: string; reqsPerSec?: number },
   auth: Auth.ReqInfo,
   r: Pick<AppDeps, "io" | "log">
 ): Promise<Auth.Db.Client & { secret: string }> => {
@@ -182,6 +203,107 @@ export const createClient = async (
   // Return everything
   return { ...client, secret };
 };
+
+/**
+ * PATCH /organizations/:id/clients/:id
+ */
+export const patchClientHandler = (
+  r: Pick<AppDeps, "log" | "io" | "authz">
+): SimpleHttpServerMiddleware => {
+  return async (req, res, next) => {
+    const log = Http.logger(r.log, req, res);
+    try {
+      // Make sure it's an authd request so we can access the auth object
+      Http.assertAuthdReq(req);
+      const auth = req.auth;
+      Common.assertAuth(auth);
+
+      // Get organization and client ids from params and verify
+      const organizationId = req.params.orgId;
+      const clientId = req.params.id;
+      if (!organizationId || !clientId) {
+        throw new E.InternalServerError(
+          `Programmer: This endpoint is not set up correctly. Expecting 'orgId' and 'clientId' ` +
+            `url parameters, but one or both were missing.`,
+          `PATCH-CLIENTS-BAD-PARAMS`
+        );
+      }
+
+      // Validate input
+      const validation = PatchClientValidator.validate(req.body);
+      if (!validation.success) {
+        throw InvalidBodyError(validation);
+      }
+      const clientData = validation.value.data;
+
+      // Make sure org and client exist
+      await r.io.get("organizations", { id: organizationId }, log, true);
+      const existing = await r.io.get("clients", { id: clientId }, log, true);
+
+      // Make sure the client belongs to the org
+      if (existing.organizationId !== organizationId) {
+        throw new E.BadRequest(
+          `The given client is not owned by the given organization. Please use the correct ids.`,
+          `PATCH-CLIENT_ID-MISMATCH`
+        );
+      }
+
+      // Authorize
+      await authorizeCallerForRole(organizationId, auth, "manage", r);
+
+      // Only allow reqsPerSec parameter if caller is sysadmin or employee
+      if (clientData.reqsPerSec !== undefined) {
+        try {
+          Http.authorize(req, r.authz["PATCH /organizations/:id/clients/:id"], log);
+        } catch (e) {
+          // The native error isn't exactly what we want to convey, so wrap it in language that's
+          // more appropriate
+          throw new E.BadRequest(
+            `You are not authorized to set the 'reqsPerSec' field.`,
+            `PATCH-CLIENTS_UNAUTHORIZED-FIELD`
+          );
+        }
+      }
+
+      // Update client if necessary
+      let client: Auth.Db.Client;
+      if ((!clientData.name || !clientData.name.trim()) && clientData.reqsPerSec === undefined) {
+        client = existing;
+      } else {
+        // Update the client
+        client = await r.io.update(
+          "clients",
+          clientId,
+          {
+            ...(clientData.name?.trim() ? { name: clientData.name.trim() } : {}),
+            ...(clientData.reqsPerSec !== undefined ? { reqsPerSec: clientData.reqsPerSec } : {}),
+          },
+          auth,
+          log
+        );
+      }
+
+      const response: Auth.Api.Responses<
+        ClientRoles,
+        UserRoles
+      >["PATCH /organizations/:id/clients/:id"] = {
+        t: "single",
+        data: await addRoles(T.Clients.dbToApi(client, log), { ...r, log }),
+      };
+      res.status(200).send(response);
+    } catch (e) {
+      next(e);
+    }
+  };
+};
+
+const PatchClientValidator = rt.Record({
+  data: rt.Record({
+    type: rt.Literal("clients"),
+    name: rt.Optional(rt.String),
+    reqsPerSec: rt.Optional(rt.Number),
+  }),
+});
 
 /**
  * Use the database to get one or more clients' roles and then add them to the corresponding client
