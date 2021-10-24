@@ -127,7 +127,7 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
   * [x] POST   /accounts/v1/users/:id/emails/:id/verify
 * [ ] **Clients**
   * [x] GET    /accounts/v1/organizations/:id/clients
-  * [ ] POST   /accounts/v1/organizations/:id/clients
+  * [x] POST   /accounts/v1/organizations/:id/clients
   * [x] GET    /accounts/v1/organizations/:id/clients/:id
   * [ ] PATCH  /accounts/v1/organizations/:id/clients/:id
   * [ ] DELETE /accounts/v1/organizations/:id/clients/:id
@@ -166,6 +166,7 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
       between endpoint handlers and functions.
 * [ ] Improve logging in various areas of the code
   * [ ] Emails module
+* [ ] Full authorization audit for every endpoint
 
 #### Later Improvements
 

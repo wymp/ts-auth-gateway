@@ -36,6 +36,9 @@ export class Io<ClientRoles extends string, UserRoles extends string> extends Ab
     if (t === "user-roles" && field === "userIdIn") {
       return { where: ["`userId` IN (?)"], params: [val] };
     }
+    if (t === "client-roles" && field === "clientIdIn") {
+      return { where: ["`clientId` IN (?)"], params: [val] };
+    }
     if (t === "sessions" && field === "createdMs") {
       // Validate operator
       const ops = { lt: "<", gt: ">", eq: "=", lte: "<=", gte: ">=", ne: "!=" };

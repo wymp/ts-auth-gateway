@@ -78,6 +78,11 @@ export const register = (
     ["/accounts/v1/organizations/:orgId/clients", "/accounts/v1/organizations/:orgId/clients/:id"],
     Clients.getClientsForOrgHandler(r)
   );
+  r.log.notice(`HTTP: POST   /accounts/v1/organizations/:id/clients`);
+  r.http.post("/accounts/v1/organizations/:orgId/clients", [
+    parseBody,
+    Clients.postClientHandler(r),
+  ]);
 
   // Users
   r.log.notice(`HTTP: GET    /accounts/v1/users`);
