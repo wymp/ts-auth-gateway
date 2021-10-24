@@ -3,11 +3,12 @@ import { SimpleHttpServerMiddleware } from "@wymp/ts-simple-interfaces";
 import { Parsers } from "@wymp/weenie-framework";
 import { AppDeps } from "../../Types";
 import { IoInterface } from "./Types";
+import * as Emails from "./Emails";
 import * as Organizations from "./Organizations";
 import * as OrgMemberships from "./OrgMemberships";
+import * as Sessions from "./Sessions";
 import * as Users from "./Users";
 import * as UserRoles from "./UserRoles";
-import * as Sessions from "./Sessions";
 
 const json = Parsers.json();
 const getParseBodyFunc = (allowBlankBodies: boolean): SimpleHttpServerMiddleware => {
@@ -94,6 +95,24 @@ export const register = (
   r.http.post(`/accounts/v1/users/:id/roles`, [parseBody, UserRoles.postUserRoles(r)]);
   r.log.notice(`HTTP: DELETE /accounts/v1/users/:id/roles/:roleId`);
   r.http.post(`/accounts/v1/users/:id/roles/:roleId`, UserRoles.deleteUserRoles(r));
+
+  // Emails
+  r.log.notice(`HTTP: GET    /accounts/v1/users/:id/emails`);
+  r.http.get(`/accounts/v1/users/:id/emails`, Emails.getUserEmailsHandler(r));
+  r.log.notice(`HTTP: POST   /accounts/v1/users/:id/emails`);
+  r.http.post(`/accounts/v1/users/:id/emails`, [parseBody, Emails.postUserEmailHandler(r)]);
+  r.log.notice(`HTTP: DELETE /accounts/v1/users/:id/emails/:id`);
+  r.http.post(`/accounts/v1/users/:id/emails/:emailId`, Emails.deleteUserEmailHandler(r));
+  r.log.notice(`HTTP: POST   /accounts/v1/users/:id/emails/:emailId/generate-verification`);
+  r.http.post(
+    `/accounts/v1/users/:id/emails/:emailId/generate-verification`,
+    Emails.generateEmailVerificationHandler(r)
+  );
+  r.log.notice(`HTTP: POST   /accounts/v1/users/:id/emails/:emailId/verify`);
+  r.http.post(`/accounts/v1/users/:id/emails/:emailId/verify`, [
+    parseBody,
+    Emails.verifyUserEmailHandler(r),
+  ]);
 
   // OrgMemberships
   r.log.notice(`HTTP: GET    /accounts/v1/users/:id/memberships`);

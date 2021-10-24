@@ -32,6 +32,12 @@ export const Users = new T.Translator<Auth.Db.User, Auth.Api.User<UserRoles>>(
   }
 );
 
+export const Emails = new T.Translator<Auth.Db.Email, Auth.Api.Email>("/accounts/v1/", "emails", {
+  verifiedMs: "attr",
+  createdMs: "attr",
+  user: ["userId", "users"],
+});
+
 /**
  * An OrgMembership translator to translate between DB format and API format. Note that
  * OrgMemberships have booleans, so it's necessary to convert back and forth using a transformer

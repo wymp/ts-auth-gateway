@@ -119,11 +119,12 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
   * [x] POST   /accounts/v1/users/:id/roles
   * [x] DELETE /accounts/v1/users/:id/roles/:roleId
   * [x] POST   /accounts/v1/users/:id/change-password
-* [ ] **Emails**
-  * [ ] GET    /accounts/v1/users/:id/emails
-  * [ ] POST   /accounts/v1/users/:id/emails
-  * [ ] DELETE /accounts/v1/emails/:id
-  * [ ] POST   /accounts/v1/emails/:id/verify
+* [x] **Emails**
+  * [x] GET    /accounts/v1/users/:id/emails
+  * [x] POST   /accounts/v1/users/:id/emails
+  * [x] DELETE /accounts/v1/users/:id/emails/:id
+  * [x] POST   /accounts/v1/users/:id/emails/:id/generate-verification
+  * [x] POST   /accounts/v1/users/:id/emails/:id/verify
 * [ ] **Clients**
   * [ ] GET    /accounts/v1/clients/:id
   * [ ] PATCH  /accounts/v1/clients/:id

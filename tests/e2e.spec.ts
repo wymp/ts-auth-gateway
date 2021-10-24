@@ -110,7 +110,7 @@ const startFakeService = async (port: number) => {
 describe("End-to-End Tests of Auth Service", () => {
   // Start the service before all tests
   beforeAll(async () => {
-    r = await startFakeService(11223);
+    r = await startFakeService(port);
   });
 
   // Close connections after tests

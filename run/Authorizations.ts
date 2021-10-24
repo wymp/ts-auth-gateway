@@ -32,6 +32,8 @@ export const authz: AppDeps["authz"] = {
     [ClientRoles.INTERNAL, null, UserRoles.EMPLOYEE, null],
   ],
   "POST /users": [],
+
+  // UserRoles
   "GET /users/:id/roles": [
     [ClientRoles.SYSTEM, true, null, null],
     [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
@@ -45,6 +47,16 @@ export const authz: AppDeps["authz"] = {
     [ClientRoles.SYSTEM, true, null, null],
     [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
   ],
+
+  // Emails
+  "GET /users/:id/emails": [
+    [ClientRoles.SYSTEM, true, null, null],
+    [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
+    [ClientRoles.INTERNAL, null, UserRoles.EMPLOYEE, null],
+  ],
+  "POST /users/:id/emails": [[ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null]],
+  "DELETE /users/:id/emails/:id": [[ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null]],
+  "POST /users/:id/emails/:id/verify": [[ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null]],
 
   // Sessions
   "GET /sessions": [[ClientRoles.INTERNAL, true, UserRoles.SYSADMIN, null]],

@@ -17,12 +17,19 @@ REFRESH_TOKEN=
 # Get the logged-in user's data
 curl -H 'Origin: https://dev.acme-ventures.com' -H "Authorization: Basic $(echo -n "$APIKEY:$SECRET" | base64 -w0),Bearer session:$SESSION_TOKEN" http://localhost:6546/accounts/v1/users/current | jq .
 curl -H 'Origin: https://dev.acme-ventures.com' -H "Authorization: Basic $(echo -n "$APIKEY:$SECRET" | base64 -w0),Bearer session:$SESSION_TOKEN" http://localhost:6546/accounts/v1/users/current/memberships | jq .
+curl -H 'Origin: https://dev.acme-ventures.com' -H "Authorization: Basic $(echo -n "$APIKEY:$SECRET" | base64 -w0),Bearer session:$SESSION_TOKEN" http://localhost:6546/accounts/v1/users/current/emails | jq .
+
+# Email verification flow
+EMAIL_ADDR_ESC=biff.stevenson%40bifford.me
+curl -H 'Origin: https://dev.acme-ventures.com' -H "Authorization: Basic $(echo -n "$APIKEY:$SECRET" | base64 -w0),Bearer session:$SESSION_TOKEN" -X POST http://localhost:6546/accounts/v1/users/current/emails/$EMAIL_ADDR_ESC/generate-verification | jq .
+EMAIL_VER_CODE=
+curl -H 'Origin: https://dev.acme-ventures.com' -H "Authorization: Basic $(echo -n "$APIKEY:$SECRET" | base64 -w0),Bearer session:$SESSION_TOKEN" -X POST -d '{"data":{"type":"verification-codes","code":"'$EMAIL_VER_CODE'"}}' http://localhost:6546/accounts/v1/users/current/emails/$EMAIL_ADDR_ESC/verify | jq .
 
 # Log in with password
 curl -H 'Origin: https://dev.acme-ventures.com' -H "Authorization: Basic $(echo -n "$APIKEY:$SECRET" | base64 -w0)" -H "Content-Type: application/json" -d '{"data":{"t":"password-step","email":"kael.shipman@gmail.com","password":"AaBbCc123!!","state":"aaaabbbbccccdddd1111222233334444"}}' http://localhost:6546/accounts/v1/sessions/login/password | jq .
 
 # Refresh a session
-curl -H 'Origin: https://dev.acme-ventures.com' -H "Content-Type: application/json" -H "Authorization: Basic $(echo -n "$APIKEY:$SECRET" | base64 -w0)" -d '{"data":{"t":"refresh-tokens","token":"255d889aaaa70956d2e86adcd598c314d2a19a0ac6ee414572ee104d26d4b557"}}' http://localhost:6546/accounts/v1/sessions/refresh | jq .
+curl -H 'Origin: https://dev.acme-ventures.com' -H "Content-Type: application/json" -H "Authorization: Basic $(echo -n "$APIKEY:$SECRET" | base64 -w0)" -d '{"data":{"t":"refresh-tokens","token":"'$REFRESH_TOKEN'"}}' http://localhost:6546/accounts/v1/sessions/refresh | jq .
 
 # Log out
 curl -H 'Origin: https://dev.acme-ventures.com' -H "Content-Type: application/json" -H "Authorization: Basic $(echo -n "$APIKEY:$SECRET" | base64 -w0),Bearer session:$SESSION_TOKEN" -X POST http://localhost:6546/accounts/v1/sessions/logout | jq .

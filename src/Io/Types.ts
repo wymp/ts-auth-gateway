@@ -99,7 +99,7 @@ export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
   emails: {
     type: Auth.Db.Email;
     constraints: { id: string };
-    filters: NullFilter;
+    filters: Filter<{ userId: string }>;
     defaults: typeof Defaults["emails"];
   };
   "verification-codes": {

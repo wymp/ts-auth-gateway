@@ -42,7 +42,7 @@ export const generateCode = async (
   }
 
   // Generate code
-  const code = randomBytes(32).toString("hex");
+  const code = randomBytes(32);
 
   // Save code to db
   r.log.debug(`Saving ${type} code`);
@@ -51,9 +51,10 @@ export const generateCode = async (
     {
       type,
       codeSha256: createHash("sha256").update(code).digest(),
-      email,
+      email: email.toLowerCase(),
       userGeneratedToken,
       expiresMs:
+        Date.now() +
         r.config.expires[type === "login" ? "loginCodeMin" : "emailVerCodeMin"] * 60 * 1000,
     },
     auth,
@@ -61,5 +62,65 @@ export const generateCode = async (
   );
 
   // Return the raw code
-  return code;
+  return code.toString("hex");
+};
+
+export const verifyEmail = async (
+  email: string,
+  rawCodeHexOrBuffer: string | Buffer,
+  auth: Auth.ReqInfo,
+  r: Pick<AppDeps, "log" | "io">
+): Promise<Auth.Db.Email> => {
+  // Get the sha256 representation of the code
+  const codeSha256 = createHash("sha256")
+    .update(
+      typeof rawCodeHexOrBuffer === "string"
+        ? Buffer.from(rawCodeHexOrBuffer, "hex")
+        : rawCodeHexOrBuffer
+    )
+    .digest();
+
+  // Get the code from the database
+  const codeRecord = await r.io.get("verification-codes", { codeSha256 }, r.log);
+
+  if (
+    !codeRecord ||
+    codeRecord.type !== "verification" ||
+    codeRecord.email !== email.toLowerCase()
+  ) {
+    throw new E.NotFound(
+      `Sorry, it appears that you've passed an invalid verification code. Please try to execute ` +
+        `the email verification flow again.`,
+      `EMAIL-VERIFY-INVALID-CODE`
+    );
+  }
+
+  // Make sure the code is not consumed, expired or invalidated
+  if (codeRecord.consumedMs !== null) {
+    throw new E.BadRequest(
+      `This email verification code has already been consumed. You shouldn't need to take any ` +
+        `additional action.`,
+      `EMAIL-VERIFY-CODE-CONSUMED`
+    );
+  }
+  if (codeRecord.expiresMs < Date.now()) {
+    throw new E.BadRequest(
+      `This email verification code has expired. Please try the verification flow again to get a ` +
+        `fresh code`,
+      `EMAIL-VERIFY-CODE-EXPIRED`
+    );
+  }
+  if (codeRecord.invalidatedMs !== null) {
+    throw new E.BadRequest(
+      `This email verification code has been invalidated. Please try the verification flow again ` +
+        `to get a fresh code`,
+      `EMAIL-VERIFY-CODE-INVALIDATED`
+    );
+  }
+
+  // If nothing is wrong, then let's go ahead and mark the email verified and consume the code
+  const updatedEmail = await r.io.update("emails", email, { verifiedMs: Date.now() }, auth, r.log);
+  await r.io.update("verification-codes", codeSha256, { consumedMs: Date.now() }, auth, r.log);
+
+  return updatedEmail;
 };

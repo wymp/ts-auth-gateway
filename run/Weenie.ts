@@ -29,3 +29,21 @@ export const authz = () => ({ authz: Authz });
  * service you'd like as a back-end.
  */
 export const emailer = (): { emailer: Emailer | null } => ({ emailer: null });
+/* STUB EMAILER
+export const emailer = (): { emailer: Emailer | null } => ({
+  emailer: {
+    sendEmailVerificationCode: async (
+      codeHex: string,
+      fromEmail: string,
+      toEmail: string,
+      log: SimpleLoggerInterface
+    ): Promise<void> => { log.warning(`THIS IS A STUB. WOULD HAVE SENT AN EMAIL FOR VERIFICATION CODE '${codeHex}'.`); },
+    sendLoginCode: async (
+      codeHex: string,
+      fromEmail: string,
+      toEmail: string,
+      log: SimpleLoggerInterface
+    ): Promise<void> => { log.warning(`THIS IS A STUB. WOULD HAVE SENT AN EMAIL FOR LOGIN CODE '${codeHex}'.`); },
+  }
+});
+*/
