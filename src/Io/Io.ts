@@ -141,4 +141,108 @@ export class Io<ClientRoles extends string, UserRoles extends string> extends Ab
       log
     );
   }
+
+  /**
+   * With the current @wymp/sql library it's not possible to delete rows with complex keys, so we
+   * have to make those declarative methods here on our local object.
+   */
+  public async deleteClientRole(
+    clientId: string,
+    roleId: string,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<void> {
+    log.debug(`Deleting client role '${clientId}:${roleId}'`);
+    const resource = this.get("client-roles", { clientId, roleId }, log, false);
+    if (resource) {
+      await this.db.query("DELETE FROM `client-roles` WHERE `clientId` = ? && `roleId` = ?", [
+        clientId,
+        roleId,
+      ]);
+      log.debug(`Resource deleted, publishing messages`);
+
+      // Bust cache
+      this.cache.clear(new RegExp(`client-roles-.*`));
+
+      // Publish audit message
+      const p: Array<Promise<unknown>> = [];
+      if (this.audit) {
+        log.debug(`Publishing audit message`);
+        p.push(
+          this.audit.delete({
+            auth,
+            targetType: "client-roles",
+            targetId: `${clientId}:${roleId}`,
+          })
+        );
+      }
+
+      // Publish domain message
+      if (this.pubsub) {
+        log.debug(`Publishing domain message`);
+        p.push(
+          this.pubsub.publish({
+            action: "deleted",
+            resource: { type: "client-roles", ...resource },
+          })
+        );
+      }
+
+      await Promise.all(p);
+    } else {
+      log.info(`Resource not found. Nothing to delete.`);
+    }
+  }
+
+  /**
+   * With the current @wymp/sql library it's not possible to delete rows with complex keys, so we
+   * have to make those declarative methods here on our local object.
+   */
+  public async deleteUserRole(
+    userId: string,
+    roleId: string,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<void> {
+    log.debug(`Deleting user role '${userId}:${roleId}'`);
+    const resource = this.get("user-roles", { userId, roleId }, log, false);
+    if (resource) {
+      await this.db.query("DELETE FROM `user-roles` WHERE `userId` = ? && `roleId` = ?", [
+        userId,
+        roleId,
+      ]);
+      log.debug(`Resource deleted, publishing messages`);
+
+      // Bust cache
+      this.cache.clear(new RegExp(`user-roles-.*`));
+
+      // Publish audit message
+      const p: Array<Promise<unknown>> = [];
+      if (this.audit) {
+        log.debug(`Publishing audit message`);
+        p.push(
+          this.audit.delete({
+            auth,
+            targetType: "user-roles",
+            targetId: `${userId}:${roleId}`,
+          })
+        );
+      }
+
+      // Publish domain message
+      if (this.pubsub) {
+        log.debug(`Publishing domain message`);
+        p.push(
+          this.pubsub.publish({
+            action: "deleted",
+            resource: { type: "user-roles", ...resource },
+          })
+        );
+      }
+
+      await Promise.all(p);
+    } else {
+      log.info(`Resource not found. Nothing to delete.`);
+    }
+  }
 }

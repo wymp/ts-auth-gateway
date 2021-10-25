@@ -126,7 +126,7 @@ export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
   };
   "user-roles": {
     type: Auth.Db.UserRole<UserRoles>;
-    constraints: IdConstraint;
+    constraints: { userId: string; roleId: string };
     filters: Filter<{ userId: string }> | Filter<{ userIdIn: Array<string> }>;
     defaults: typeof Defaults["user-roles"];
   };

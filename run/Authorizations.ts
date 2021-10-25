@@ -25,6 +25,14 @@ export const authz: AppDeps["authz"] = {
     [ClientRoles.INTERNAL, null, UserRoles.EMPLOYEE, null],
   ],
 
+  // ClientRoles
+  "POST /organizations/:id/clients/:id/roles": [
+    [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
+  ],
+  "DELETE /organizations/:id/clients/:id/roles/:id": [
+    [ClientRoles.INTERNAL, null, UserRoles.SYSADMIN, null],
+  ],
+
   // Users
   "GET /users(/:id)": [
     [ClientRoles.SYSTEM, true, null, null],

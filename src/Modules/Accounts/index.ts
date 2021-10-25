@@ -4,6 +4,7 @@ import { Parsers } from "@wymp/weenie-framework";
 import { AppDeps } from "../../Types";
 import { IoInterface } from "./Types";
 import * as Clients from "./Clients";
+import * as ClientRoles from "./ClientRoles";
 import * as Emails from "./Emails";
 import * as Organizations from "./Organizations";
 import * as OrgMemberships from "./OrgMemberships";
@@ -96,6 +97,23 @@ export const register = (
     Clients.refreshSecretHandler(r)
   );
 
+  // Client Roles
+  r.log.notice(`HTTP: GET    /accounts/v1/organizations/:orgId/clients/:id/roles`);
+  r.http.get(
+    `/accounts/v1/organizations/:orgId/clients/:id/roles`,
+    ClientRoles.getClientRolesHandler(r)
+  );
+  r.log.notice(`HTTP: POST   /accounts/v1/organizations/:orgId/clients/:id/roles`);
+  r.http.post(`/accounts/v1/organizations/:orgId/clients/:id/roles`, [
+    parseBody,
+    ClientRoles.postClientRolesHandler(r),
+  ]);
+  r.log.notice(`HTTP: DELETE /accounts/v1/organizations/:orgId/clients/:id/roles/:roleId`);
+  r.http.delete(
+    `/accounts/v1/organizations/:orgId/clients/:id/roles/:roleId`,
+    ClientRoles.deleteClientRolesHandler(r)
+  );
+
   // Users
   r.log.notice(`HTTP: GET    /accounts/v1/users`);
   r.http.get(`/accounts/v1/users`, Users.getUsers(r));
@@ -119,7 +137,7 @@ export const register = (
   r.log.notice(`HTTP: POST   /accounts/v1/users/:id/roles`);
   r.http.post(`/accounts/v1/users/:id/roles`, [parseBody, UserRoles.postUserRoles(r)]);
   r.log.notice(`HTTP: DELETE /accounts/v1/users/:id/roles/:roleId`);
-  r.http.post(`/accounts/v1/users/:id/roles/:roleId`, UserRoles.deleteUserRoles(r));
+  r.http.delete(`/accounts/v1/users/:id/roles/:roleId`, UserRoles.deleteUserRoles(r));
 
   // Emails
   r.log.notice(`HTTP: GET    /accounts/v1/users/:id/emails`);

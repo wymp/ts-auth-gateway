@@ -129,6 +129,9 @@ export const addUserRole = async (
       `USER-ROLES-INSUFFICIENT-PERMISSIONS`
     );
   }
+
+  // Now add the role
+  await r.io.save("user-roles", { userId, roleId }, auth, r.log);
 };
 
 /** DELETE /user/:id/roles/:roleId */
@@ -142,16 +145,30 @@ export const deleteUserRoles = (
       // Make sure it's an authd request so we can access the auth object
       Http.assertAuthdReq(req);
 
-      // Get user id
+      // Get user id and roleId
       const userId = getDealiasedUserIdFromReq(req, log);
+      const roleId = req.params.roleId;
+
+      // Verify existence of params
+      if (!userId || !roleId) {
+        throw new E.InternalServerError(
+          `Programmer: This endpoint is not set up correctly. Expecting 'userId' and 'roleId' url parameters, but at least one was missing.`,
+          `DELETE-USER-ROLES_BAD-PARAMS`
+        );
+      }
 
       // If the user is not requesting their own user object, then this requires authorization
       if (userId !== undefined && userId !== req.auth.u?.id) {
         Http.authorize(req, r.authz["DELETE /users/:id/roles"], log);
       }
 
-      // RESUME
-      throw new E.NotImplemented("Sorry, not yet implemented.");
+      // Delete role and respond
+      await r.io.deleteUserRole(userId, roleId, req.auth, log);
+
+      const response: Auth.Api.Responses<ClientRoles, UserRoles>["DELETE /users/:id/roles/:id"] = {
+        data: null,
+      };
+      res.status(200).send(response);
     } catch (e) {
       next(e);
     }
