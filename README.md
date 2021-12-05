@@ -57,15 +57,23 @@ presented by this system:
 * Authentication is a multistep process where the next step is returned in response to the last
   submission until a session is finally returned. Steps are submitted via the
   [`POST /accounts/v1/sessions/login/:step` endpoint](/docs/api.v1.html#tag/Sessions).
-* If the submission returns a response with type `sessions`, then it is a session and no further
+* If the submission returns a response with `t === "session"`, then it is a session and no further
   steps are required.
 * The first step you submit will usually be either [`email`](/docs/api.v1.html#operation/post-accounts-v1-sessions-login-step)
   or [`password`](/docs/api.v1.html#operation/post-accounts-v1-sessions-login-password).
-* A "step" response is identified by a `t` value which is `"steps"`, while a "session" response is
-  identified by a `t` value which is `"sessions"`. In the event of an error, the `t` value is
+* A "step" response is identified by a `t` value which is `"step"`, while a "session" response is
+  identified by a `t` value which is `"session"`. In the event of an error, the `t` value is
   `"error"`. When a "step" response is received, the `step` parameter will contain the next
   step to submit. Clients are responsible for knowing the necessary parameters to submit for each
   step.
+* At the time of this writing, there are only 4 steps: `email`, `password`, `code` and `totp`. They
+  are defined as follows:
+  * `email` - Send an email with a login code in it to the user's login email. The user clicks the
+    link in the email, which should hand the client the login code, which it can use for the `code`
+    step.
+  * `code` - Submit a login code from an email
+  * `password` - Submit an email/password combination
+  * `totp` - Submit a 2fa TOTP (this requires a code that is returned as part of the step response)
 
 
 ### Using Session and Refresh Tokens
