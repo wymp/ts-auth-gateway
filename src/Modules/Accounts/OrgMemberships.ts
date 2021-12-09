@@ -58,7 +58,7 @@ export const getByUserIdHandler = (r: Pick<AppDeps, "io" | "log">): SimpleHttpSe
 export const getByUserId = async (
   userId: string,
   auth: Auth.ReqInfoString,
-  collectionParams: Api.CollectionParams,
+  collectionParams: Api.Server.CollectionParams,
   r: Pick<AppDeps, "io" | "log">
 ): Promise<Api.CollectionResponse<Auth.Db.OrgMembership, any>> => {
   // Authorize - must be an authenticated internal system client, or the user id must match the
@@ -143,7 +143,7 @@ export const getByOrganizationIdHandler = (
 export const getByOrganizationId = async (
   organizationId: string,
   auth: Auth.ReqInfoString,
-  collectionParams: Api.CollectionParams,
+  collectionParams: Api.Server.CollectionParams,
   r: Pick<AppDeps, "io" | "log">
 ): Promise<Api.CollectionResponse<Auth.Db.OrgMembership, any>> => {
   // Authorize - must be an authenticated internal system client, or the calling user must be a

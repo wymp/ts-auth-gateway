@@ -114,7 +114,7 @@ BEGIN;
   --
   CREATE TABLE `sessions` (
     `id` CHAR(36) NOT NULL PRIMARY KEY,
-    `userAgent` VARCHAR(255) NOT NULL COMMENT "The user-agent string representing the device from which the user has logged in",
+    `userAgent` VARCHAR(255) DEFAULT NULL COMMENT "The user-agent string representing the device from which the user has logged in",
     `ip` VARCHAR(128) NOT NULL COMMENT "The ip address (v4 or v6) from which this session was created.",
     `userId` CHAR(36) NOT NULL,
     `invalidatedMs` BIGINT UNSIGNED NULL COMMENT "Manually invalidate the session by setting this value",

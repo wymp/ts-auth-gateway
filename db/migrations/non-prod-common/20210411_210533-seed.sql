@@ -13,7 +13,7 @@ BEGIN;
 
   INSERT INTO `clients` VALUES
     -- Secret: 2c51a52f2dec9998292dab987bd24eee136916898abab14f8a060f47b6287535
-    ('1eb9b2d9-aa0b-68b0-2d59-5a25779175e7','$2a$10$mnZOIGUjN.Bq5CKyBn.cw.Rryyr9gDQkVXnRyN2qBYFd/R9RgxiLe','ACME Website',-1,"1eb9b2d9-9b59-6560-9f95-b5c015c766da",1618190621645);
+    ('1eb9b2d9-aa0b-68b0-2d59-5a25779175e7','$2a$10$mnZOIGUjN.Bq5CKyBn.cw.Rryyr9gDQkVXnRyN2qBYFd/R9RgxiLe','ACME Website',-1,"1eb9b2d9-9b59-6560-9f95-b5c015c766da",1618190621645, null);
 
   INSERT INTO `client-access-restrictions` VALUES
     ('1eb9b2e5-0624-6330-4d3a-8e87c8fd4414','host','https://dev.acme-ventures.com','1eb9b2d9-aa0b-68b0-2d59-5a25779175e7',1618190621646);
@@ -23,7 +23,7 @@ BEGIN;
 
   INSERT INTO `users` VALUES
     -- Password: `Testing12!`
-    ('1eb9b2e9-1e97-6850-d243-8452b516915f', 'Test User One', '$2a$10$2jhqTJXThvMxbETzO0Gq/eq7SeZIqpiY/HYWD1Qjmj/zJQohCSJJ6', 0, 0, 0, 1618190621647);
+    ('1eb9b2e9-1e97-6850-d243-8452b516915f', 'Test User One', '$2a$10$2jhqTJXThvMxbETzO0Gq/eq7SeZIqpiY/HYWD1Qjmj/zJQohCSJJ6', 0, 1618190621647, null, null);
 
   INSERT INTO `emails` VALUES
     ('testing+1@example.com', '1eb9b2e9-1e97-6850-d243-8452b516915f', null, 1618190621647);
