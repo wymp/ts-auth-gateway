@@ -1,0 +1,230 @@
+<!DOCTYPE html><html class="default"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>@wymp/auth-gateway</title><meta name="description" content="Documentation for @wymp/auth-gateway"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script async src="assets/search.js" id="search-script"></script></head><body><script>document.body.classList.add(localStorage.getItem("tsd-theme") || "os")</script><header><div class="tsd-page-toolbar"><div class="container"><div class="table-wrap"><div class="table-cell" id="tsd-search" data-base="."><div class="field"><label for="tsd-search-field" class="tsd-widget search no-caption">Search</label><input type="text" id="tsd-search-field"/></div><ul class="results"><li class="state loading">Preparing search index...</li><li class="state failure">The search index is not available</li></ul><a href="index.html" class="title">@wymp/auth-gateway</a></div><div class="table-cell" id="tsd-widgets"><div id="tsd-filter"><a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a><div class="tsd-filter-group"><div class="tsd-select" id="tsd-filter-visibility"><span class="tsd-select-label">All</span><ul class="tsd-select-list"><li data-value="public">Public</li><li data-value="protected">Public/Protected</li><li data-value="private" class="selected">All</li></ul></div> <input type="checkbox" id="tsd-filter-inherited" checked/><label class="tsd-widget" for="tsd-filter-inherited">Inherited</label><input type="checkbox" id="tsd-filter-externals" checked/><label class="tsd-widget" for="tsd-filter-externals">Externals</label></div></div><a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a></div></div></div></div><div class="tsd-page-title"><div class="container"><h1>@wymp/auth-gateway</h1></div></div></header><div class="container container-main"><div class="row"><div class="col-8 col-content"><div class="tsd-panel tsd-typography">
+<a href="#auth-gateway" id="auth-gateway" style="color: inherit; text-decoration: none;">
+  <h1>Auth Gateway</h1>
+</a>
+<p><strong>WARNING: THIS IS AN EXPERIMENT IN EARLY DEVELOPMENT. IT IS SUBJECT TO BREAKING CHANGES AND IS NOT
+GUARANTEED TO WORK WELL OR EVEN AT ALL.</strong></p>
+<p>This is a library and reference implementation for a production-grade Authn/z gateway (similar in
+concept to AWS&#39;s API Gateway). It performs
+the following functions:</p>
+<ul>
+<li>(optional) Validates that a client ID was passed with every request</li>
+<li>Validates passed client ID and (optional) secret against database records</li>
+<li>(optional) Rate-limits requests per client ID</li>
+<li>Registers new users</li>
+<li>Validates user data (session token or oauth (TODO)), if passed</li>
+<li>Generates new session credentials for users on valid authentication (including optional 2fa (TODO))</li>
+<li>Enforces configurable restrictions on clients (e.g., IP restrictions, host restrictions, or target
+API restrictions)</li>
+<li>Manages relationships between organizations, clients and users.</li>
+<li>TODO: Generates new oauth credentials on valid request</li>
+</ul>
+<p>It is intended to be used as a front door to a collection of microservices. For example, say you
+have an exchange service, a market data service, a currencies service and a monitoring service. You
+would access all of those separate services through an instance of this gateway via urls such as
+<code>/exchange/v1</code>, <code>/market-data/v1</code>, <code>/currencies/v1</code> and <code>/monitoring/v1</code>. You can maintain separate
+versions of each service by using different version specifiers (which you would configure in the
+database for this service to route to separate instances), and each service would get a uniform
+<a href="https://github.com/wymp/ts-types/blob/9d2047e1338e8cc9c557e675c5dfbade29a40745/src/Auth.ts#L3">Request Info object</a>
+containing information about the request, such as the client from which the request was issued and
+its associated roles, and the user that made the request and their roles.</p>
+<p>This service has built-in endpoints for account management at <code>/accounts/v1</code>. Those endpoints
+facilitate things like user creation, login, organization management, etc.</p>
+
+<a href="#purpose-of-this-codebase" id="purpose-of-this-codebase" style="color: inherit; text-decoration: none;">
+  <h3>Purpose of This Codebase</h3>
+</a>
+<p>This codebase is intended to be an API gateway that is (eventually) usable out of the box as a clone
+or optionally brought in as a dependency and used as a library.</p>
+<p>If you were to use it out of the box, you would clone this repo; use the migrations in the <code>db</code>
+folder to set up the database, loading whatever seed data in that is appropriate for your use case
+(e.g., your organization, a sysadmin user, and some back-end services in the <code>apis</code> table); compile
+the source code into JS files; then deploy the built files however you wish to a server of your
+choice.</p>
+<p>However, authentication and user management is <em>very</em> domain specific, so it&#39;s very likely that it
+won&#39;t quite work for your specific needs out of the box. With that in mind, it is also intended to
+be documented and built well enough that you would be able to relatively easily fork the repo and
+modify it for your specific needs (definitely a work in progress).</p>
+
+<a href="#authentication" id="authentication" style="color: inherit; text-decoration: none;">
+  <h3>Authentication</h3>
+</a>
+<p>Every authentication system will have its own flow. Following is a detailed description of the flow
+presented by this system:</p>
+<ul>
+<li>Authentication is a multistep process where the next step is returned in response to the last
+submission until a session is finally returned. Steps are submitted via the
+<a href="/docs/api.v1.html#tag/Sessions"><code>POST /accounts/v1/sessions/login/:step</code> endpoint</a>.</li>
+<li>If the submission returns a response with <code>t === &quot;session&quot;</code>, then it is a session and no further
+steps are required.</li>
+<li>The first step you submit will usually be either <a href="/docs/api.v1.html#operation/post-accounts-v1-sessions-login-step"><code>email</code></a>
+or <a href="/docs/api.v1.html#operation/post-accounts-v1-sessions-login-password"><code>password</code></a>.</li>
+<li>A &quot;step&quot; response is identified by a <code>t</code> value which is <code>&quot;step&quot;</code>, while a &quot;session&quot; response is
+identified by a <code>t</code> value which is <code>&quot;session&quot;</code>. In the event of an error, the <code>t</code> value is
+<code>&quot;error&quot;</code>. When a &quot;step&quot; response is received, the <code>step</code> parameter will contain the next
+step to submit. Clients are responsible for knowing the necessary parameters to submit for each
+step.</li>
+<li>At the time of this writing, there are only 4 steps: <code>email</code>, <code>password</code>, <code>code</code> and <code>totp</code>. They
+are defined as follows:<ul>
+<li><code>email</code> - Send an email with a login code in it to the user&#39;s login email. The user clicks the
+link in the email, which should hand the client the login code, which it can use for the <code>code</code>
+step.</li>
+<li><code>code</code> - Submit a login code from an email</li>
+<li><code>password</code> - Submit an email/password combination</li>
+<li><code>totp</code> - Submit a 2fa TOTP (this requires a code that is returned as part of the step response)</li>
+</ul>
+</li>
+</ul>
+
+<a href="#using-session-and-refresh-tokens" id="using-session-and-refresh-tokens" style="color: inherit; text-decoration: none;">
+  <h3>Using Session and Refresh Tokens</h3>
+</a>
+<p>Successful authentication results in a <code>sessions</code> object containing a <code>token</code> value and a <code>refresh</code>
+value. The <code>token</code> value is to be used to make requests against the API, while the <code>refresh</code> value
+is to be used to obtain new values when the token expires.</p>
+<p>Additionally, either value may be used to log out (i.e., invalidate) a session.</p>
+<p>To refresh a session using a refresh token, submit a payload to the <code>POST /accounts/v1/sessions/refresh</code>
+endpoint as indicated in the <a href="/docs/api.v1.html#operation/post-accounts-v1-sessions-refresh">API docs</a>.
+The response will be a session object with new &quot;refresh&quot; and &quot;token&quot; values.</p>
+<p>To log out of a session, submit a request to the <code>POST /accounts/v1/sessions/logout</code> endpoint in
+accordance with the <a href="/docs/api.v1.html#operation/post-accounts-v1-sessions-logout">API docs</a>.</p>
+
+<a href="#running" id="running" style="color: inherit; text-decoration: none;">
+  <h3>Running</h3>
+</a>
+
+<a href="#database" id="database" style="color: inherit; text-decoration: none;">
+  <h4>Database</h4>
+</a>
+<p>This service is expecting a MySQL database. It provides a database schema in the <code>db/migrations</code>
+folder which may be applied using <code>shmig</code>. <code>shmig</code> is a small, lightweight shell-based database
+migration framework for various SQL servers (including MySQL).</p>
+<p>You can install shmig on Debian-based machines by installing the apt repo <a href="https://packages.kaelshipman.me/">here</a>
+and then running <code>sudo apt-get install shmig</code>. Alternatively, you can go to the Wymp fork of the
+shmig repo <a href="https://github.com/wymp/shmig/">here</a> and just download and install the file directly.</p>
+<p>When you have shmig installed, just create a new database and user (if necessary), add those
+credentials to your <code>shmig.local.conf</code> file, cd into <code>db</code> and run <code>shmig up</code>.</p>
+
+<a href="#todo" id="todo" style="color: inherit; text-decoration: none;">
+  <h3>TODO</h3>
+</a>
+
+<a href="#accounts-endpoints" id="accounts-endpoints" style="color: inherit; text-decoration: none;">
+  <h4>Accounts Endpoints</h4>
+</a>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <strong>Organizations</strong><ul>
+<li><input checked="" disabled="" type="checkbox"> GET    /accounts/v1/organizations</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/organizations</li>
+<li><input checked="" disabled="" type="checkbox"> GET    /accounts/v1/organizations/:id</li>
+<li><input checked="" disabled="" type="checkbox"> PATCH  /accounts/v1/organizations/:id</li>
+<li><input checked="" disabled="" type="checkbox"> DELETE /accounts/v1/organizations/:id</li>
+</ul>
+</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Users</strong><ul>
+<li><input checked="" disabled="" type="checkbox"> GET    /accounts/v1/users</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/users</li>
+<li><input checked="" disabled="" type="checkbox"> GET    /accounts/v1/users/:id</li>
+<li><input checked="" disabled="" type="checkbox"> PATCH  /accounts/v1/users/:id</li>
+<li><input checked="" disabled="" type="checkbox"> DELETE /accounts/v1/users/:id</li>
+<li><input checked="" disabled="" type="checkbox"> GET    /accounts/v1/users/:id/roles</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/users/:id/roles</li>
+<li><input checked="" disabled="" type="checkbox"> DELETE /accounts/v1/users/:id/roles/:roleId</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/users/:id/change-password</li>
+</ul>
+</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Emails</strong><ul>
+<li><input checked="" disabled="" type="checkbox"> GET    /accounts/v1/users/:id/emails</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/users/:id/emails</li>
+<li><input checked="" disabled="" type="checkbox"> DELETE /accounts/v1/users/:id/emails/:id</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/users/:id/emails/:id/generate-verification</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/users/:id/emails/:id/verify</li>
+</ul>
+</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Clients</strong><ul>
+<li><input checked="" disabled="" type="checkbox"> GET    /accounts/v1/organizations/:id/clients</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/organizations/:id/clients</li>
+<li><input checked="" disabled="" type="checkbox"> GET    /accounts/v1/organizations/:id/clients/:id</li>
+<li><input checked="" disabled="" type="checkbox"> PATCH  /accounts/v1/organizations/:id/clients/:id</li>
+<li><input checked="" disabled="" type="checkbox"> DELETE /accounts/v1/organizations/:id/clients/:id</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/organizations/:id/clients/:id/refresh-secret</li>
+</ul>
+</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Client Roles</strong><ul>
+<li><input checked="" disabled="" type="checkbox"> GET    /accounts/v1/organizations/:id/clients/:id/roles</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/organizations/:id/clients/:id/roles</li>
+<li><input checked="" disabled="" type="checkbox"> DELETE /accounts/v1/organizations/:id/clients/:id/roles/:id</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> <strong>Client Access Restrictions</strong><ul>
+<li><input disabled="" type="checkbox"> GET    /accounts/v1/organizations/:id/clients/:id/access-restrictions</li>
+<li><input disabled="" type="checkbox"> POST   /accounts/v1/organizations/:id/clients/:id/access-restrictions</li>
+<li><input disabled="" type="checkbox"> DELETE /accounts/v1/organizations/:id/clients/:id/access-restrictions/:id</li>
+</ul>
+</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Memberships</strong><ul>
+<li><input checked="" disabled="" type="checkbox"> GET    /accounts/v1/users/:id/memberships</li>
+<li><input checked="" disabled="" type="checkbox"> GET    /accounts/v1/organizations/:id/memberships</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/organizations/:id/memberships</li>
+<li><input checked="" disabled="" type="checkbox"> PATCH /accounts/v1/org-memberships/:id</li>
+<li><input checked="" disabled="" type="checkbox"> DELETE /accounts/v1/org-memberships/:id</li>
+</ul>
+</li>
+<li>[-] <strong>Sessions</strong><ul>
+<li><input checked="" disabled="" type="checkbox"> GET    /accounts/v1/sessions</li>
+<li><input checked="" disabled="" type="checkbox"> GET    /accounts/v1/users/:id/sessions</li>
+<li>[-] POST   /accounts/v1/sessions/login/email</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/sessions/login/password</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/sessions/login/code</li>
+<li>[-] POST   /accounts/v1/sessions/login/totp</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/sessions/refresh</li>
+<li><input checked="" disabled="" type="checkbox"> POST   /accounts/v1/sessions/logout</li>
+</ul>
+</li>
+</ul>
+
+<a href="#general" id="general" style="color: inherit; text-decoration: none;">
+  <h4>General</h4>
+</a>
+<ul>
+<li><input disabled="" type="checkbox"> Implement TOTP flow and infrastructure</li>
+<li><input disabled="" type="checkbox"> Implement API regression tests</li>
+<li><input disabled="" type="checkbox"> Use TypeDoc to create library documentation</li>
+<li><input disabled="" type="checkbox"> Implement hook system that allows for alternate handling and/or system extensibility</li>
+<li><input disabled="" type="checkbox"> Export library functions correctly. In many cases, this may include refactoring functionality
+between endpoint handlers and functions.</li>
+<li><input disabled="" type="checkbox"> Improve logging in various areas of the code<ul>
+<li><input disabled="" type="checkbox"> Emails module</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> Full authorization audit for every endpoint</li>
+</ul>
+
+<a href="#later-improvements" id="later-improvements" style="color: inherit; text-decoration: none;">
+  <h4>Later Improvements</h4>
+</a>
+<ul>
+<li><input disabled="" type="checkbox"> Implement data transactions in database for things like user creation</li>
+<li><input disabled="" type="checkbox"> Fix lots of things around <code>verification-codes</code>. We need to refactor around the idea that the
+<code>state</code> parameter passed in by a user represents a certain login flow execution, rather than
+having it be somewhat tangential. This flows into login code and totp authn flows.<ul>
+<li><input disabled="" type="checkbox"> Currently they require an email address, but in some cases we would prefer to associated a
+userId</li>
+<li><input disabled="" type="checkbox"> We&#39;ve switched back to calling the user generated token &quot;state&quot;, and we should reflect that
+in the database.</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> Refactor <code>session-tokens</code> to have <code>tokenSha256</code> and <code>refreshTokenSha256</code> all together. When a
+refresh token is consumed or invalidated, the associated session token should also be consumed
+or invalidated, and that should be verified by the gateway. I.e., users should not be able to
+use session tokens associated with consumed refresh tokens to successfully make requests.</li>
+<li><input disabled="" type="checkbox"> Protect email addresses as PII</li>
+<li><input disabled="" type="checkbox"> Implement generalized multi-step process for dangerous operations (e.g., DELETE user). This
+would mean, for example, any endpoint could return an <code>auth-step</code> or something, and an auth
+flow would ensue, resulting in completion of the operation being attempted.</li>
+<li><input disabled="" type="checkbox"> Possibly refactor endpoits? I&#39;m starting to question my original philosophies. Perhaps it&#39;s
+fine, but I believe at very least there are some inconsistencies that can be resolved. E.g.,
+When do we force access through a hierarchical endpoint vs a flat one (e.g.,
+<code>/organizations/:id/clients/:id</code> vs <code>/clients/:id</code>)?</li>
+</ul>
+</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Exports</a></li><li class=" tsd-kind-namespace"><a href="modules/Io.html">Io</a></li><li class=" tsd-kind-namespace"><a href="modules/Accounts.html">Accounts</a></li><li class=" tsd-kind-namespace"><a href="modules/Cors.html">Cors</a></li><li class=" tsd-kind-namespace"><a href="modules/Gateway.html">Gateway</a></li><li class=" tsd-kind-namespace"><a href="modules/Proxy.html">Proxy</a></li><li class=" tsd-kind-namespace"><a href="modules/Service.html">Service</a></li><li class=" tsd-kind-namespace"><a href="modules/Types.html">Types</a></li></ul></nav><nav class="tsd-navigation secondary menu-sticky"><ul></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>
