@@ -6,7 +6,7 @@
   "types": "dist/src/index.d.ts",
   "scripts": {
     "build": "scripts/build",
-    "docgen": "npx redoc-cli bundle -o docs/api.v1.html docs/Wymp-Auth-Gateway-API.v1.json",
+    "docgen": "npx redoc-cli bundle -o docs/http/api.v1.html docs/http/Wymp-Auth-Gateway-API.v1.json; npx typedoc src/index.ts --out ./docs/ts --sort visibility --sort source-order",
     "test": "jest",
     "compile-start": "npx -p typescript tsc && node ./dist/run/app.js",
     "start": "node ./dist/run/app.js"
@@ -54,9 +54,10 @@
     "jest": "^27.4.3",
     "prettier": "^2.5.1",
     "pretty-quick": "^3.1.2",
-    "redoc-cli": "^0.13.1",
+    "redoc-cli": "^0.12.3",
     "simple-http-client-rpn": "^0.5.1",
     "ts-jest": "^27.1.1",
+    "typedoc": "^0.22.10",
     "typescript": "^4.5.2"
   },
   "prettier": {

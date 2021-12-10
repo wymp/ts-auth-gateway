@@ -1,6 +1,6 @@
 import * as E from "@openfinanceio/http-errors";
 import * as Weenie from "@wymp/weenie-framework";
-import { Service, AppConfigValidator, AppConfig } from "../src";
+import { Service, Types } from "../src";
 import * as AppWeenie from "./Weenie";
 
 // There are some minimal bootstrap options that you can configure via environment variables:
@@ -29,8 +29,13 @@ process.on("uncaughtException", die);
   // Start off our dependencies with config, then attach others from here
   const d = await Weenie.Weenie(
     (envConfig
-      ? Weenie.configFromEnv<AppConfig>(process.env, AppConfigValidator, defaults, prefix)
-      : Weenie.configFromFiles<AppConfig>(defaults, overrides, AppConfigValidator))()
+      ? Weenie.configFromEnv<Types.AppConfig>(
+          process.env,
+          Types.AppConfigValidator,
+          defaults,
+          prefix
+        )
+      : Weenie.configFromFiles<Types.AppConfig>(defaults, overrides, Types.AppConfigValidator))()
   )
     // Make sure config.http.parseJson is not turned on, since that will cause problems with proxying
     .and(

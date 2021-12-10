@@ -1,18 +1,21 @@
 Auth Gateway
 =========================================================================
 
-**WARNING: THIS IS AN EXPERIMENT IN EARLY DEVELOPMENT. IT IS SUBJECT TO FREQUENT BREAKING CHANGES,
-AND IS NOT GUARANTEED TO WORK WELL OR EVEN AT ALL.**
+**WARNING: THIS IS AN EXPERIMENT IN EARLY DEVELOPMENT. IT IS SUBJECT TO BREAKING CHANGES AND IS NOT
+GUARANTEED TO WORK WELL OR EVEN AT ALL.**
 
-This is a library and reference implementation for a production-grade Authn/z gateway. It performs
+This is a library and reference implementation for a production-grade Authn/z gateway (similar in
+concept to AWS's API Gateway). It performs
 the following functions:
 
-* Validates client ID and (optional) secret against database records
-* (optional) Rate-limits requests from clients
+* (optional) Validates that a client ID was passed with every request
+* Validates passed client ID and (optional) secret against database records
+* (optional) Rate-limits requests per client ID
 * Registers new users
 * Validates user data (session token or oauth (TODO)), if passed
-* Generates new session credentials for users on valid authentication (including optional 2fa)
-* Enforces configurable restrictions on clients
+* Generates new session credentials for users on valid authentication (including optional 2fa (TODO))
+* Enforces configurable restrictions on clients (e.g., IP restrictions, host restrictions, or target
+  API restrictions)
 * Manages relationships between organizations, clients and users.
 * TODO: Generates new oauth credentials on valid request
 
@@ -22,31 +25,29 @@ would access all of those separate services through an instance of this gateway 
 `/exchange/v1`, `/market-data/v1`, `/currencies/v1` and `/monitoring/v1`. You can maintain separate
 versions of each service by using different version specifiers (which you would configure in the
 database for this service to route to separate instances), and each service would get a uniform
-[Request Info object](https://github.com/wymp/ts-types/blob/c186ce316dc689cd7b913abde3ceb4bb562b7da4/src/Auth.ts#L4)
-containing information about the request such as the client from which the request was issued and
+[Request Info object](https://github.com/wymp/ts-types/blob/9d2047e1338e8cc9c557e675c5dfbade29a40745/src/Auth.ts#L3)
+containing information about the request, such as the client from which the request was issued and
 its associated roles, and the user that made the request and their roles.
 
 This service has built-in endpoints for account management at `/accounts/v1`. Those endpoints
 facilitate things like user creation, login, organization management, etc.
 
-At the time of this writing, basic user creation and authentication works correctly, meaning you can
-create a user and log in and log out of a session for that user.
-
 
 ### Purpose of This Codebase
 
-This codebase is intended to be an API gateway that is (eventually) usable out of the box.
+This codebase is intended to be an API gateway that is (eventually) usable out of the box as a clone
+or optionally brought in as a dependency and used as a library.
 
-If you were to use it out of the box, you would download the source code; use the migrations in the
-`db` folder to set up the database, loading whatever seed data in that is appropriate for your use
-case (e.g., your organization, a sysadmin user, and some back-end services in the `apis` table);
-compile the source code into JS files; then deploy the built files however you wish to a server of
-your choice.
+If you were to use it out of the box, you would clone this repo; use the migrations in the `db`
+folder to set up the database, loading whatever seed data in that is appropriate for your use case
+(e.g., your organization, a sysadmin user, and some back-end services in the `apis` table); compile
+the source code into JS files; then deploy the built files however you wish to a server of your
+choice.
 
 However, authentication and user management is _very_ domain specific, so it's very likely that it
 won't quite work for your specific needs out of the box. With that in mind, it is also intended to
-be documented and built well enough, that you would be able to relatively easily fork the repo and
-modify it for your specific needs.
+be documented and built well enough that you would be able to relatively easily fork the repo and
+modify it for your specific needs (definitely a work in progress).
 
 
 ### Authentication

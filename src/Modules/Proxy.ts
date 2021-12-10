@@ -4,6 +4,9 @@ import * as E from "@wymp/http-errors";
 import * as Http from "@wymp/http-utils";
 import { AppDeps } from "../Types";
 
+/**
+ * A very minimal IO interface to help better scope the dependnecies in this module.
+ */
 export type ProxyIoInterface = Pick<AppDeps["io"], "getApiConfig">;
 
 type MinReq = {
@@ -16,6 +19,10 @@ type MinReq = {
   };
 };
 
+/**
+ * Use the passed in application dependencies to create a proxying middleware and then register that
+ * middleware against the given HTTP request handler.
+ */
 export const register = (
   r: Pick<AppDeps, "http" | "config" | "log" | "proxy"> & { io: ProxyIoInterface }
 ) => {
@@ -23,6 +30,17 @@ export const register = (
   r.http.use(getProxyMiddleware(r));
 };
 
+/**
+ * Takes a set of dependnecies and uses them to create and return a middleware function that
+ * forwards requests to the destination specified by the request's API configuration (from the
+ * database). The forwarded request strips out the Authorization header and inserts a new header
+ * containing full authentication information.
+ *
+ * Depending on configuration, the header may be signed to improve system security.
+ *
+ * Note that this middleware can be used with Express, but it is also compatible with
+ * `SimpleHttpRequestHandlerInterface` from [`@wymp/ts-simple-interfaces`](https://github.com/wymp/ts-simple-interfaces).
+ */
 export const getProxyMiddleware = (
   r: Pick<AppDeps, "log" | "proxy"> & {
     io: ProxyIoInterface;

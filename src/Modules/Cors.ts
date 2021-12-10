@@ -3,11 +3,13 @@ import { SimpleHttpServerMiddleware } from "@wymp/ts-simple-interfaces";
 import { AppDeps } from "../Types";
 
 /**
- * CORS Handler
+ * Get a CORS Handler
  *
- * Handles details of the CORS protocol, including the preflight OPTIONS request,  on
- * a per-request basis. By default, allows GET requests with auth, content type and
- * accept headers.
+ * Handles details of the CORS protocol - including the preflight OPTIONS request - on a per-request
+ * basis. By default, allows GET requests with auth, content type and accept headers.
+ *
+ * **NOTE:** Because this library was designed to perform authn/z internally, it mostly just "turns
+ * off" CORS functionality. This may or may not be desirable to you in your particular use case.**
  */
 
 export const handler = (

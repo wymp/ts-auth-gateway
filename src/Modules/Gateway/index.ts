@@ -4,8 +4,6 @@ import { Auth } from "@wymp/types";
 import { AppDeps, ClientRoles } from "../../Types";
 import * as lib from "./Lib";
 
-export type GatewayMiddlewareIo = AppDeps["io"];
-
 type MinReq = {
   method: string;
   path: string;
@@ -15,9 +13,16 @@ type MinReq = {
   };
 };
 
-export const middleware = (
-  r: Pick<AppDeps, "config" | "log" | "cache" | "rateLimiter"> & { io: GatewayMiddlewareIo }
-) => {
+/**
+ * Takes a set of application dependencies and returns a middleware function that can be used to
+ * verify whether a given request is formatted correctly and is properly authn/z'd. **This is the
+ * core functionality of the Gateway portion of this library - it is mostly the reason this library
+ * was built.**
+ *
+ * Note that this middleware can be used with Express, but it is also compatible with
+ * `SimpleHttpRequestHandlerInterface` from [`@wymp/ts-simple-interfaces`](https://github.com/wymp/ts-simple-interfaces).
+ */
+export const middleware = (r: Pick<AppDeps, "config" | "log" | "cache" | "rateLimiter" | "io">) => {
   return async (req: MinReq, res: any, next: (e?: Error) => void) => {
     const log = logger(r.log, req, res);
     log.debug(`Running gateway logic`);

@@ -1,14 +1,14 @@
 import { SimpleSqlDbInterface, SimpleLoggerInterface } from "@wymp/ts-simple-interfaces";
 import * as HttpProxy from "http-proxy";
-import { Io, CacheInterface, ClientRoles, UserRoles, Emailer } from "../src";
+import { Io, Types } from "../src";
 import { authz as Authz } from "./Authorizations";
 
-export const io = (r: { sql: SimpleSqlDbInterface; cache: CacheInterface }) => ({
-  io: new Io<ClientRoles, UserRoles>(r.sql, r.cache),
+export const io = (r: { sql: SimpleSqlDbInterface; cache: Types.CacheInterface }) => ({
+  io: new Io.Io<Types.ClientRoles, Types.UserRoles>(r.sql, r.cache),
 });
 
 export const mockCache = () => ({
-  cache: <CacheInterface>{
+  cache: <Types.CacheInterface>{
     get<T>(
       k: string,
       v: () => T | Promise<T>,
@@ -28,9 +28,9 @@ export const authz = () => ({ authz: Authz });
  * To enable emailing, just implement `src/Types::Emailer` interface here. You can use whatever
  * service you'd like as a back-end.
  */
-export const emailer = (): { emailer: Emailer | null } => ({ emailer: null });
+export const emailer = (): { emailer: Types.Emailer | null } => ({ emailer: null });
 /* STUB EMAILER
-export const emailer = (): { emailer: Emailer | null } => ({
+export const emailer = (): { emailer: Types.Emailer | null } => ({
   emailer: {
     sendEmailVerificationCode: async (
       codeHex: string,

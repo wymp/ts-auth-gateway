@@ -1,6 +1,10 @@
 import { IdConstraint, Filter, NullFilter, both, strId } from "@wymp/sql";
 import { Auth } from "@wymp/types";
 
+/**
+ * A set of defaults for using in our `TypeMap` (see [`@wymp/sql`](https://github.com/wymp/ts-sql)
+ * for more details).
+ */
 export const Defaults = {
   apis: {
     active: 1 as const,
@@ -54,6 +58,11 @@ export const Defaults = {
   "client-roles": {},
 };
 
+/**
+ * A Type Map defining the output types, selection constraints, collection filters, and default
+ * values for all of the objects that our database handles. See [`@wymp/sql`](https://github.com/wymp/ts-sql)
+ * for more details.
+ */
 export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
   apis: {
     type: Auth.Db.Api;

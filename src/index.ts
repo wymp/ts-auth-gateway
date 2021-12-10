@@ -1,7 +1,6 @@
+import * as Io from "./Io";
 import * as Service from "./Service";
+import * as Types from "./Types";
 
-export { Service };
-
-export * from "./Io";
 export * from "./Modules";
-export * from "./Types";
+export { Io, Service, Types };

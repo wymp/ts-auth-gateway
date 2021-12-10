@@ -290,7 +290,7 @@ export const createUser = async (
   userAgent: string | undefined,
   referrer: string | undefined,
   auth: Auth.ReqInfo,
-  r: Pick<AppDeps, "config" | "log" | "io" | "emailer">
+  r: Pick<AppDeps, "config" | "log" | "io" | "emailer" | "onCreateUser">
 ): Promise<Auth.Api.Authn.Session> => {
   r.log.debug(`Called createUser`);
 
@@ -390,6 +390,20 @@ export const createUser = async (
     // Create a new session
     createSession(user.id, userAgent, auth, {}, r),
   ]);
+
+  // If we've got an `onCreateUser` hook, send the user data to it
+  if (r.onCreateUser) {
+    r.log.notice(`\`onCreateUser\` hook provided. Calling it with user data.`);
+    await r
+      .onCreateUser(
+        {
+          ...user,
+          email: postUser.email,
+        },
+        r
+      )
+      .catch((e) => r.log.error(`\`onCreateUser\` hook failed! Error: ${e.message}`));
+  }
 
   // Return the session
   return session;

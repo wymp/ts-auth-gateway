@@ -12,7 +12,9 @@ import { TypeMap, Defaults } from "./Types";
 type SessionAndToken = Auth.Db.Session & { token: Auth.Db.SessionToken };
 
 /**
- * This class abstracts all io access into generalized or specific declarative method calls
+ * This class abstracts all io access into generalized or specific declarative method calls. It
+ * extends `AbstractSql` from [`@wymp/sql`](https://github.com/wymp/ts-sql). Please see that library
+ * to learn more.
  */
 export class Io<ClientRoles extends string, UserRoles extends string> extends AbstractSql<
   TypeMap<ClientRoles, UserRoles>
@@ -20,8 +22,13 @@ export class Io<ClientRoles extends string, UserRoles extends string> extends Ab
   protected defaults = Defaults;
   public constructor(protected db: SimpleSqlDbInterface, protected cache: CacheInterface) {
     super();
+
+    // There are a couple objects that don't have an `id` field as their primary key. Set those
+    // here.
     this.primaryKeys["session-tokens"] = "tokenSha256";
     this.primaryKeys["verification-codes"] = "codeSha256";
+
+    // Don't automatically convert back and forth between strings and buffers
     this.convertBuffersAndHex = false;
   }
 
