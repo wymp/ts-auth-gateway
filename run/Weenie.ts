@@ -3,12 +3,12 @@ import * as HttpProxy from "http-proxy";
 import { Io, Types } from "../src";
 import { authz as Authz } from "./Authorizations";
 
-export const io = (r: { sql: SimpleSqlDbInterface; cache: Types.CacheInterface }) => ({
+export const io = (r: { sql: SimpleSqlDbInterface; cache: Io.CacheInterface }) => ({
   io: new Io.Io<Types.ClientRoles, Types.UserRoles>(r.sql, r.cache),
 });
 
 export const mockCache = () => ({
-  cache: <Types.CacheInterface>{
+  cache: <Io.CacheInterface>{
     get<T>(
       k: string,
       v: () => T | Promise<T>,

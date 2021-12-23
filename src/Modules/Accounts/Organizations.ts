@@ -39,13 +39,17 @@ export const getOrganizations = (
           t: "single",
           data: {
             type: "organizations",
-            ...(await r.io.get("organizations", { id: req.params.id }, log, true)),
+            ...(await r.io.getOrganizationById(req.params.id, log, true)),
           },
         };
         return res.send(response);
       } else {
         // GET /organizations
-        const orgs = await r.io.get("organizations", Http.getCollectionParams(req.query), log);
+        const orgs = await r.io.getOrganizations(
+          undefined,
+          Http.getCollectionParams(req.query),
+          log
+        );
 
         const response: Auth.Api.Responses<ClientRoles, UserRoles>["GET /organizations"] = {
           ...orgs,
@@ -132,11 +136,10 @@ export const createOrganization = async (
   auth: Auth.ReqInfo,
   r: Pick<AppDeps, "log" | "io">
 ): Promise<Auth.Db.Organization> => {
-  const organization = await r.io.save("organizations", { name: incoming.name }, auth, r.log);
+  const organization = await r.io.saveOrganization({ name: incoming.name }, auth, r.log);
 
   if (auth.u) {
-    await r.io.save(
-      "org-memberships",
+    await r.io.saveOrgMembership(
       {
         organizationId: organization.id,
         userId: auth.u.id,
@@ -236,7 +239,7 @@ export const updateOrganization = async (
   await verifyOrganizationExistenceAndPerms(organizationId, auth, "edit" as const, r);
 
   // Do update and return result
-  return await r.io.update("organizations", organizationId, { name: payload.name }, auth, r.log);
+  return await r.io.updateOrganization(organizationId, { name: payload.name }, auth, r.log);
 };
 
 /**
@@ -286,7 +289,7 @@ export const deleteOrganization = async (
   await verifyOrganizationExistenceAndPerms(organizationId, auth, "delete" as const, r);
 
   // Delete
-  await r.io.delete("organizations", organizationId, auth, r.log);
+  await r.io.deleteOrganization(organizationId, auth, r.log);
 
   return;
 };
@@ -310,7 +313,7 @@ export const verifyOrganizationExistenceAndPerms = async (
   r: Pick<AppDeps, "io" | "log">
 ): Promise<Auth.Db.Organization> => {
   // First verify existence (will throw if non-existent)
-  const organization = await r.io.get("organizations", { id: organizationId }, r.log, true);
+  const organization = await r.io.getOrganizationById(organizationId, r.log, true);
 
   // Verify auth object format
   Common.assertAuth(auth);
@@ -322,8 +325,7 @@ export const verifyOrganizationExistenceAndPerms = async (
   // See if caller is a privileged member of the org in question or a sysadmin or employee
   if (!proceed && auth.u) {
     r.log.info(`Client roles are insufficient for operation; checking user permissions.`);
-    let membership = await r.io.get(
-      "org-memberships",
+    let membership = await r.io.getOrgMembershipById(
       { organizationId, userId: auth.u.id },
       r.log,
       false

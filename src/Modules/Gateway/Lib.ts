@@ -259,8 +259,7 @@ export const validateSession = async (
   }
 
   // Now we know it's valid - get user information
-  const roles = await io.get(
-    "user-roles",
+  const roles = await io.getUserRoles(
     { _t: "filter", userId: session.userId },
     { __pg: { size: 1000000 } },
     log

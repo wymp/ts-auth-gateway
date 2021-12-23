@@ -39,10 +39,10 @@ export const getUserRoles = (
       }
 
       // Verify that user exists
-      await r.io.get("users", { id: userId }, log, true);
+      await r.io.getUserById(userId, log, true);
 
       // Get and send response
-      const roles = await r.io.get("user-roles", { _t: "filter", userId }, log);
+      const roles = await r.io.getUserRoles({ _t: "filter", userId }, undefined, log);
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["GET /users/:id/roles"] = {
         ...roles,
         data: roles.data.map((row) => ({ type: "user-roles", id: row.roleId })),
@@ -83,7 +83,7 @@ export const postUserRoles = (
       await addUserRole(userId, roleId as UserRoles, req.auth, { ...r, log });
 
       // Get all user roles and return as response
-      const roles = await r.io.get("user-roles", { _t: "filter", userId }, log);
+      const roles = await r.io.getUserRoles({ _t: "filter", userId }, undefined, log);
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["POST /users/:id/roles"] = {
         ...roles,
         data: roles.data.map((row) => ({ type: "user-roles", id: row.roleId })),
@@ -131,7 +131,7 @@ export const addUserRole = async (
   }
 
   // Now add the role
-  await r.io.save("user-roles", { userId, roleId }, auth, r.log);
+  await r.io.saveUserRole({ userId, roleId }, auth, r.log);
 };
 
 /** DELETE /user/:id/roles/:roleId */

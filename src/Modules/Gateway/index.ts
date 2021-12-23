@@ -56,7 +56,7 @@ export const middleware = (r: Pick<AppDeps, "config" | "log" | "cache" | "rateLi
         log.debug(`Getting and validating client id ${clientId}`);
 
         // First get the Client
-        const clientData = await r.io.get("clients", { id: clientId }, log, false);
+        const clientData = await r.io.getClientById(clientId, log, false);
 
         // If nothing (or deleted), throw
         if (!clientData || clientData.deletedMs !== null) {
@@ -66,7 +66,7 @@ export const middleware = (r: Pick<AppDeps, "config" | "log" | "cache" | "rateLi
         }
 
         // Now get this client's roles, attach and return
-        clientRoles = (await r.io.get("client-roles", { _t: "filter", clientId }, log)).data.map(
+        clientRoles = (await r.io.getClientRoles({ _t: "filter", clientId }, log)).data.map(
           (row) => row.roleId
         );
 
@@ -77,8 +77,7 @@ export const middleware = (r: Pick<AppDeps, "config" | "log" | "cache" | "rateLi
         });
 
         // Validate request against access restrictions
-        const { data: restrictions } = await r.io.get(
-          "client-access-restrictions",
+        const { data: restrictions } = await r.io.getClientAccessRestrictions(
           { _t: "filter", clientId },
           { __pg: { size: 10000000 } },
           log
@@ -146,7 +145,7 @@ export const middleware = (r: Pick<AppDeps, "config" | "log" | "cache" | "rateLi
       // Make sure the given user isn't banned or deleted
       if (sessionUser) {
         log.info(`User passed; ensuring they're not banned or deleted.`);
-        const fullUser = await r.io.get("users", { id: sessionUser.id }, log, true);
+        const fullUser = await r.io.getUserById(sessionUser.id, log, true);
         if (fullUser.bannedMs !== null || fullUser.deletedMs !== null) {
           throw new E.Forbidden(
             `Sorry, this account has been disabled.`,

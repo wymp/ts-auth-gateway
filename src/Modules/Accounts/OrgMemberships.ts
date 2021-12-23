@@ -36,7 +36,7 @@ export const getByUserIdHandler = (r: Pick<AppDeps, "io" | "log">): SimpleHttpSe
       // Authorization happens in the actual "get" function below
 
       // Validate user id (will throw 404 if not found)
-      await r.io.get("users", { id: userId }, log, true);
+      await r.io.getUserById(userId, log, true);
 
       // Get response
       const memberships = await getByUserId(userId, auth, Http.getCollectionParams(req.query), {
@@ -75,7 +75,7 @@ export const getByUserId = async (
   }
 
   // If we've got permissions, get the memberships
-  return await r.io.get("org-memberships", { _t: "filter", userId }, collectionParams, r.log);
+  return await r.io.getOrgMemberships({ type: "users", id: userId }, collectionParams, r.log);
 };
 
 /**
@@ -113,7 +113,7 @@ export const getByOrganizationIdHandler = (
       Common.assertAuth(auth);
 
       // Validate org id (will throw 404 if not found)
-      await r.io.get("organizations", { id: organizationId }, log, true);
+      await r.io.getOrganizationById(organizationId, log, true);
 
       // Get response (validations are performed by this function)
       const memberships = await getByOrganizationId(
@@ -151,9 +151,8 @@ export const getByOrganizationId = async (
   await authorizeCallerForRole(organizationId, auth, "read", r);
 
   // If we've got permissions, get the memberships
-  return await r.io.get(
-    "org-memberships",
-    { _t: "filter", organizationId },
+  return await r.io.getOrgMemberships(
+    { type: "organizations", id: organizationId },
     collectionParams,
     r.log
   );
@@ -195,7 +194,7 @@ export const postOrgMembershipHandler = (
       Common.assertAuth(auth);
 
       // Validate org id (will throw 404 if not found)
-      await r.io.get("organizations", { id: organizationId }, log, true);
+      await r.io.getOrganizationById(organizationId, log, true);
 
       // Validate body
       const validation = PostOrgMembership.validate(req.body);
@@ -247,8 +246,7 @@ const addNewOrgMembership = async (
   await authorizeCallerForRole(organizationId, auth, "manage", r);
 
   // Check to see if membership already exists
-  let membership = await r.io.get(
-    "org-memberships",
+  let membership = await r.io.getOrgMembershipById(
     { userId: incoming.user.id, organizationId },
     r.log,
     false
@@ -256,8 +254,7 @@ const addNewOrgMembership = async (
 
   if (membership) {
     r.log.info(`Membership already exists for this user. Updating it.`);
-    membership = await r.io.update(
-      "org-memberships",
+    membership = await r.io.updateOrgMembership(
       membership.id,
       {
         read: incoming.read ? 1 : 0,
@@ -270,8 +267,7 @@ const addNewOrgMembership = async (
     );
   } else {
     r.log.info(`Membership does not already exist for this user. Creating.`);
-    membership = await r.io.save(
-      "org-memberships",
+    membership = await r.io.saveOrgMembership(
       {
         organizationId,
         userId: incoming.user.id,
@@ -369,7 +365,7 @@ const updateOrgMembership = async (
   r: Pick<AppDeps, "io" | "log">
 ): Promise<Auth.Db.OrgMembership> => {
   // Get membership
-  let membership = await r.io.get("org-memberships", { id: membershipId }, r.log, true);
+  let membership = await r.io.getOrgMembershipById({ id: membershipId }, r.log, true);
 
   // Authorize if the caller is not the owner of the membership
   if (!auth.u || auth.u.id !== membership.userId) {
@@ -380,8 +376,7 @@ const updateOrgMembership = async (
     await authorizeCallerForRole(membership.organizationId, auth, "manage", r);
   }
 
-  membership = await r.io.update(
-    "org-memberships",
+  membership = await r.io.updateOrgMembership(
     membership.id,
     {
       ...(incoming.read === undefined ? {} : { read: incoming.read ? 1 : 0 }),
@@ -457,7 +452,7 @@ const deleteOrgMembership = async (
   r: Pick<AppDeps, "io" | "log">
 ): Promise<void> => {
   // Get membership
-  const membership = await r.io.get("org-memberships", { id: membershipId }, r.log, true);
+  const membership = await r.io.getOrgMembershipById({ id: membershipId }, r.log, true);
 
   // Authorize if the caller is not the owner of the membership
   if (!auth.u || auth.u.id !== membership.userId) {
@@ -468,7 +463,7 @@ const deleteOrgMembership = async (
     await authorizeCallerForRole(membership.organizationId, auth, "delete", r);
   }
 
-  await r.io.delete("org-memberships", membership.id, auth, r.log);
+  await r.io.deleteOrgMembership(membership.id, auth, r.log);
 };
 
 /**
@@ -504,8 +499,7 @@ export const authorizeCallerForRole = async (
       proceed = true;
     } else {
       r.log.info(`Checking to see if user is a privileged member of the organization.`);
-      const membership = await r.io.get(
-        "org-memberships",
+      const membership = await r.io.getOrgMembershipById(
         { userId: caller.u.id, organizationId },
         r.log,
         false

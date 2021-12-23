@@ -5,7 +5,7 @@ import {
   SimpleHttpRequestHandlerInterface,
 } from "@wymp/ts-simple-interfaces";
 import * as Weenie from "@wymp/weenie-framework";
-import { Io } from "./Io";
+import { CacheInterface, IoInterface } from "./Io";
 
 /**
  * For generated documentation: See source for more useful understanding of config requirements.
@@ -105,7 +105,7 @@ export type AppDeps = {
   http: SimpleHttpRequestHandlerInterface;
 
   /** Our IO object for accessing the database */
-  io: Omit<Io<ClientRoles, UserRoles>, "db" | "cache" | "sqlizeParams">;
+  io: IoInterface<ClientRoles, UserRoles>;
 
   /** A cache (possibly stubbed if you don't want to mess with caching) */
   cache: CacheInterface;
@@ -195,12 +195,6 @@ export enum ClientRoles {
 
   // A client you create for an external partner or user
   EXTERNAL = "external",
-}
-
-export interface CacheInterface {
-  get<T>(k: string, cb: () => Promise<T>, ttl?: number, log?: SimpleLoggerInterface): Promise<T>;
-  get<T>(k: string, cb: () => T, ttl?: number, log?: SimpleLoggerInterface): T;
-  clear(k: string | RegExp): void | unknown;
 }
 
 export interface RateLimiterInterface {

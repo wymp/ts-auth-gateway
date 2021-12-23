@@ -159,7 +159,7 @@ export const handleGetAllSessions = (
       let params = Http.getCollectionParams(req.query);
 
       // Make request and return response
-      const sessions = await r.io.get("sessions", { _t: "filter", ...filter }, params, log);
+      const sessions = await r.io.getSessions({ _t: "filter", ...filter }, params, log);
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["GET /sessions"] = sessions;
 
       // Send response
@@ -225,8 +225,7 @@ export const handleGetUserSessions = (
       let params = Http.getCollectionParams(req.query);
 
       // Make request and return response
-      const sessions = await r.io.get(
-        "sessions",
+      const sessions = await r.io.getSessions(
         { _t: "filter", userId, createdMs: filter?.createdMs },
         params,
         log
@@ -450,8 +449,7 @@ export const createSession = async (
   const sessionToken = randomBytes(32).toString("hex");
 
   // Save session
-  const session = await r.io.save(
-    "sessions",
+  const session = await r.io.saveSession(
     {
       userAgent: userAgent || null,
       ip: auth.ip,
@@ -469,8 +467,7 @@ export const createSession = async (
 
   // Save tokens
   await Promise.all([
-    r.io.save(
-      "session-tokens",
+    r.io.saveSessionToken(
       {
         type: "session",
         tokenSha256: createHash("sha256").update(sessionToken).digest(),
@@ -480,8 +477,7 @@ export const createSession = async (
       auth,
       r.log
     ),
-    r.io.save(
-      "session-tokens",
+    r.io.saveSessionToken(
       {
         type: "refresh",
         tokenSha256: createHash("sha256").update(refreshToken).digest(),
@@ -520,7 +516,7 @@ export const refreshSession = async (
   const tokenSha256 = createHash("sha256").update(payload.token).digest();
 
   // Get from db and validate more
-  const token = await r.io.get("session-tokens", { tokenSha256 }, r.log);
+  const token = await r.io.getSessionTokenBySha256(tokenSha256, r.log);
   if (!token) {
     throw new E.Unauthorized(
       `The refresh token you've passed is not valid. Please log in again.`,
@@ -553,7 +549,7 @@ export const refreshSession = async (
   }
 
   // Get the session and also validate that
-  const session = await r.io.get("sessions", { id: token.sessionId }, r.log, true);
+  const session = await r.io.getSessionById(token.sessionId, r.log, true);
   if (session.expiresMs < Date.now()) {
     throw new E.Unauthorized(
       `Session has expired. Please try logging in again.`,
@@ -571,8 +567,7 @@ export const refreshSession = async (
   const refreshToken = randomBytes(32).toString("hex");
   const sessionToken = randomBytes(32).toString("hex");
   await Promise.all([
-    r.io.save(
-      "session-tokens",
+    r.io.saveSessionToken(
       {
         type: "session",
         tokenSha256: createHash("sha256").update(sessionToken).digest(),
@@ -582,8 +577,7 @@ export const refreshSession = async (
       auth,
       r.log
     ),
-    r.io.save(
-      "session-tokens",
+    r.io.saveSessionToken(
       {
         type: "refresh",
         tokenSha256: createHash("sha256").update(refreshToken).digest(),
@@ -593,7 +587,7 @@ export const refreshSession = async (
       auth,
       r.log
     ),
-    r.io.update("session-tokens", tokenSha256, { consumedMs: Date.now() }, auth, r.log),
+    r.io.updateSessionToken(tokenSha256, { consumedMs: Date.now() }, auth, r.log),
   ]);
 
   // Return structured data
@@ -637,7 +631,7 @@ export const invalidateSession = async (
       const tokenSha256 = createHash("sha256").update(val.value).digest();
 
       // Get from db and validate more
-      token = await r.io.get("session-tokens", { tokenSha256 }, r.log);
+      token = await r.io.getSessionTokenBySha256(tokenSha256, r.log);
       if (!token) {
         throw new E.Unauthorized(`The token you've passed is not valid.`, `TOKEN-INVALID`);
       }
@@ -659,7 +653,7 @@ export const invalidateSession = async (
 
     // Get and validate the session
     r.log.info(`Retrieving session from database`);
-    const session = await r.io.get("sessions", { id: sessionId }, r.log, false);
+    const session = await r.io.getSessionById(sessionId, r.log, false);
     if (!session) {
       // If no session returned, log this and continue
       r.log.warning(
@@ -684,11 +678,9 @@ export const invalidateSession = async (
     // Now invalidate the session associated with this token and invalidate and/or consume related
     // tokens
     const p1: Array<Promise<unknown>> = [];
-    p1.push(r.io.update("sessions", sessionId, { invalidatedMs: Date.now() }, auth, r.log));
+    p1.push(r.io.updateSession(sessionId, { invalidatedMs: Date.now() }, auth, r.log));
     if (token && token.type === "refresh") {
-      p1.push(
-        r.io.update("session-tokens", token.tokenSha256, { consumedMs: Date.now() }, auth, r.log)
-      );
+      p1.push(r.io.updateSessionToken(token.tokenSha256, { consumedMs: Date.now() }, auth, r.log));
     }
 
     // Wait for the invalidation operations to finish
@@ -801,7 +793,7 @@ const getAndValidateUserForEmail = async (
   r: Pick<AppDeps, "io" | "log">
 ): Promise<Auth.Db.User> => {
   // Verify that the email exists
-  const email = await r.io.get("emails", { id: _email }, r.log);
+  const email = await r.io.getEmailByAddress(_email, r.log);
   if (!email) {
     throw new E.BadRequest(
       `Email '${_email}' not found. Please register before trying to log in.`,
@@ -810,7 +802,7 @@ const getAndValidateUserForEmail = async (
   }
 
   // Get the user for the given email
-  const user = await r.io.get("users", { id: email.userId }, r.log, true);
+  const user = await r.io.getUserById(email.userId, r.log, true);
 
   // Validate that the user is not banned or deleted
   if (user.bannedMs !== null) {
@@ -843,11 +835,7 @@ const getAndValidateUserForLoginCode = async (
   }
 
   // Now do a deeper validation of the code
-  const code = await r.io.get(
-    "verification-codes",
-    { codeSha256: Buffer.from(_code, "hex") },
-    r.log
-  );
+  const code = await r.io.getVerificationCodeBySha256(Buffer.from(_code, "hex"), r.log);
   if (!code) {
     throw new E.Unauthorized(
       `Code '${_code}' not found. Please try logging in again.`,
@@ -886,8 +874,8 @@ const getAndValidateUserForLoginCode = async (
   }
 
   // Get the email object for the code
-  const email = await r.io.get("emails", { id: code.email }, r.log, true);
-  const user = await r.io.get("users", { id: email.userId }, r.log, true);
+  const email = await r.io.getEmailByAddress(code.email, r.log, true);
+  const user = await r.io.getUserById(email.userId, r.log, true);
 
   // Validate that the user is not banned or deleted
   if (user.bannedMs !== null) {

@@ -40,10 +40,10 @@ export const getUserEmailsHandler = (
       }
 
       // Verify that user exists
-      await r.io.get("users", { id: userId }, log, true);
+      await r.io.getUserById(userId, log, true);
 
       // Get and send response
-      const emails = await r.io.get("emails", { _t: "filter", userId }, log);
+      const emails = await r.io.getEmailsForUser(userId, log);
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["GET /users/:id/emails"] = {
         ...emails,
         data: emails.data.map((row) => T.Emails.dbToApi(row, log)),
@@ -129,7 +129,7 @@ export const deleteUserEmailHandler = (
             `follows: DELETE /users/:id/emails/:emailId. However, no emailId parameter was found.`
         );
       }
-      const email = await r.io.get("emails", { id: emailAddr }, log);
+      const email = await r.io.getEmailByAddress(emailAddr, log);
       if (!email) {
         throw new E.NotFound(
           `This email address was not found among your registered email addresses.`,
@@ -148,7 +148,7 @@ export const deleteUserEmailHandler = (
       }
 
       // Finally, delete and respond
-      await r.io.delete("emails", emailAddr, req.auth, log);
+      await r.io.deleteEmail(emailAddr, req.auth, log);
 
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["DELETE /users/:id/emails/:id"] = {
         data: null,
@@ -188,7 +188,7 @@ export const generateEmailVerificationHandler = (
             `parameter was found.`
         );
       }
-      const email = await r.io.get("emails", { id: emailAddr }, log);
+      const email = await r.io.getEmailByAddress(emailAddr, log);
       if (!email) {
         throw new E.NotFound(
           `This email address was not found among your registered email addresses.`,
@@ -266,7 +266,7 @@ export const verifyUserEmailHandler = (
             `follows: POST /users/:id/emails/:emailId/verify. However, no emailId parameter was found.`
         );
       }
-      const email = await r.io.get("emails", { id: emailAddr }, log);
+      const email = await r.io.getEmailByAddress(emailAddr, log);
       if (!email) {
         throw new E.NotFound(
           `This email address was not found among your registered email addresses.`,
@@ -355,14 +355,13 @@ export const addEmail = async (
   }
 
   // Make sure it doesn't already exist
-  const existing = await r.io.get("emails", { id: email }, r.log);
+  const existing = await r.io.getEmailByAddress(email, r.log);
   if (existing) {
     throw new E.DuplicateResource("This email is already being used.", "DUPLICATE-EMAIL");
   }
 
   // Save email to database
-  const newEmail = r.io.save(
-    "emails",
+  const newEmail = r.io.saveEmail(
     {
       id: email,
       userId,

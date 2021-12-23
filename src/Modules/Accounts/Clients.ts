@@ -46,7 +46,7 @@ export const getClientsForOrgHandler = (
       }
 
       // Make sure org exists
-      await r.io.get("organizations", { id: organizationId }, log, true);
+      await r.io.getOrganizationById(organizationId, log, true);
 
       // Possibly get client id
       const clientId = req.params.id;
@@ -56,7 +56,7 @@ export const getClientsForOrgHandler = (
 
       if (clientId) {
         // Sending a singular response
-        const client = await r.io.get("clients", { id: clientId }, log, true);
+        const client = await r.io.getClientById(clientId, log, true);
         if (client.organizationId !== organizationId || client.deletedMs !== null) {
           throw new E.NotFound(
             `The client id you've requested was not found in our system.`,
@@ -73,8 +73,7 @@ export const getClientsForOrgHandler = (
         res.status(200).send(response);
       } else {
         // Get clients and send response
-        const clients = await r.io.get(
-          "clients",
+        const clients = await r.io.getClients(
           { _t: "filter", organizationId, deleted: false },
           log
         );
@@ -128,7 +127,7 @@ export const postClientHandler = (
       const clientData = validation.value.data;
 
       // Make sure org exists
-      await r.io.get("organizations", { id: organizationId }, log, true);
+      await r.io.getOrganizationById(organizationId, log, true);
 
       // Authorize
       await authorizeCallerForRole(organizationId, auth, "manage", r);
@@ -189,20 +188,10 @@ export const createClient = async (
   const secretBcrypt = await bcrypt.hash(secret, 10);
 
   // Store client
-  const client = await r.io.save(
-    "clients",
-    { ...newClient, secretBcrypt, reqsPerSec: 10 },
-    auth,
-    r.log
-  );
+  const client = await r.io.saveClient({ ...newClient, secretBcrypt, reqsPerSec: 10 }, auth, r.log);
 
   // Add basic roles
-  await r.io.save(
-    "client-roles",
-    { clientId: client.id, roleId: ClientRoles.EXTERNAL },
-    auth,
-    r.log
-  );
+  await r.io.saveClientRole({ clientId: client.id, roleId: ClientRoles.EXTERNAL }, auth, r.log);
 
   // Return everything
   return { ...client, secret };
@@ -241,8 +230,8 @@ export const patchClientHandler = (
       const clientData = validation.value.data;
 
       // Make sure org and client exist
-      await r.io.get("organizations", { id: organizationId }, log, true);
-      const existing = await r.io.get("clients", { id: clientId }, log, true);
+      await r.io.getOrganizationById(organizationId, log, true);
+      const existing = await r.io.getClientById(clientId, log, true);
 
       // Authorize
       await authorizeCallerForRole(organizationId, auth, "manage", r);
@@ -275,8 +264,7 @@ export const patchClientHandler = (
         client = existing;
       } else {
         // Update the client
-        client = await r.io.update(
-          "clients",
+        client = await r.io.updateClient(
           clientId,
           {
             ...(clientData.name?.trim() ? { name: clientData.name.trim() } : {}),
@@ -335,8 +323,8 @@ export const deleteClientHandler = (
       }
 
       // Make sure org and client exist
-      await r.io.get("organizations", { id: organizationId }, log, true);
-      const existing = await r.io.get("clients", { id: clientId }, log, true);
+      await r.io.getOrganizationById(organizationId, log, true);
+      const existing = await r.io.getClientById(clientId, log, true);
 
       // Authorize
       await authorizeCallerForRole(organizationId, auth, "manage", r);
@@ -350,7 +338,7 @@ export const deleteClientHandler = (
       }
 
       // Mark client deleted
-      await r.io.update("clients", clientId, { deletedMs: Date.now() }, auth, log);
+      await r.io.updateClient(clientId, { deletedMs: Date.now() }, auth, log);
 
       const response: Auth.Api.Responses<
         ClientRoles,
@@ -389,8 +377,8 @@ export const refreshSecretHandler = (
       }
 
       // Make sure org and client exist
-      await r.io.get("organizations", { id: organizationId }, log, true);
-      const existing = await r.io.get("clients", { id: clientId }, log, true);
+      await r.io.getOrganizationById(organizationId, log, true);
+      const existing = await r.io.getClientById(clientId, log, true);
 
       // Authorize
       await authorizeCallerForRole(organizationId, auth, "manage", r);
@@ -407,7 +395,7 @@ export const refreshSecretHandler = (
       r.log.debug(`Generating new client secret`);
       const secret = randomBytes(32).toString("hex");
       const secretBcrypt = await bcrypt.hash(secret, 10);
-      const client = await r.io.update("clients", clientId, { secretBcrypt }, auth, log);
+      const client = await r.io.updateClient(clientId, { secretBcrypt }, auth, log);
 
       const finishedClient = await addRoles(T.Clients.dbToApi(client, log), { ...r, log });
 
@@ -441,7 +429,7 @@ const addRoles: AddRoles = async (clientOrClients, r): Promise<any> => {
   const clientIds = Array.isArray(clientOrClients)
     ? clientOrClients.map((u) => u.id)
     : [clientOrClients.id];
-  const roles = await r.io.get("client-roles", { _t: "filter", clientIdIn: clientIds }, r.log);
+  const roles = await r.io.getClientRoles({ _t: "filter", clientIdIn: clientIds }, r.log);
 
   const add = (client: Auth.Api.Client<ClientRoles>): Auth.Api.Client<ClientRoles> => {
     client.roles = roles.data.filter((row) => row.clientId === client.id).map((row) => row.roleId);

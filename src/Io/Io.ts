@@ -1,255 +1,604 @@
-import { createHash /*randomBytes*/ } from "crypto";
-import { SimpleSqlDbInterface, SimpleLoggerInterface } from "ts-simple-interfaces";
-import { AbstractSql, Query } from "@wymp/sql";
-import { Auth } from "@wymp/types";
-import * as E from "@wymp/http-errors";
-import { CacheInterface } from "../Types";
-import { TypeMap, Defaults } from "./Types";
+import { SimpleLoggerInterface, SimpleSqlDbInterface } from "@wymp/ts-simple-interfaces";
+import { Auth, Api, PartialSelect } from "@wymp/types";
+import { Sql } from "./Sql";
+import { CacheInterface, IoInterface, SessionAndToken, TypeMap, Defaults } from "./Types";
 
-/**
- * Convenience definition
- */
-type SessionAndToken = Auth.Db.Session & { token: Auth.Db.SessionToken };
+export class Io<ClientRoles extends string, UserRoles extends string>
+  implements IoInterface<ClientRoles, UserRoles>
+{
+  protected sql: Sql<ClientRoles, UserRoles>;
 
-/**
- * This class abstracts all io access into generalized or specific declarative method calls. It
- * extends `AbstractSql` from [`@wymp/sql`](https://github.com/wymp/ts-sql). Please see that library
- * to learn more.
- */
-export class Io<ClientRoles extends string, UserRoles extends string> extends AbstractSql<
-  TypeMap<ClientRoles, UserRoles>
-> {
-  protected defaults = Defaults;
-  public constructor(protected db: SimpleSqlDbInterface, protected cache: CacheInterface) {
-    super();
-
-    // There are a couple objects that don't have an `id` field as their primary key. Set those
-    // here.
-    this.primaryKeys["session-tokens"] = "tokenSha256";
-    this.primaryKeys["verification-codes"] = "codeSha256";
-
-    // Don't automatically convert back and forth between strings and buffers
-    this.convertBuffersAndHex = false;
+  public constructor(db: SimpleSqlDbInterface, cache: CacheInterface) {
+    this.sql = new Sql<ClientRoles, UserRoles>(db, cache);
   }
 
   /**
-   * Overriding default filter calculations for certain non-normal filters
+   *
+   *
+   *
+   *
+   * Apis
+   *
+   *
+   *
+   *
    */
-  protected getSqlForFilterField<T extends keyof TypeMap<ClientRoles, UserRoles>>(
-    t: T,
-    field: string,
-    val: any
-  ): Partial<Query> {
-    if (t === "user-roles" && field === "userIdIn") {
-      return { where: ["`userId` IN (?)"], params: [val] };
-    }
-    if (t === "client-roles" && field === "clientIdIn") {
-      return { where: ["`clientId` IN (?)"], params: [val] };
-    }
-    if (t === "clients" && field === "deleted") {
-      return { where: [val ? "`deletedMs` IS NOT NULL" : "`deletedMs` IS NULL"] };
-    }
-    if (t === "sessions" && field === "createdMs") {
-      // Validate operator
-      const ops = { lt: "<", gt: ">", eq: "=", lte: "<=", gte: ">=", ne: "!=" };
-      const op: keyof typeof ops = val.op;
-      if (!op || !ops[op]) {
-        throw new E.InternalServerError(
-          `Problem with filter value for filter sessions::createdMs - Missing or invalid 'op' ` +
-            `field: '${op}'. Acceptable options are ${JSON.stringify(Object.keys(ops))}`
-        );
-      }
 
-      // Validate timestamp
-      const timestamp = val.val;
-      if (typeof timestamp !== "number") {
-        throw new E.InternalServerError(
-          `Problem with filter value for filter sessions::createdMs - Missing or invalid ` +
-            `'val' field: '${val.val}'. This field should be an integer timestamp in MS.`
-        );
-      }
-
-      return { where: ["`createdMs` " + ops[op] + " ?"], params: [val.val] };
-    }
-    return super.getSqlForFilterField(t, field, val);
-  }
-
-  /**
-   * Get config for the given api and version, throwing specific errors if not found
-   */
-  public async getApiConfig(
+  public getApiConfig(
     domain: string,
     version: string,
     log: SimpleLoggerInterface
   ): Promise<Auth.Db.Api> {
-    log.debug(`Getting config for API '/${domain}/${version}'`);
-    return await this.cache.get<Auth.Db.Api>(
-      `api-${domain}-${version}`,
-      async () => {
-        const { data: versions } = await this.get("apis", { _t: "filter", domain }, log);
-
-        if (versions.length === 0) {
-          throw new E.BadRequest(`API '${domain}' does not exist.`);
-        }
-
-        // Get the requested version of the API
-        const config = versions.find((v) => v.version === version);
-        if (!config) {
-          throw new E.BadRequest(
-            `API '${domain}' exists, but not in version '${version}'. Available versions are ${versions
-              .map((v) => v.version)
-              .join(", ")}.`
-          );
-        }
-
-        return config;
-      },
-      undefined,
-      log
-    );
+    return this.sql.getApiConfig(domain, version, log);
   }
 
   /**
-   * Get session from a raw session token passed in by a user
+   *
+   *
+   *
+   *
+   * Clients
+   *
+   *
+   *
+   *
    */
-  public async getSessionByToken(
-    tokenStr: string | undefined | null,
+
+  public getClientById(id: string, log: SimpleLoggerInterface, thrw: true): Promise<Auth.Db.Client>;
+  public getClientById(
+    id: string,
+    log: SimpleLoggerInterface,
+    thrw?: false | undefined
+  ): Promise<Auth.Db.Client | undefined>;
+  public getClientById(
+    id: string,
+    log: SimpleLoggerInterface,
+    thrw?: boolean
+  ): Promise<Auth.Db.Client | undefined> {
+    return thrw
+      ? this.sql.get("clients", { id }, log, thrw)
+      : this.sql.get("clients", { id }, log, thrw);
+  }
+
+  public getClients(
+    filter: TypeMap<ClientRoles, UserRoles>["clients"]["filters"],
     log: SimpleLoggerInterface
-  ): Promise<SessionAndToken | undefined> {
-    if (!tokenStr) {
-      return undefined;
-    }
-    return this.cache.get<SessionAndToken | undefined>(
-      `session-by-token-${tokenStr}`,
-      async () => {
-        const tokenSha256 = createHash("sha256").update(tokenStr).digest();
+  ): Promise<Api.CollectionResponse<Auth.Db.Client, any>> {
+    return this.sql.get("clients", filter, log);
+  }
 
-        const [{ rows: sessions }, token] = await Promise.all([
-          this.db.query<Auth.Db.Session>(
-            "SELECT `s`.* " +
-              "FROM `sessions` `s` JOIN `session-tokens` `t` ON (`s`.`id` = `t`.`sessionId`)" +
-              "WHERE `tokenSha256` = ?",
-            [tokenSha256]
-          ),
-          this.get("session-tokens", { tokenSha256 }, log, false),
-        ]);
+  public saveClient(
+    record: PartialSelect<Auth.Db.Client, keyof typeof Defaults["clients"]>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.Client> {
+    return this.sql.save("clients", record, auth, log);
+  }
 
-        const session = sessions[0];
-        if (!session || !token) {
-          return undefined;
-        }
-
-        return { ...session, token };
-      },
-
-      // Clear out of cache after 20 minutes, since these tokens are only supposed to be 20-minute
-      // tokens
-      1200000,
-      log
-    );
+  public updateClient(
+    clientId: string,
+    record: Partial<Auth.Db.Client>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.Client> {
+    return this.sql.update("clients", clientId, record, auth, log);
   }
 
   /**
-   * With the current @wymp/sql library it's not possible to delete rows with complex keys, so we
-   * have to make those declarative methods here on our local object.
+   *
+   *
+   *
+   *
+   * Client access restrictions
+   *
+   *
+   *
+   *
    */
-  public async deleteClientRole(
+
+  public getClientAccessRestrictions(
+    filter: undefined | TypeMap<ClientRoles, UserRoles>["client-access-restrictions"]["filters"],
+    params: undefined | Api.Server.CollectionParams,
+    log: SimpleLoggerInterface
+  ): Promise<Api.CollectionResponse<Auth.Db.ClientAccessRestriction, any>> {
+    return !filter
+      ? this.sql.get("client-access-restrictions", params, log)
+      : this.sql.get("client-access-restrictions", filter, params, log);
+  }
+
+  /**
+   *
+   *
+   *
+   *
+   * Client Roles
+   *
+   *
+   *
+   *
+   */
+
+  public getClientRoles(
+    filter: TypeMap<ClientRoles, UserRoles>["client-roles"]["filters"],
+    log: SimpleLoggerInterface
+  ): Promise<Api.CollectionResponse<Auth.Db.ClientRole<ClientRoles>, any>> {
+    return this.sql.get("client-roles", filter, log);
+  }
+
+  public saveClientRole(
+    record: PartialSelect<Auth.Db.ClientRole<ClientRoles>, keyof typeof Defaults["client-roles"]>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.ClientRole<ClientRoles>> {
+    return this.sql.save("client-roles", record, auth, log);
+  }
+
+  public deleteClientRole(
     clientId: string,
     roleId: string,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<void> {
-    log.debug(`Deleting client role '${clientId}:${roleId}'`);
-    const resource = this.get("client-roles", { clientId, roleId }, log, false);
-    if (resource) {
-      await this.db.query("DELETE FROM `client-roles` WHERE `clientId` = ? && `roleId` = ?", [
-        clientId,
-        roleId,
-      ]);
-      log.debug(`Resource deleted, publishing messages`);
-
-      // Bust cache
-      this.cache.clear(new RegExp(`client-roles-.*`));
-
-      // Publish audit message
-      const p: Array<Promise<unknown>> = [];
-      if (this.audit) {
-        log.debug(`Publishing audit message`);
-        p.push(
-          this.audit.delete({
-            auth,
-            targetType: "client-roles",
-            targetId: `${clientId}:${roleId}`,
-          })
-        );
-      }
-
-      // Publish domain message
-      if (this.pubsub) {
-        log.debug(`Publishing domain message`);
-        p.push(
-          this.pubsub.publish({
-            action: "deleted",
-            resource: { type: "client-roles", ...resource },
-          })
-        );
-      }
-
-      await Promise.all(p);
-    } else {
-      log.info(`Resource not found. Nothing to delete.`);
-    }
+    return this.sql.deleteClientRole(clientId, roleId, auth, log);
   }
 
   /**
-   * With the current @wymp/sql library it's not possible to delete rows with complex keys, so we
-   * have to make those declarative methods here on our local object.
+   *
+   *
+   *
+   *
+   * Email Addresses
+   *
+   *
+   *
+   *
    */
-  public async deleteUserRole(
+
+  public getEmailsForUser(
+    userId: string,
+    log: SimpleLoggerInterface
+  ): Promise<Api.CollectionResponse<Auth.Db.Email, any>> {
+    return this.sql.get("emails", { _t: "filter", userId }, log);
+  }
+
+  public getEmailByAddress(
+    addr: string,
+    log: SimpleLoggerInterface,
+    thrw: true
+  ): Promise<Auth.Db.Email>;
+  public getEmailByAddress(
+    addr: string,
+    log: SimpleLoggerInterface,
+    thrw?: false
+  ): Promise<Auth.Db.Email | undefined>;
+  public getEmailByAddress(
+    addr: string,
+    log: SimpleLoggerInterface,
+    thrw?: boolean
+  ): Promise<Auth.Db.Email | undefined> {
+    return thrw
+      ? this.sql.get("emails", { id: addr }, log, thrw)
+      : this.sql.get("emails", { id: addr }, log, thrw);
+  }
+
+  public deleteEmail(addr: string, auth: Auth.ReqInfo, log: SimpleLoggerInterface): Promise<void> {
+    return this.sql.delete("emails", addr, auth, log);
+  }
+
+  public saveEmail(
+    record: PartialSelect<Auth.Db.Email, keyof typeof Defaults["emails"]>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.Email> {
+    return this.sql.save("emails", record, auth, log);
+  }
+
+  public updateEmail(
+    email: string,
+    record: Partial<Auth.Db.Email>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.Email> {
+    return this.sql.update("emails", email, record, auth, log);
+  }
+
+  /**
+   *
+   *
+   *
+   *
+   * Organizations
+   *
+   *
+   *
+   *
+   */
+  public getOrganizationById(
+    id: string,
+    log: SimpleLoggerInterface,
+    thrw: true
+  ): Promise<Auth.Db.Organization>;
+  public getOrganizationById(
+    id: string,
+    log: SimpleLoggerInterface,
+    thrw?: false | undefined
+  ): Promise<Auth.Db.Organization | undefined>;
+  public getOrganizationById(
+    id: string,
+    log: SimpleLoggerInterface,
+    thrw?: boolean
+  ): Promise<Auth.Db.Organization | undefined> {
+    return thrw
+      ? this.sql.get("organizations", { id }, log, thrw)
+      : this.sql.get("organizations", { id }, log, thrw);
+  }
+
+  public getOrganizations(
+    filter: undefined | TypeMap<ClientRoles, UserRoles>["organizations"]["filters"],
+    params: undefined | Api.Server.CollectionParams,
+    log: SimpleLoggerInterface
+  ): Promise<Api.CollectionResponse<Auth.Db.Organization, any>> {
+    return !filter
+      ? this.sql.get("organizations", params, log)
+      : this.sql.get("organizations", filter, params, log);
+  }
+
+  public saveOrganization(
+    record: PartialSelect<Auth.Db.Organization, keyof typeof Defaults["organizations"]>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.Organization> {
+    return this.sql.save("organizations", record, auth, log);
+  }
+
+  public updateOrganization(
+    id: string,
+    record: Partial<Auth.Db.Organization>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.Organization> {
+    return this.sql.update("organizations", id, record, auth, log);
+  }
+
+  public deleteOrganization(
+    id: string,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<void> {
+    return this.sql.delete("organizations", id, auth, log);
+  }
+
+  /**
+   *
+   *
+   *
+   *
+   * Org Memberships
+   *
+   *
+   *
+   *
+   */
+
+  public getOrgMembershipById(
+    id: { id: string } | { userId: string; organizationId: string },
+    log: SimpleLoggerInterface,
+    thrw: true
+  ): Promise<Auth.Db.OrgMembership>;
+  public getOrgMembershipById(
+    id: { id: string } | { userId: string; organizationId: string },
+    log: SimpleLoggerInterface,
+    thrw?: false
+  ): Promise<Auth.Db.OrgMembership | undefined>;
+  public getOrgMembershipById(
+    id: { id: string } | { userId: string; organizationId: string },
+    log: SimpleLoggerInterface,
+    thrw?: boolean
+  ): Promise<Auth.Db.OrgMembership | undefined> {
+    return thrw
+      ? this.sql.get("org-memberships", id, log, thrw)
+      : this.sql.get("org-memberships", id, log, thrw);
+  }
+
+  public getOrgMemberships(
+    filter: undefined | { type: "users"; id: string } | { type: "organizations"; id: string },
+    params: undefined | Api.Server.CollectionParams,
+    log: SimpleLoggerInterface
+  ): Promise<Api.CollectionResponse<Auth.Db.OrgMembership, any>> {
+    return !filter
+      ? this.sql.get("org-memberships", params, log)
+      : filter.type === "users"
+      ? this.sql.get("org-memberships", { _t: "filter", userId: filter.id }, params, log)
+      : this.sql.get("org-memberships", { _t: "filter", organizationId: filter.id }, params, log);
+  }
+
+  public saveOrgMembership(
+    record: PartialSelect<Auth.Db.OrgMembership, keyof typeof Defaults["org-memberships"]>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.OrgMembership> {
+    return this.sql.save("org-memberships", record, auth, log);
+  }
+
+  public updateOrgMembership(
+    id: string,
+    record: Partial<Auth.Db.OrgMembership>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.OrgMembership> {
+    return this.sql.update("org-memberships", id, record, auth, log);
+  }
+
+  public deleteOrgMembership(
+    id: string,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<void> {
+    return this.sql.delete("org-memberships", id, auth, log);
+  }
+
+  /**
+   *
+   *
+   *
+   *
+   * Sessions
+   *
+   *
+   *
+   *
+   */
+
+  public getSessionById(
+    id: string,
+    log: SimpleLoggerInterface,
+    thrw: true
+  ): Promise<Auth.Db.Session>;
+  public getSessionById(
+    id: string,
+    log: SimpleLoggerInterface,
+    thrw?: false | undefined
+  ): Promise<Auth.Db.Session | undefined>;
+  public getSessionById(
+    id: string,
+    log: SimpleLoggerInterface,
+    thrw?: boolean
+  ): Promise<Auth.Db.Session | undefined> {
+    return thrw
+      ? this.sql.get("sessions", { id }, log, thrw)
+      : this.sql.get("sessions", { id }, log, thrw);
+  }
+
+  public getSessionByToken(
+    tokenStr: string | undefined | null,
+    log: SimpleLoggerInterface
+  ): Promise<SessionAndToken | undefined> {
+    return this.sql.getSessionByToken(tokenStr, log);
+  }
+
+  public getSessions(
+    filter: undefined | TypeMap<ClientRoles, UserRoles>["sessions"]["filters"],
+    params: undefined | Api.Server.CollectionParams,
+    log: SimpleLoggerInterface
+  ): Promise<Api.CollectionResponse<Auth.Db.Session, any>> {
+    return !filter
+      ? this.sql.get("sessions", params, log)
+      : this.sql.get("sessions", filter, params, log);
+  }
+
+  public saveSession(
+    record: PartialSelect<Auth.Db.Session, keyof typeof Defaults["sessions"]>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.Session> {
+    return this.sql.save("sessions", record, auth, log);
+  }
+
+  public updateSession(
+    id: string,
+    record: Partial<Auth.Db.Session>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.Session> {
+    return this.sql.update("sessions", id, record, auth, log);
+  }
+
+  /**
+   *
+   *
+   *
+   *
+   * Session Tokens
+   *
+   *
+   *
+   *
+   */
+
+  public getSessionTokenBySha256(
+    tokenSha256: Buffer,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.SessionToken | undefined> {
+    return this.sql.get("session-tokens", { tokenSha256 }, log);
+  }
+
+  public saveSessionToken(
+    record: PartialSelect<Auth.Db.SessionToken, keyof typeof Defaults["session-tokens"]>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.SessionToken> {
+    return this.sql.save("session-tokens", record, auth, log);
+  }
+
+  public updateSessionToken(
+    tokenSha256: Buffer,
+    record: Partial<Auth.Db.SessionToken>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.SessionToken> {
+    return this.sql.update("session-tokens", tokenSha256, record, auth, log);
+  }
+
+  /**
+   *
+   *
+   *
+   *
+   * Users
+   *
+   *
+   *
+   *
+   */
+
+  public getUserById(id: string, log: SimpleLoggerInterface, thrw: true): Promise<Auth.Db.User>;
+  public getUserById(
+    id: string,
+    log: SimpleLoggerInterface,
+    thrw?: false | undefined
+  ): Promise<Auth.Db.User | undefined>;
+  public getUserById(
+    id: string,
+    log: SimpleLoggerInterface,
+    thrw?: boolean
+  ): Promise<Auth.Db.User | undefined> {
+    return thrw
+      ? this.sql.get("users", { id }, log, thrw)
+      : this.sql.get("users", { id }, log, thrw);
+  }
+
+  public getUsers(
+    filter: undefined | TypeMap<ClientRoles, UserRoles>["users"]["filters"],
+    params: Api.Server.CollectionParams,
+    log: SimpleLoggerInterface
+  ): Promise<Api.CollectionResponse<Auth.Db.User, any>> {
+    return !filter
+      ? this.sql.get("users", params, log)
+      : this.sql.get("users", filter, params, log);
+  }
+
+  public saveUser(
+    record: PartialSelect<Auth.Db.User, keyof typeof Defaults["users"]>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.User> {
+    return this.sql.save("users", record, auth, log);
+  }
+
+  public updateUser(
+    id: string,
+    record: Partial<Auth.Db.User>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.User> {
+    return this.sql.update("users", id, record, auth, log);
+  }
+
+  /**
+   *
+   *
+   *
+   *
+   * User Clients
+   *
+   *
+   *
+   *
+   */
+
+  public saveUserClient(
+    record: PartialSelect<Auth.Db.UserClient, keyof typeof Defaults["user-clients"]>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.UserClient> {
+    return this.sql.save("user-clients", record, auth, log);
+  }
+
+  /**
+   *
+   *
+   *
+   *
+   * User Roles
+   *
+   *
+   *
+   *
+   */
+
+  public getUserRoles(
+    filter: undefined | TypeMap<ClientRoles, UserRoles>["user-roles"]["filters"],
+    params: undefined | Api.Server.CollectionParams,
+    log: SimpleLoggerInterface
+  ): Promise<Api.CollectionResponse<Auth.Db.UserRole<UserRoles>, any>> {
+    return !filter
+      ? this.sql.get("user-roles", params, log)
+      : this.sql.get("user-roles", filter, params, log);
+  }
+
+  public saveUserRole(
+    record: PartialSelect<Auth.Db.UserRole<UserRoles>, keyof typeof Defaults["user-roles"]>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.UserRole<UserRoles>> {
+    return this.sql.save("user-roles", record, auth, log);
+  }
+
+  public deleteUserRole(
     userId: string,
     roleId: string,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<void> {
-    log.debug(`Deleting user role '${userId}:${roleId}'`);
-    const resource = this.get("user-roles", { userId, roleId }, log, false);
-    if (resource) {
-      await this.db.query("DELETE FROM `user-roles` WHERE `userId` = ? && `roleId` = ?", [
-        userId,
-        roleId,
-      ]);
-      log.debug(`Resource deleted, publishing messages`);
+    return this.sql.deleteUserRole(userId, roleId, auth, log);
+  }
 
-      // Bust cache
-      this.cache.clear(new RegExp(`user-roles-.*`));
+  /**
+   *
+   *
+   *
+   *
+   * Verification Codes
+   *
+   *
+   *
+   *
+   */
 
-      // Publish audit message
-      const p: Array<Promise<unknown>> = [];
-      if (this.audit) {
-        log.debug(`Publishing audit message`);
-        p.push(
-          this.audit.delete({
-            auth,
-            targetType: "user-roles",
-            targetId: `${userId}:${roleId}`,
-          })
-        );
-      }
+  public getVerificationCodeBySha256(
+    codeSha256: Buffer,
+    log: SimpleLoggerInterface,
+    thrw: true
+  ): Promise<Auth.Db.VerificationCode>;
+  public getVerificationCodeBySha256(
+    codeSha256: Buffer,
+    log: SimpleLoggerInterface,
+    thrw?: false | undefined
+  ): Promise<Auth.Db.VerificationCode | undefined>;
+  public getVerificationCodeBySha256(
+    codeSha256: Buffer,
+    log: SimpleLoggerInterface,
+    thrw?: boolean
+  ): Promise<Auth.Db.VerificationCode | undefined> {
+    return thrw
+      ? this.sql.get("verification-codes", { codeSha256 }, log, thrw)
+      : this.sql.get("verification-codes", { codeSha256 }, log, thrw);
+  }
 
-      // Publish domain message
-      if (this.pubsub) {
-        log.debug(`Publishing domain message`);
-        p.push(
-          this.pubsub.publish({
-            action: "deleted",
-            resource: { type: "user-roles", ...resource },
-          })
-        );
-      }
+  public saveVerificationCode(
+    record: PartialSelect<Auth.Db.VerificationCode, keyof typeof Defaults["verification-codes"]>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.VerificationCode> {
+    return this.sql.save("verification-codes", record, auth, log);
+  }
 
-      await Promise.all(p);
-    } else {
-      log.info(`Resource not found. Nothing to delete.`);
-    }
+  public updateVerificationCode(
+    codeSha256: Buffer,
+    record: Partial<Auth.Db.VerificationCode>,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.VerificationCode> {
+    return this.sql.update("verification-codes", codeSha256, record, auth, log);
   }
 }

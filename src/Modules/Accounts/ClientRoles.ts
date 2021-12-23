@@ -44,8 +44,8 @@ export const getClientRolesHandler = (
       }
 
       // Make sure org and client exist
-      await r.io.get("organizations", { id: organizationId }, log, true);
-      const client = await r.io.get("clients", { id: clientId }, log, true);
+      await r.io.getOrganizationById(organizationId, log, true);
+      const client = await r.io.getClientById(clientId, log, true);
 
       // Authorize
       await authorizeCallerForRole(organizationId, auth, "read", r);
@@ -59,7 +59,7 @@ export const getClientRolesHandler = (
       }
 
       // Get and send response
-      const roles = await r.io.get("client-roles", { _t: "filter", clientId }, log);
+      const roles = await r.io.getClientRoles({ _t: "filter", clientId }, log);
       const response: Auth.Api.Responses<
         ClientRoles,
         UserRoles
@@ -96,8 +96,8 @@ export const postClientRolesHandler = (
       Http.authorize(req, r.authz["POST /organizations/:id/clients/:id/roles"], log);
 
       // Make sure org and client exist
-      await r.io.get("organizations", { id: organizationId }, log, true);
-      const client = await r.io.get("clients", { id: clientId }, log, true);
+      await r.io.getOrganizationById(organizationId, log, true);
+      const client = await r.io.getClientById(clientId, log, true);
 
       // Make sure the client belongs to the org and is not deleted
       if (client.organizationId !== organizationId || client.deletedMs !== null) {
@@ -115,10 +115,10 @@ export const postClientRolesHandler = (
       const roleId = validation.value.data.id;
 
       // Add client role
-      await r.io.save("client-roles", { clientId, roleId: roleId as ClientRoles }, req.auth, log);
+      await r.io.saveClientRole({ clientId, roleId: roleId as ClientRoles }, req.auth, log);
 
       // Get all client roles and return as response
-      const roles = await r.io.get("client-roles", { _t: "filter", clientId }, log);
+      const roles = await r.io.getClientRoles({ _t: "filter", clientId }, log);
       const response: Auth.Api.Responses<
         ClientRoles,
         UserRoles
@@ -164,8 +164,8 @@ export const deleteClientRolesHandler = (
       Http.authorize(req, r.authz["DELETE /organizations/:id/clients/:id/roles/:id"], log);
 
       // Make sure org and client exist
-      await r.io.get("organizations", { id: organizationId }, log, true);
-      const client = await r.io.get("clients", { id: clientId }, log, true);
+      await r.io.getOrganizationById(organizationId, log, true);
+      const client = await r.io.getClientById(clientId, log, true);
 
       // Make sure the client belongs to the org and is not deleted
       if (client.organizationId !== organizationId || client.deletedMs !== null) {

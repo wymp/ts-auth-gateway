@@ -31,7 +31,7 @@ export const getUsers = (r: Pick<AppDeps, "log" | "io" | "authz">): SimpleHttpSe
       Http.authorize(req, r.authz["GET /users(/:id)"], log);
 
       // Get response
-      const users = await r.io.get("users", Http.getCollectionParams(req.query), log);
+      const users = await r.io.getUsers(undefined, Http.getCollectionParams(req.query), log);
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["GET /users"] = {
         ...users,
         data: await addRoles(
@@ -67,7 +67,7 @@ export const getUserById = (
       }
 
       // Get and send response
-      const user = await r.io.get("users", { id: userId }, r.log, true);
+      const user = await r.io.getUserById(userId, r.log, true);
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["GET /users/:id"] = {
         t: "single",
         data: await addRoles(T.Users.dbToApi(user), r),
@@ -108,7 +108,7 @@ export const postUsers = (
       // Get and validate the referrer
       let referrer = req.auth.c;
       if (user.referrer) {
-        if (!(await r.io.get("clients", { id: user.referrer }, log))) {
+        if (!(await r.io.getClientById(user.referrer, log))) {
           throw new E.BadRequest(
             `Unknown Referrer '${user.referrer}'. The referrer must be a valid client known to ` +
               `system`,
@@ -156,8 +156,7 @@ export const patchUsers = (r: Pick<AppDeps, "log" | "io">): SimpleHttpServerMidd
       }
       const payload = validation.value.data;
 
-      const user = await r.io.update(
-        "users",
+      const user = await r.io.updateUser(
         userId,
         {
           // Name and 2fa are the only two editable attributes, so we're just adding them directly
@@ -255,7 +254,7 @@ export const deleteUsers = (r: Pick<AppDeps, "log" | "io">): SimpleHttpServerMid
       }
 
       // Do the deletion
-      await r.io.update("users", userId, { deletedMs: Date.now() }, req.auth, log);
+      await r.io.updateUser(userId, { deletedMs: Date.now() }, req.auth, log);
 
       // Return response
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["DELETE /users/:id"] = {
@@ -343,7 +342,7 @@ export const createUser = async (
   }
 
   // Check to see if user already exists
-  if (await r.io.get("emails", { id: postUser.email }, r.log)) {
+  if (await r.io.getEmailByAddress(postUser.email, r.log)) {
     const e = new E.DuplicateResource("A user with this email already exists", "DUPLICATE");
     e.obstructions = [
       {
@@ -366,8 +365,7 @@ export const createUser = async (
   }
 
   // Insert user into database
-  const user = await r.io.save(
-    "users",
+  const user = await r.io.saveUser(
     {
       name: postUser.name,
       passwordBcrypt,
@@ -382,10 +380,10 @@ export const createUser = async (
     addEmail(postUser.email, user.id, auth, r),
 
     // Insert default user role
-    r.io.save("user-roles", { roleId: UserRoles.USER, userId: user.id }, auth, r.log),
+    r.io.saveUserRole({ roleId: UserRoles.USER, userId: user.id }, auth, r.log),
 
     // Associate referrer with user
-    r.io.save("user-clients", { clientId: referrer || auth.c, userId: user.id }, auth, r.log),
+    r.io.saveUserClient({ clientId: referrer || auth.c, userId: user.id }, auth, r.log),
 
     // Create a new session
     createSession(user.id, userAgent, auth, {}, r),
@@ -471,7 +469,7 @@ export const changeUserPassword = async (
   auth: Auth.ReqInfo,
   r: Pick<AppDeps, "log" | "io">
 ): Promise<void> => {
-  const user = await r.io.get("users", { id: userId }, r.log, true);
+  const user = await r.io.getUserById(userId, r.log, true);
 
   if (payload.type === "forgot-password") {
     // "Forgot password" flow
@@ -500,7 +498,7 @@ export const changeUserPassword = async (
   }
 
   // Update records
-  await r.io.update("users", userId, { passwordBcrypt }, auth, r.log);
+  await r.io.updateUser(userId, { passwordBcrypt }, auth, r.log);
 };
 
 /**
@@ -517,7 +515,7 @@ declare interface AddRoles {
 }
 const addRoles: AddRoles = async (userOrUsers, r): Promise<any> => {
   const userIds = Array.isArray(userOrUsers) ? userOrUsers.map((u) => u.id) : [userOrUsers.id];
-  const roles = await r.io.get("user-roles", { _t: "filter", userIdIn: userIds }, r.log);
+  const roles = await r.io.getUserRoles({ _t: "filter", userIdIn: userIds }, undefined, r.log);
 
   const add = (user: Auth.Api.User<UserRoles>): Auth.Api.User<UserRoles> => {
     user.roles = roles.data.filter((row) => row.userId === user.id).map((row) => row.roleId);

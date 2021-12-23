@@ -2,8 +2,8 @@ import { RateLimiterMemory } from "rate-limiter-flexible";
 import { SimpleHttpClientRpn } from "simple-http-client-rpn";
 import { MockSimpleLogger } from "@wymp/ts-simple-interfaces-testing";
 import * as Weenie from "@wymp/weenie-framework";
-import { AppConfigValidator, AppConfig, Service } from "../src";
-import * as AppWeenie from "../run/Weenie";
+import { Types, Service } from "../../src";
+import * as AppWeenie from "../../run/Weenie";
 
 // For easy typing of the 'r' parameter
 declare type PromiseValue<T> = T extends PromiseLike<infer U> ? U : T;
@@ -11,7 +11,7 @@ export type FakeDeps = PromiseValue<ReturnType<typeof startFakeService>>;
 
 let r: FakeDeps;
 const http = new SimpleHttpClientRpn();
-const port = "11223";
+const port = 11223;
 
 // Standard auth info to make basic request testing easier
 let apikey = "1eb9b2d9-aa0b-68b0-2d59-5a25779175e7";
@@ -22,11 +22,6 @@ let headers = {
   "User-Agent": "test1",
 };
 */
-
-const timeOutInSeconds = async (seconds: number) => {
-  jest.setTimeout(seconds * 1000);
-  jest.runAllTimers();
-};
 
 // Create a fake web proxy function to monitor proxy calls
 let webProxyStub: any;
@@ -49,14 +44,14 @@ const fakeWebProxyFunction = (req: any, res: any, opts: any, err: Function) => {
 const startFakeService = async (port: number) => {
   // prettier-ignore
   const r = await Weenie.Weenie(
-    Weenie.configFromFiles<AppConfig>(
+    Weenie.configFromFiles<Types.AppConfig>(
       "./config.json",
       "./config.local.json",
-      AppConfigValidator
+      Types.AppConfigValidator
     )()
   )
     // Change the listening port to ${port} for testing
-    .and((r: { config: AppConfig }) => {
+    .and((r: { config: Types.AppConfig }) => {
       r.config.http.listeners = [[port, "localhost"]];
       return {};
     })
@@ -68,7 +63,9 @@ const startFakeService = async (port: number) => {
     // Mock proxy handler, real rate-limiter
     .and(() => {
       return {
-        proxy: <any>{ web: (a: any, b: any, c: any, err: Function) => { } },
+        proxy: <any>{ web: (a: any, b: any, c: any, err: Function) => {
+          throw new Error("This function should never execute. Something must be wrong with your web proxy stub.");
+        }},
         rateLimiter: new RateLimiterMemory({ duration: 1 }),
       }
     })
@@ -124,6 +121,7 @@ describe("End-to-End Tests of Auth Service", () => {
   // Reset the web proxy mock every time
   beforeEach(() => {
     webProxyStub.mockReset();
+    webProxyStub.mockImplementation(fakeWebProxyFunction);
   });
 
   /**
@@ -209,10 +207,6 @@ describe("End-to-End Tests of Auth Service", () => {
    */
 
   describe("Gateway Logic", () => {
-    beforeEach(async () => {
-      jest.useFakeTimers();
-    });
-
     afterEach(async () => {
       await r.sql.query("DELETE FROM `apis` WHERE `domain` = '_testing'");
     });
@@ -285,8 +279,7 @@ describe("End-to-End Tests of Auth Service", () => {
       });
       expect(res2.status).toBe(429);
 
-      // Wait one second
-      timeOutInSeconds(1);
+      await new Promise<void>((res) => setTimeout(res, 1000));
 
       //Finally, should return a successful status after the rate limit has passed
       const res3 = await http.request<any>({ url: `http://localhost:${port}/_testing/v1/test` });

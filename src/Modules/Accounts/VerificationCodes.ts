@@ -46,8 +46,7 @@ export const generateCode = async (
 
   // Save code to db
   r.log.debug(`Saving ${type} code`);
-  await r.io.save(
-    "verification-codes",
+  await r.io.saveVerificationCode(
     {
       type,
       codeSha256: createHash("sha256").update(code).digest(),
@@ -81,7 +80,7 @@ export const verifyEmail = async (
     .digest();
 
   // Get the code from the database
-  const codeRecord = await r.io.get("verification-codes", { codeSha256 }, r.log);
+  const codeRecord = await r.io.getVerificationCodeBySha256(codeSha256, r.log);
 
   if (
     !codeRecord ||
@@ -119,8 +118,8 @@ export const verifyEmail = async (
   }
 
   // If nothing is wrong, then let's go ahead and mark the email verified and consume the code
-  const updatedEmail = await r.io.update("emails", email, { verifiedMs: Date.now() }, auth, r.log);
-  await r.io.update("verification-codes", codeSha256, { consumedMs: Date.now() }, auth, r.log);
+  const updatedEmail = await r.io.updateEmail(email, { verifiedMs: Date.now() }, auth, r.log);
+  await r.io.updateVerificationCode(codeSha256, { consumedMs: Date.now() }, auth, r.log);
 
   return updatedEmail;
 };
