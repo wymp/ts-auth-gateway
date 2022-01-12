@@ -5,11 +5,11 @@
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "scripts": {
-    "build": "scripts/build",
     "docgen": "npx redoc-cli bundle -o docs/http/api.v1.html docs/http/Wymp-Auth-Gateway-API.v1.json; npx typedoc src/index.ts --out ./docs/ts --sort visibility --sort source-order",
     "test": "jest",
     "compile-start": "npx -p typescript tsc && node ./dist/run/app.js",
-    "start": "node ./dist/run/app.js"
+    "start": "node ./dist/run/app.js",
+    "prepublishOnly": "rm -Rf dist; npx tsc"
   },
   "repository": {
     "type": "git",
