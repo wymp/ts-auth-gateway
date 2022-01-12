@@ -1,5 +1,5 @@
 import { createHash /*randomBytes*/ } from "crypto";
-import { SimpleSqlDbInterface, SimpleLoggerInterface } from "ts-simple-interfaces";
+import { SimpleSqlDbInterface, SimpleLoggerInterface } from "@wymp/ts-simple-interfaces";
 import { AbstractSql, Query } from "@wymp/sql";
 import { Auth } from "@wymp/types";
 import * as E from "@wymp/http-errors";

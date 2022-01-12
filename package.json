@@ -1,6 +1,6 @@
 {
   "name": "@wymp/auth-gateway",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha1",
   "description": "A functioning auth gateway for receiving, authenticating and proxying requests into a system.",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://github.com:wymp/auth-gateway.git"
+    "url": "git+ssh://github.com:wymp/ts-auth-gateway.git"
   },
   "keywords": [
     "Authentication",
@@ -23,12 +23,12 @@
     "APIs"
   ],
   "author": "Kael Shipman",
-  "contributors": "Various Contributors (https://github.com/wymp/ts-accounts-module/graphs/contributors)",
+  "contributors": "Various Contributors (https://github.com/wymp/ts-auth-gateway/graphs/contributors)",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/wymp/auth-gateway/issues"
+    "url": "https://github.com/wymp/ts-auth-gateway/issues"
   },
-  "homepage": "https://github.com/wymp/auth-gateway#readme",
+  "homepage": "https://github.com/wymp/ts-auth-gateway#readme",
   "dependencies": {
     "@types/bcryptjs": "^2.4.2",
     "@types/http-proxy": "^1.17.7",
@@ -48,14 +48,14 @@
     "runtypes": "^6.5.0"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.24",
+    "@types/jest": "^27.0.0",
+    "@wymp/simple-http-client-rpn": "^0.5.2",
     "@wymp/ts-simple-interfaces-testing": "^0.5.1",
     "husky": "^6.0.0",
     "jest": "^27.4.3",
     "prettier": "^2.5.1",
     "pretty-quick": "^3.1.2",
     "redoc-cli": "^0.12.3",
-    "simple-http-client-rpn": "^0.5.1",
     "ts-jest": "^27.1.1",
     "typedoc": "^0.22.10",
     "typescript": "^4.5.2"

@@ -1,4 +1,4 @@
-import * as E from "@openfinanceio/http-errors";
+import * as E from "@wymp/http-errors";
 import * as Weenie from "@wymp/weenie-framework";
 import { Service, Types } from "../src";
 import * as AppWeenie from "./Weenie";
