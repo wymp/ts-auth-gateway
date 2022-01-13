@@ -16,7 +16,7 @@ export const AppConfigValidator = rt.Intersect(
     http: Weenie.webServiceConfigValidator,
     amqp: Weenie.mqConnectionConfigValidator,
     db: Weenie.databaseConfigValidator,
-    domain: rt.Literal("auth"),
+    domain: rt.String,
     debugKey: rt.String,
 
     // JWT keys
