@@ -1,5 +1,5 @@
 import { SimpleLoggerInterface, SimpleSqlDbInterface } from "@wymp/ts-simple-interfaces";
-import { Auth, Api, PartialSelect } from "@wymp/types";
+import { Audit, Auth, Api, PartialSelect } from "@wymp/types";
 import { Sql } from "./Sql";
 import { CacheInterface, IoInterface, SessionAndToken, TypeMap, Defaults } from "./Types";
 
@@ -8,8 +8,13 @@ export class Io<ClientRoles extends string, UserRoles extends string>
 {
   protected sql: Sql<ClientRoles, UserRoles>;
 
-  public constructor(db: SimpleSqlDbInterface, cache: CacheInterface) {
-    this.sql = new Sql<ClientRoles, UserRoles>(db, cache);
+  public constructor(
+    db: SimpleSqlDbInterface,
+    cache: CacheInterface,
+    pubsub: { publish(msg: unknown): Promise<unknown> } | null = null,
+    audit: Audit.ClientInterface | null = null
+  ) {
+    this.sql = new Sql<ClientRoles, UserRoles>(db, cache, pubsub, audit);
   }
 
   /**

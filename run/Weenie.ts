@@ -1,11 +1,37 @@
 import { SimpleSqlDbInterface, SimpleLoggerInterface } from "@wymp/ts-simple-interfaces";
+import { Audit } from "@wymp/types";
 import * as HttpProxy from "http-proxy";
 import { Io, Types } from "../src";
 import { authz as Authz } from "./Authorizations";
 
-export const io = (r: { sql: SimpleSqlDbInterface; cache: Io.CacheInterface }) => ({
-  io: new Io.Io<Types.ClientRoles, Types.UserRoles>(r.sql, r.cache),
-});
+export const io = (r: {
+  sql: SimpleSqlDbInterface;
+  cache: Io.CacheInterface;
+  pubsub?: {
+    publish(channel: string, msg: unknown, options: { routingKey: string }): Promise<void>;
+  };
+  audit?: Audit.ClientInterface;
+  config?: { domain: string; pubsubDataEventsChannel: string };
+}) => {
+  // If we've got enough stuff to assemble a pubsub, do it
+  const pubsub = !r.pubsub
+    ? null
+    : {
+        publish(msg: { action: string; resource: { type: string } }): Promise<void> {
+          const routingKey = `${r.config ? `${r.config.domain}.` : ``}${msg.action}.${
+            msg.resource.type
+          }`;
+          return r.pubsub!.publish(r.config?.pubsubDataEventsChannel || "data-events", msg, {
+            routingKey,
+          });
+        },
+      };
+
+  // Now return the thing
+  return {
+    io: new Io.Io<Types.ClientRoles, Types.UserRoles>(r.sql, r.cache, pubsub, r.audit || null),
+  };
+};
 
 export const mockCache = () => ({
   cache: <Io.CacheInterface>{

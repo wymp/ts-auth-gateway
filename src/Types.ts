@@ -14,10 +14,11 @@ export const AppConfigValidator = rt.Intersect(
   Weenie.baseConfigValidator,
   rt.Record({
     http: Weenie.webServiceConfigValidator,
-    amqp: Weenie.mqConnectionConfigValidator,
+    amqp: rt.Optional(Weenie.mqConnectionConfigValidator),
     db: Weenie.databaseConfigValidator,
     domain: rt.String,
     debugKey: rt.String,
+    pubsubDataEventsChannel: rt.String,
 
     // JWT keys
     authHeader: rt.Union(

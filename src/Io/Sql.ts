@@ -1,7 +1,7 @@
 import { createHash /*randomBytes*/ } from "crypto";
 import { SimpleSqlDbInterface, SimpleLoggerInterface } from "@wymp/ts-simple-interfaces";
 import { AbstractSql, Query } from "@wymp/sql";
-import { Auth } from "@wymp/types";
+import { Audit, Auth } from "@wymp/types";
 import * as E from "@wymp/http-errors";
 import { CacheInterface, TypeMap, Defaults, SessionAndToken } from "./Types";
 
@@ -14,7 +14,14 @@ export class Sql<ClientRoles extends string, UserRoles extends string> extends A
   TypeMap<ClientRoles, UserRoles>
 > {
   protected defaults = Defaults;
-  public constructor(protected db: SimpleSqlDbInterface, protected cache: CacheInterface) {
+  public constructor(
+    protected db: SimpleSqlDbInterface,
+    protected cache: CacheInterface,
+    protected pubsub: null | {
+      publish(msg: { action: string; resource: { type: string } }): Promise<unknown>;
+    } = null,
+    protected audit: Audit.ClientInterface | null = null
+  ) {
     super();
 
     // There are a couple objects that don't have an `id` field as their primary key. Set those
