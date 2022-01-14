@@ -1,6 +1,6 @@
 {
   "name": "@wymp/auth-gateway",
-  "version": "1.0.0-alpha2",
+  "version": "1.0.0-alpha3",
   "description": "A functioning auth gateway for receiving, authenticating and proxying requests into a system.",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",

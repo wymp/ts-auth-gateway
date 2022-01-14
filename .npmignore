@@ -1,2 +1,5 @@
 tests
 tmp
+*.local.conf
+*.local.json
+*.override.yml
