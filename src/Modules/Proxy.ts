@@ -124,6 +124,9 @@ export const getProxyMiddleware = (
         _req.headers = {};
       }
 
+      // Trim api info off beginning of target url
+      req.url = req.url.replace(new RegExp("^/[^/]+/[^/]+/?"), "/");
+
       // Now remove the authorization header
       delete _req.headers.authorization;
 
