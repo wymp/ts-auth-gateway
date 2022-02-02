@@ -5,7 +5,6 @@ import { SimpleHttpServerMiddleware } from "@wymp/ts-simple-interfaces";
 import { Api, Auth } from "@wymp/types";
 import * as T from "../../Translators";
 import { AppDeps, UserRoles, ClientRoles } from "../../Types";
-import { InvalidBodyError } from "../Lib";
 import * as Common from "./Common";
 import { getDealiasedUserIdFromReq } from "./Users";
 
@@ -198,9 +197,7 @@ export const postOrgMembershipHandler = (
 
       // Validate body
       const validation = PostOrgMembership.validate(req.body);
-      if (!validation.success) {
-        throw InvalidBodyError(validation);
-      }
+      Common.throwOnInvalidBody(validation);
       const postOrgMembership = validation.value.data;
 
       // Hand back to the functions
@@ -321,9 +318,7 @@ export const patchOrgMembershipHandler = (
 
       // Validate body
       const validation = PatchOrgMembership.validate(req.body);
-      if (!validation.success) {
-        throw InvalidBodyError(validation);
-      }
+      Common.throwOnInvalidBody(validation);
       const patchOrgMembership = validation.value.data;
 
       // Hand back to the functions

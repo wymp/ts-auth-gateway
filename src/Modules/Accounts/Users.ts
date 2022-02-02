@@ -6,7 +6,7 @@ import * as E from "@wymp/http-errors";
 import * as Http from "@wymp/http-utils";
 import { AppDeps, UserRoles, ClientRoles } from "../../Types";
 import * as T from "../../Translators";
-import { InvalidBodyError } from "../Lib";
+import * as Common from "./Common";
 import { addEmail } from "./Emails";
 import { createSession } from "./Sessions";
 
@@ -100,9 +100,7 @@ export const postUsers = (
 
       // Validate
       const validation = PostUser.validate(req.body);
-      if (!validation.success) {
-        throw InvalidBodyError(validation);
-      }
+      Common.throwOnInvalidBody(validation);
       const user = validation.value.data;
 
       // Get and validate the referrer
@@ -151,9 +149,7 @@ export const patchUsers = (r: Pick<AppDeps, "log" | "io">): SimpleHttpServerMidd
 
       // Validate body
       const validation = PatchUserValidator.validate(req.body);
-      if (!validation.success) {
-        throw InvalidBodyError(validation);
-      }
+      Common.throwOnInvalidBody(validation);
       const payload = validation.value.data;
 
       const user = await r.io.updateUser(
@@ -208,9 +204,7 @@ export const postChangePasswordHandler = (
 
       // Validate body
       const validation = PostChangePasswordValidator.validate(req.body);
-      if (!validation.success) {
-        throw InvalidBodyError(validation);
-      }
+      Common.throwOnInvalidBody(validation);
       const payload = validation.value.data;
 
       // Hand back to function

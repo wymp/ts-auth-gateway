@@ -1,3 +1,4 @@
+import * as rt from "runtypes";
 import * as E from "@wymp/http-errors";
 import { SimpleLoggerInterface } from "@wymp/ts-simple-interfaces";
 import { Auth } from "@wymp/types";
@@ -71,3 +72,34 @@ export const callerIsOwnerOrPrivilegedUser = (
 
   return proceed;
 };
+
+/**
+ * Convert a runtypes error into a standard BadRequest error
+ */
+export function throwOnInvalidBody<T>(
+  val: rt.Result<T>,
+  errString: string = ""
+): asserts val is rt.Success<T> {
+  if (val.success === false) {
+    errString =
+      errString ||
+      `The body of your request does not appear to conform to the documented input for this ` +
+        `endpoint. Please read the docs. Error: ${val.message}.`;
+    if (val.details) {
+      errString += " Details:\n";
+      const addDetails = (k: string, v: string | rt.Details) => {
+        if (typeof v === "string") {
+          errString += `\n* ${k}: ${v}`;
+        } else {
+          for (const newKey in v) {
+            addDetails(`${k}.${newKey}`, v[newKey]);
+          }
+        }
+      };
+      for (const k in val.details) {
+        addDetails(k, val.details[k]);
+      }
+    }
+    throw new E.BadRequest(errString, "BAD-BODY");
+  }
+}

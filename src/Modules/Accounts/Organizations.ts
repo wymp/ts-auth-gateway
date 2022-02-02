@@ -4,7 +4,6 @@ import * as Http from "@wymp/http-utils";
 import { SimpleHttpServerMiddleware } from "@wymp/ts-simple-interfaces";
 import { Auth } from "@wymp/types";
 import { AppDeps, UserRoles, ClientRoles } from "../../Types";
-import { InvalidBodyError } from "../Lib";
 import * as Common from "./Common";
 
 /**
@@ -93,9 +92,7 @@ export const postOrganizations = (
 
       // Validate
       const validation = PostOrganization.validate(req.body);
-      if (!validation.success) {
-        throw InvalidBodyError(validation);
-      }
+      Common.throwOnInvalidBody(validation);
       const postOrganization = validation.value.data;
 
       // Hand back to the functions
@@ -182,9 +179,7 @@ export const patchOrganization = (
 
       // Validate
       const validation = PatchOrganization.validate(req.body);
-      if (!validation.success) {
-        throw InvalidBodyError(validation);
-      }
+      Common.throwOnInvalidBody(validation);
       const patchOrganization = validation.value.data;
 
       // Validate the id

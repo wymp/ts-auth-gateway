@@ -9,7 +9,6 @@ import * as T from "../../Translators";
 import { AppDeps, ClientRoles, UserRoles } from "../../Types";
 import * as Common from "./Common";
 import { authorizeCallerForRole } from "./OrgMemberships";
-import { InvalidBodyError } from "../Lib";
 
 /**
  *
@@ -121,9 +120,7 @@ export const postClientHandler = (
 
       // Validate input
       const validation = PostClientValidator.validate(req.body);
-      if (!validation.success) {
-        throw InvalidBodyError(validation);
-      }
+      Common.throwOnInvalidBody(validation);
       const clientData = validation.value.data;
 
       // Make sure org exists
@@ -224,9 +221,7 @@ export const patchClientHandler = (
 
       // Validate input
       const validation = PatchClientValidator.validate(req.body);
-      if (!validation.success) {
-        throw InvalidBodyError(validation);
-      }
+      Common.throwOnInvalidBody(validation);
       const clientData = validation.value.data;
 
       // Make sure org and client exist

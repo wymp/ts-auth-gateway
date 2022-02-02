@@ -5,7 +5,7 @@ import * as E from "@wymp/http-errors";
 import * as Http from "@wymp/http-utils";
 import * as T from "../../Translators";
 import { AppDeps, ClientRoles, UserRoles } from "../../Types";
-import { InvalidBodyError } from "../Lib";
+import * as Common from "./Common";
 import { getDealiasedUserIdFromReq } from "./Users";
 import { sendCode, verifyEmail } from "./VerificationCodes";
 
@@ -75,9 +75,7 @@ export const postUserEmailHandler = (
 
       // Validate
       const validation = PostEmail.validate(req.body);
-      if (!validation.success) {
-        throw InvalidBodyError(validation);
-      }
+      Common.throwOnInvalidBody(validation);
       const emailAddr = validation.value.data.email;
 
       // Add user role
@@ -294,9 +292,7 @@ export const verifyUserEmailHandler = (
 
       // Validate payload
       const validation = VerifyEmailValidator.validate(req.body);
-      if (!validation.success) {
-        throw InvalidBodyError(validation);
-      }
+      Common.throwOnInvalidBody(validation);
       const code = validation.value.data.code;
 
       // Now try to verify

@@ -4,7 +4,6 @@ import { Auth } from "@wymp/types";
 import * as E from "@wymp/http-errors";
 import * as Http from "@wymp/http-utils";
 import { AppDeps, UserRoles, ClientRoles } from "../../Types";
-import { InvalidBodyError } from "../Lib";
 import * as Common from "./Common";
 import { getDealiasedUserIdFromReq } from "./Users";
 
@@ -74,9 +73,7 @@ export const postUserRoles = (
 
       // Validate
       const validation = PostUserRoles.validate(req.body);
-      if (!validation.success) {
-        throw InvalidBodyError(validation);
-      }
+      Common.throwOnInvalidBody(validation);
       const roleId = validation.value.data.id;
 
       // Add user role

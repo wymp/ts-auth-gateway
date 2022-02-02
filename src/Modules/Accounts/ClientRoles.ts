@@ -4,7 +4,6 @@ import { Auth } from "@wymp/types";
 import * as E from "@wymp/http-errors";
 import * as Http from "@wymp/http-utils";
 import { AppDeps, ClientRoles, UserRoles } from "../../Types";
-import { InvalidBodyError } from "../Lib";
 import * as Common from "./Common";
 import { authorizeCallerForRole } from "./OrgMemberships";
 
@@ -109,9 +108,7 @@ export const postClientRolesHandler = (
 
       // Validate
       const validation = PostClientRoles.validate(req.body);
-      if (!validation.success) {
-        throw InvalidBodyError(validation);
-      }
+      Common.throwOnInvalidBody(validation);
       const roleId = validation.value.data.id;
 
       // Add client role

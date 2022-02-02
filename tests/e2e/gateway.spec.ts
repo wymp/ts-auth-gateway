@@ -1,5 +1,5 @@
 import { RateLimiterMemory } from "rate-limiter-flexible";
-import { SimpleHttpClientRpn } from "simple-http-client-rpn";
+import { SimpleHttpClientRpn } from "@wymp/simple-http-client-rpn";
 import { MockSimpleLogger } from "@wymp/ts-simple-interfaces-testing";
 import * as Weenie from "@wymp/weenie-framework";
 import { Types, Service } from "../../src";

@@ -103,10 +103,6 @@ const invalidatePayloadValidator = rt.Record({
   ),
 });
 
-const baseErr =
-  `The body of your request does not appear to conform to the documented input for this ` +
-  `endpoint. Please read the docs: /docs/api.v1.html.\n\n`;
-
 /**
  *
  *
@@ -136,9 +132,9 @@ export const handleGetAllSessions = (
           log.debug(`Filter passed: '${req.query.filter}'`);
           const validate = sessionFilterValidator.validate(JSON.parse(req.query.filter));
           if (validate.success === false) {
-            throw new E.BadRequest(
-              `The 'filter' query parameter you passed did not pass validation: ` +
-                `${validate.message}`
+            Common.throwOnInvalidBody(
+              validate,
+              `The 'filter' query parameter you passed did not pass validation: ${validate.message}`
             );
           }
           filter = validate.value;
@@ -202,9 +198,9 @@ export const handleGetUserSessions = (
           log.debug(`Filter passed: '${req.query.filter}'`);
           const validate = userSessionFilterValidator.validate(JSON.parse(req.query.filter));
           if (validate.success === false) {
-            throw new E.BadRequest(
-              `The 'filter' query parameter you passed did not pass validation: ` +
-                `${validate.message}`
+            Common.throwOnInvalidBody(
+              validate,
+              `The 'filter' query parameter you passed did not pass validation: ${validate.message}`
             );
           }
           filter = validate.value;
@@ -259,9 +255,7 @@ export const handlePostSessionsLoginEmail = (
       }
 
       const val = emailStepPayloadValidator.validate(req.body);
-      if (!val.success) {
-        throw new E.BadRequest(baseErr + `Error: ${val.message}`);
-      }
+      Common.throwOnInvalidBody(val);
 
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["POST /sessions/login/email"] =
         await logInWithEmail(val.value.data, throttle, req.auth, { ...r, log });
@@ -284,9 +278,7 @@ export const handlePostSessionsLoginPassword = (
       Http.assertAuthdReq(req);
 
       const val = passwordStepPayloadValidator.validate(req.body);
-      if (!val.success) {
-        throw new E.BadRequest(baseErr + `Error: ${val.message}`);
-      }
+      Common.throwOnInvalidBody(val);
 
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["POST /sessions/login/password"] =
         await logInWithPassword(val.value.data, req.get("user-agent"), throttle, req.auth, {
@@ -311,9 +303,7 @@ export const handlePostSessionsLoginCode = (
       Http.assertAuthdReq(req);
 
       const val = codeStepPayloadValidator.validate(req.body);
-      if (!val.success) {
-        throw new E.BadRequest(baseErr + `Error: ${val.message}`);
-      }
+      Common.throwOnInvalidBody(val);
 
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["POST /sessions/login/code"] =
         await logInWithEmailCode(val.value.data, req.get("user-agent"), req.auth, { ...r, log });
@@ -335,9 +325,7 @@ export const handlePostSessionsLoginTotp = (
       Http.assertAuthdReq(req);
 
       const val = totpStepPayloadValidator.validate(req.body);
-      if (!val.success) {
-        throw new E.BadRequest(baseErr + `Error: ${val.message}`);
-      }
+      Common.throwOnInvalidBody(val);
 
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["POST /sessions/login/totp"] =
         await logInWithTotp(val.value.data, req.get("user-agent"), req.auth, { ...r, log });
@@ -359,9 +347,7 @@ export const handlePostSessionsRefresh = (
       Http.assertAuthdReq(req);
 
       const val = refreshPayloadValidator.validate(req.body);
-      if (!val.success) {
-        throw new E.BadRequest(baseErr + `Error: ${val.message}`);
-      }
+      Common.throwOnInvalidBody(val);
 
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["POST /sessions/refresh"] = {
         data: await refreshSession(val.value.data, req.auth, { ...r, log }),
@@ -386,9 +372,7 @@ export const handlePostSessionsLogout = (
       let data: rt.Static<typeof invalidatePayloadValidator>["data"];
       if (req.body && Object.keys(req.body).length > 0) {
         const val = invalidatePayloadValidator.validate(req.body);
-        if (!val.success) {
-          throw new E.BadRequest(baseErr + `Error: ${val.message}`);
-        }
+        Common.throwOnInvalidBody(val);
         data = val.value.data;
       } else {
         // If we didn't pass in a session and we don't have a user attached to the request, we can't
