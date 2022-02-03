@@ -5,7 +5,6 @@ import * as E from "@wymp/http-errors";
 import * as Http from "@wymp/http-utils";
 import { AppDeps, ClientRoles, UserRoles } from "../../Types";
 import * as Common from "./Common";
-import { authorizeCallerForRole } from "./OrgMemberships";
 
 /**
  *
@@ -26,11 +25,6 @@ export const getClientRolesHandler = (
   return async (req, res, next) => {
     const log = Http.logger(r.log, req, res);
     try {
-      // Make sure it's an authd request so we can access the auth object
-      Http.assertAuthdReq(req);
-      const auth = req.auth;
-      Common.assertAuth(auth);
-
       // Get organization and client ids from params and verify
       const organizationId = req.params.orgId;
       const clientId = req.params.id;
@@ -42,12 +36,12 @@ export const getClientRolesHandler = (
         );
       }
 
+      // Authorize
+      Http.authorize(req, r.authz["POST /organizations/:id/clients/:id/roles"], log);
+
       // Make sure org and client exist
       await r.io.getOrganizationById(organizationId, log, true);
       const client = await r.io.getClientById(clientId, log, true);
-
-      // Authorize
-      await authorizeCallerForRole(organizationId, auth, "read", "GET-CLIENT-ROLES", { ...r, log });
 
       // Make sure the client belongs to the org and is not deleted
       if (client.organizationId !== organizationId || client.deletedMs !== null) {

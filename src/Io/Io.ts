@@ -137,6 +137,26 @@ export class Io<ClientRoles extends string, UserRoles extends string>
    *
    */
 
+  public getClientAccessRestrictionById(
+    id: string,
+    log: SimpleLoggerInterface,
+    thrw: true
+  ): Promise<Auth.Db.ClientAccessRestriction>;
+  public getClientAccessRestrictionById(
+    id: string,
+    log: SimpleLoggerInterface,
+    thrw?: false
+  ): Promise<Auth.Db.ClientAccessRestriction | undefined>;
+  public getClientAccessRestrictionById(
+    id: string,
+    log: SimpleLoggerInterface,
+    thrw?: boolean
+  ): Promise<Auth.Db.ClientAccessRestriction | undefined> {
+    return thrw
+      ? this.sql.get("client-access-restrictions", { id }, log, thrw)
+      : this.sql.get("client-access-restrictions", { id }, log, thrw);
+  }
+
   public getClientAccessRestrictions(
     filter: undefined | TypeMap<ClientRoles, UserRoles>["client-access-restrictions"]["filters"],
     params: undefined | Api.Server.CollectionParams,

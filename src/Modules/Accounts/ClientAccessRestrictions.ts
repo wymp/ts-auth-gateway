@@ -142,6 +142,25 @@ export const postClientAccessRestrictionsHandler = (
       Common.throwOnInvalidBody(validation);
       const post = validation.value.data;
 
+      // Further validation: Only sysadmins and internal system clients can add api restrictions
+      if (post.type === "api-access-restrictions") {
+        log.info(`Trying to create API access restriction. Enforcing privileged entity.`);
+        if (!Common.isInternalSystemClient(auth.r, auth.a, log)) {
+          log.info(`Not an internal system client. Checking for privileged user.`);
+          if (!auth.u || !auth.u.r.includes("sysadmin")) {
+            log.notice(`Not a privileged user. Denying access.`);
+            throw new E.Forbidden(
+              `API restrictions are only editable by internal entities.`,
+              `POST-API-ACCESS-RESTRICTION.INSUFFICIENT-PRIVILEGES`
+            );
+          } else {
+            log.info(`Privileged user. Allowing.`);
+          }
+        } else {
+          log.info(`Internal system client. Allowing.`);
+        }
+      }
+
       const typemap: {
         [k in rt.Static<
           typeof PostClientAccessRestrictions
@@ -240,6 +259,28 @@ export const deleteClientAccessRestrictionsHandler = (
         "DELETE-CLIENT-ACCESS-RESTRICTIONS",
         { ...r, log }
       );
+
+      // Get the restriction first for further authorization
+      const restriction = await r.io.getClientAccessRestrictionById(accessRestrictionId, log, true);
+
+      // Further validation: Only sysadmins and internal system clients can add api restrictions
+      if (restriction.type === "api") {
+        log.info(`Trying to delete API access restriction. Enforcing privileged entity.`);
+        if (!Common.isInternalSystemClient(auth.r, auth.a, log)) {
+          log.info(`Not an internal system client. Checking for privileged user.`);
+          if (!auth.u || !auth.u.r.includes("sysadmin")) {
+            log.notice(`Not a privileged user. Denying access.`);
+            throw new E.Forbidden(
+              `API restrictions are only editable by internal entities.`,
+              `DELETE-API-ACCESS-RESTRICTION.INSUFFICIENT-PRIVILEGES`
+            );
+          } else {
+            log.info(`Privileged user. Allowing.`);
+          }
+        } else {
+          log.info(`Internal system client. Allowing.`);
+        }
+      }
 
       // Delete accessRestriction and respond
       await r.io.deleteClientAccessRestriction(accessRestrictionId, auth, log);
