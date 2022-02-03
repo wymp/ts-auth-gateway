@@ -3,11 +3,11 @@
   "info": {
     "title": "Wymp Auth Gateway API",
     "version": "1.0",
-    "description": "The reference implementation of the Wymp Authentication/Authorization API Gateway"
+    "description": "The reference implementation of the Wymp Authentication/Authorization API Gateway.\n\nThis API provides functionality for managing users, organizations, clients and (TODO) OAuth grants. At a high level, it allows users to create accounts for themselves, it allows users to create and manage organizations with other users with varying levels of permission, and (TODO) it allows users to grant and manage OAuth tokens for 3rd-party applications to interact with the system."
   },
   "servers": [
     {
-      "url": "http://localhost:6546",
+      "url": "http://localhost:5435",
       "description": "Dev Server"
     }
   ],
@@ -371,12 +371,9 @@
                         "properties": {
                           "t": {
                             "type": "string",
-                            "enum": [
-                              "refresh"
-                            ],
-                            "example": "refresh"
+                            "example": "refresh-tokens"
                           },
-                          "refreshToken": {
+                          "token": {
                             "type": "string",
                             "pattern": "^[a-fA-F0-9]{64}$",
                             "minLength": 64,
@@ -386,19 +383,16 @@
                         },
                         "required": [
                           "t",
-                          "refreshToken"
+                          "token"
                         ]
                       },
                       {
                         "properties": {
                           "t": {
                             "type": "string",
-                            "enum": [
-                              "token"
-                            ],
-                            "example": "token"
+                            "example": "session-tokens"
                           },
-                          "sessionToken": {
+                          "token": {
                             "type": "string",
                             "pattern": "^[a-fA-F0-9]{64}",
                             "minLength": 64,
@@ -408,7 +402,7 @@
                         },
                         "required": [
                           "t",
-                          "sessionToken"
+                          "token"
                         ]
                       }
                     ],
@@ -421,12 +415,15 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Sessions"
+        ]
       }
     },
     "/accounts/v1/sessions/logout": {
       "post": {
-        "summary": "",
+        "summary": "Log Out",
         "operationId": "post-accounts-v1-sessions-logout",
         "responses": {
           "200": {
@@ -483,7 +480,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Sessions"
+        ]
       }
     }
   },

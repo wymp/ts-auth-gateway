@@ -5,6 +5,7 @@ import { AppDeps } from "../../Types";
 import { IoInterface } from "./Types";
 import * as Clients from "./Clients";
 import * as ClientRoles from "./ClientRoles";
+import * as ClientAccessRestrictions from "./ClientAccessRestrictions";
 import * as Emails from "./Emails";
 import * as Organizations from "./Organizations";
 import * as OrgMemberships from "./OrgMemberships";
@@ -112,6 +113,25 @@ export const register = (
   r.http.delete(
     `/accounts/v1/organizations/:orgId/clients/:id/roles/:roleId`,
     ClientRoles.deleteClientRolesHandler(r)
+  );
+
+  // Client Access Restrictions
+  r.log.notice(`HTTP: GET    /accounts/v1/organizations/:orgId/clients/:id/access-restrictions`);
+  r.http.get(
+    `/accounts/v1/organizations/:orgId/clients/:id/access-restrictions`,
+    ClientAccessRestrictions.getClientAccessRestrictionsHandler(r)
+  );
+  r.log.notice(`HTTP: POST   /accounts/v1/organizations/:orgId/clients/:id/access-restrictions`);
+  r.http.post(`/accounts/v1/organizations/:orgId/clients/:id/access-restrictions`, [
+    parseBody,
+    ClientAccessRestrictions.postClientAccessRestrictionsHandler(r),
+  ]);
+  r.log.notice(
+    `HTTP: DELETE /accounts/v1/organizations/:orgId/clients/:id/access-restrictions/:accessRestrictionId`
+  );
+  r.http.delete(
+    `/accounts/v1/organizations/:orgId/clients/:id/access-restrictions/:accessRestrictionId`,
+    ClientAccessRestrictions.deleteClientAccessRestrictionsHandler(r)
   );
 
   // Users

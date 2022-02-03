@@ -195,6 +195,19 @@ export interface IoInterface<ClientRoles extends string, UserRoles extends strin
     params: undefined | Api.Server.CollectionParams,
     log: SimpleLoggerInterface
   ): Promise<Api.CollectionResponse<Auth.Db.ClientAccessRestriction, any>>;
+  saveClientAccessRestriction(
+    record: PartialSelect<
+      Auth.Db.ClientAccessRestriction,
+      keyof typeof Defaults["client-access-restrictions"]
+    >,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.ClientAccessRestriction>;
+  deleteClientAccessRestriction(
+    restrictionId: string,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<void>;
 
   getClientRoles(
     filter: TypeMap<ClientRoles, UserRoles>["client-roles"]["filters"],

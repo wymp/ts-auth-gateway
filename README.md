@@ -145,10 +145,10 @@ credentials to your `shmig.local.conf` file, cd into `db` and run `shmig up`.
   * [x] GET    /accounts/v1/organizations/:id/clients/:id/roles
   * [x] POST   /accounts/v1/organizations/:id/clients/:id/roles
   * [x] DELETE /accounts/v1/organizations/:id/clients/:id/roles/:id
-* [ ] **Client Access Restrictions**
-  * [ ] GET    /accounts/v1/organizations/:id/clients/:id/access-restrictions
-  * [ ] POST   /accounts/v1/organizations/:id/clients/:id/access-restrictions
-  * [ ] DELETE /accounts/v1/organizations/:id/clients/:id/access-restrictions/:id
+* [x] **Client Access Restrictions**
+  * [x] GET    /accounts/v1/organizations/:id/clients/:id/access-restrictions
+  * [x] POST   /accounts/v1/organizations/:id/clients/:id/access-restrictions
+  * [x] DELETE /accounts/v1/organizations/:id/clients/:id/access-restrictions/:id
 * [x] **Memberships**
   * [x] GET    /accounts/v1/users/:id/memberships
   * [x] GET    /accounts/v1/organizations/:id/memberships

@@ -94,28 +94,6 @@ export class Io<ClientRoles extends string, UserRoles extends string>
    *
    *
    *
-   * Client access restrictions
-   *
-   *
-   *
-   *
-   */
-
-  public getClientAccessRestrictions(
-    filter: undefined | TypeMap<ClientRoles, UserRoles>["client-access-restrictions"]["filters"],
-    params: undefined | Api.Server.CollectionParams,
-    log: SimpleLoggerInterface
-  ): Promise<Api.CollectionResponse<Auth.Db.ClientAccessRestriction, any>> {
-    return !filter
-      ? this.sql.get("client-access-restrictions", params, log)
-      : this.sql.get("client-access-restrictions", filter, params, log);
-  }
-
-  /**
-   *
-   *
-   *
-   *
    * Client Roles
    *
    *
@@ -145,6 +123,47 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     log: SimpleLoggerInterface
   ): Promise<void> {
     return this.sql.deleteClientRole(clientId, roleId, auth, log);
+  }
+
+  /**
+   *
+   *
+   *
+   *
+   * Client Access Restrictions
+   *
+   *
+   *
+   *
+   */
+
+  public getClientAccessRestrictions(
+    filter: undefined | TypeMap<ClientRoles, UserRoles>["client-access-restrictions"]["filters"],
+    params: undefined | Api.Server.CollectionParams,
+    log: SimpleLoggerInterface
+  ): Promise<Api.CollectionResponse<Auth.Db.ClientAccessRestriction, any>> {
+    return !filter
+      ? this.sql.get("client-access-restrictions", params, log)
+      : this.sql.get("client-access-restrictions", filter, params, log);
+  }
+
+  public saveClientAccessRestriction(
+    record: PartialSelect<
+      Auth.Db.ClientAccessRestriction,
+      keyof typeof Defaults["client-access-restrictions"]
+    >,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<Auth.Db.ClientAccessRestriction> {
+    return this.sql.save("client-access-restrictions", record, auth, log);
+  }
+
+  public deleteClientAccessRestriction(
+    restrictionId: string,
+    auth: Auth.ReqInfo,
+    log: SimpleLoggerInterface
+  ): Promise<void> {
+    return this.sql.delete("client-access-restrictions", restrictionId, auth, log);
   }
 
   /**

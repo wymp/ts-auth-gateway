@@ -47,7 +47,7 @@ export const getClientRolesHandler = (
       const client = await r.io.getClientById(clientId, log, true);
 
       // Authorize
-      await authorizeCallerForRole(organizationId, auth, "read", "GET-CLIENT-ROLES", r);
+      await authorizeCallerForRole(organizationId, auth, "read", "GET-CLIENT-ROLES", { ...r, log });
 
       // Make sure the client belongs to the org and is not deleted
       if (client.organizationId !== organizationId || client.deletedMs !== null) {
@@ -87,7 +87,7 @@ export const postClientRolesHandler = (
         throw new E.InternalServerError(
           `Programmer: This endpoint is not set up correctly. Expecting 'orgId' and 'clientId' ` +
             `url parameters, but one or both were missing.`,
-          `GET-CLIENT-ROLES_BAD-PARAMS`
+          `POST-CLIENT-ROLES_BAD-PARAMS`
         );
       }
 
