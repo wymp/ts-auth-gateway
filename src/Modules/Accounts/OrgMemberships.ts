@@ -147,7 +147,7 @@ export const getByOrganizationId = async (
 ): Promise<Api.CollectionResponse<Auth.Db.OrgMembership, any>> => {
   // Authorize - must be an authenticated internal system client, or the calling user must be a
   // sysadmin or employee, or the calling user must be a privileged memeber of the organization
-  await authorizeCallerForRole(organizationId, auth, "read", r);
+  await authorizeCallerForRole(organizationId, auth, "read", "GET-MEMBERSHIPS-BY-ORG-ID", r);
 
   // If we've got permissions, get the memberships
   return await r.io.getOrgMemberships(
@@ -240,7 +240,7 @@ const addNewOrgMembership = async (
   r: Pick<AppDeps, "io" | "log">
 ): Promise<Auth.Db.OrgMembership> => {
   // Authorize
-  await authorizeCallerForRole(organizationId, auth, "manage", r);
+  await authorizeCallerForRole(organizationId, auth, "manage", "ADD-NEW-ORG-MEMBERSHIP", r);
 
   // Check to see if membership already exists
   let membership = await r.io.getOrgMembershipById(
@@ -368,7 +368,13 @@ const updateOrgMembership = async (
       `Caller is not the membership owner. Verifying that caller has 'manage' permissions on ` +
         `this organization.`
     );
-    await authorizeCallerForRole(membership.organizationId, auth, "manage", r);
+    await authorizeCallerForRole(
+      membership.organizationId,
+      auth,
+      "manage",
+      "UPDATE-ORG-MEMBERSHIP",
+      r
+    );
   }
 
   membership = await r.io.updateOrgMembership(
@@ -455,7 +461,13 @@ const deleteOrgMembership = async (
       `Caller is not the membership owner. Verifying that caller has 'delete' permissions on ` +
         `this organization.`
     );
-    await authorizeCallerForRole(membership.organizationId, auth, "delete", r);
+    await authorizeCallerForRole(
+      membership.organizationId,
+      auth,
+      "delete",
+      "DELETE-ORG-MEMBERSHIP",
+      r
+    );
   }
 
   await r.io.deleteOrgMembership(membership.id, auth, r.log);
@@ -484,16 +496,21 @@ export const authorizeCallerForRole = async (
   organizationId: string,
   caller: { r: Array<string>; a: boolean; u?: { id: string; r: Array<string> } },
   role: "read" | "edit" | "manage" | "delete",
+  operation: string,
   r: Pick<AppDeps, "io" | "log">
 ): Promise<void> => {
   let proceed = Common.isInternalSystemClient(caller.r, caller.a, r.log);
   if (!proceed && caller.u) {
-    r.log.info(`Checking to see if caller is sysadmin or employee`);
+    r.log.info(`Checking to see if caller is a privileged user.`);
     if (caller.u.r.find((role) => privilegedUsers.includes(role))) {
-      r.log.info(`Caller is sysadmin or employee. Proceeding.`);
+      r.log.info(`Caller is privileged user. Proceeding.`);
       proceed = true;
     } else {
-      r.log.info(`Checking to see if user is a privileged member of the organization.`);
+      r.log.info(
+        `Caller is not a privileged user. (Caller's roles: ${JSON.stringify(
+          caller.u.r
+        )}.) Checking to see if caller is a privileged member of the organization.`
+      );
       const membership = await r.io.getOrgMembershipById(
         { userId: caller.u.id, organizationId },
         r.log,
@@ -507,13 +524,13 @@ export const authorizeCallerForRole = async (
           delete: membership.delete,
         };
         if (perms[role] === 1) {
-          r.log.info(`User has "read" privileges on the organization. Proceeding.`);
+          r.log.info(`Caller has "${role}" privileges on the organization. Proceeding.`);
           proceed = true;
         } else {
-          r.log.info(`User does not have "read" privileges on the organization.`);
+          r.log.info(`Caller does not have "${role}" privileges on the organization.`);
         }
       } else {
-        r.log.info(`User is not a member of the organization`);
+        r.log.info(`Caller is not a member of the organization`);
       }
     }
   }
@@ -521,7 +538,7 @@ export const authorizeCallerForRole = async (
   if (!proceed) {
     throw new E.Forbidden(
       `You do not have sufficient permissions to perform this operation.`,
-      `GET-MEMBERSHIPS-BY-ORG-ID_INSUFFICIENT-PERMISSIONS`
+      `${operation}_INSUFFICIENT-PERMISSIONS`
     );
   }
 };

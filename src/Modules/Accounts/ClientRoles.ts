@@ -47,7 +47,7 @@ export const getClientRolesHandler = (
       const client = await r.io.getClientById(clientId, log, true);
 
       // Authorize
-      await authorizeCallerForRole(organizationId, auth, "read", r);
+      await authorizeCallerForRole(organizationId, auth, "read", "GET-CLIENT-ROLES", r);
 
       // Make sure the client belongs to the org and is not deleted
       if (client.organizationId !== organizationId || client.deletedMs !== null) {

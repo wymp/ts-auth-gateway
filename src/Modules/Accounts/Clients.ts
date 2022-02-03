@@ -51,7 +51,7 @@ export const getClientsForOrgHandler = (
       const clientId = req.params.id;
 
       // Authorize
-      await authorizeCallerForRole(organizationId, auth, "read", r);
+      await authorizeCallerForRole(organizationId, auth, "read", "GET-ORG-CLIENTS", r);
 
       if (clientId) {
         // Sending a singular response
@@ -127,7 +127,10 @@ export const postClientHandler = (
       await r.io.getOrganizationById(organizationId, log, true);
 
       // Authorize
-      await authorizeCallerForRole(organizationId, auth, "manage", r);
+      await authorizeCallerForRole(organizationId, auth, "manage", "CREATE-CLIENT-FOR-ORG", {
+        ...r,
+        log,
+      });
 
       // Only allow reqsPerSec parameter if caller is sysadmin or employee
       if (clientData.reqsPerSec !== undefined) {
@@ -229,7 +232,10 @@ export const patchClientHandler = (
       const existing = await r.io.getClientById(clientId, log, true);
 
       // Authorize
-      await authorizeCallerForRole(organizationId, auth, "manage", r);
+      await authorizeCallerForRole(organizationId, auth, "manage", "UPDATE-ORG-CLIENT", {
+        ...r,
+        log,
+      });
 
       // Make sure the client belongs to the org
       if (existing.organizationId !== organizationId) {
@@ -322,7 +328,10 @@ export const deleteClientHandler = (
       const existing = await r.io.getClientById(clientId, log, true);
 
       // Authorize
-      await authorizeCallerForRole(organizationId, auth, "manage", r);
+      await authorizeCallerForRole(organizationId, auth, "manage", "DELETE-ORG-CLIENT", {
+        ...r,
+        log,
+      });
 
       // Make sure the client belongs to the org and is not already deleted
       if (existing.organizationId !== organizationId || existing.deletedMs !== null) {
@@ -376,7 +385,10 @@ export const refreshSecretHandler = (
       const existing = await r.io.getClientById(clientId, log, true);
 
       // Authorize
-      await authorizeCallerForRole(organizationId, auth, "manage", r);
+      await authorizeCallerForRole(organizationId, auth, "manage", "REFRESH-CLIENT-SECRET", {
+        ...r,
+        log,
+      });
 
       // Make sure the client belongs to the org and is not already deleted
       if (existing.organizationId !== organizationId || existing.deletedMs !== null) {
