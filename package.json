@@ -1,6 +1,6 @@
 {
   "name": "@wymp/auth-gateway",
-  "version": "1.0.0-alpha6",
+  "version": "1.0.0-alpha7",
   "description": "A functioning auth gateway for receiving, authenticating and proxying requests into a system.",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -9,7 +9,7 @@
     "test": "jest",
     "compile-start": "npx -p typescript tsc && node ./dist/run/app.js",
     "start": "node ./dist/run/app.js",
-    "prepublishOnly": "rm -Rf dist; npx tsc"
+    "prepublishOnly": "rm -Rf dist; npx tsc && npm run docgen"
   },
   "repository": {
     "type": "git",

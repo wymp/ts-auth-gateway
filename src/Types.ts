@@ -4,6 +4,7 @@ import {
   SimpleLoggerInterface,
   SimpleHttpRequestHandlerInterface,
 } from "@wymp/ts-simple-interfaces";
+import { Auth } from "@wymp/types";
 import * as Weenie from "@wymp/weenie-framework";
 import { CacheInterface, IoInterface } from "./Io";
 
@@ -18,7 +19,7 @@ export const AppConfigValidator = rt.Intersect(
     db: Weenie.databaseConfigValidator,
     domain: rt.String,
     debugKey: rt.String,
-    pubsubDataEventsChannel: rt.String,
+    pubsubMigrationEventsChannel: rt.Union(rt.String, rt.Null),
 
     // JWT keys
     authHeader: rt.Union(
@@ -138,7 +139,12 @@ export type AppDeps = {
    * error for any reason, it will NOT be re-run. This is considered an acceptable cost for the
    * benefit of not having to set up an MQ.
    */
-  onCreateUser?: null | ((user: unknown, r: { log: SimpleLoggerInterface }) => Promise<void>);
+  onCreateUser?:
+    | null
+    | ((
+        user: Auth.Db.User & { email: string },
+        r: { log: SimpleLoggerInterface }
+      ) => Promise<void>);
 };
 
 /**

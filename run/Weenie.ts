@@ -11,21 +11,26 @@ export const io = (r: {
     publish(channel: string, msg: unknown, options: { routingKey: string }): Promise<void>;
   };
   audit?: Audit.ClientInterface;
-  config?: { domain: string; pubsubDataEventsChannel: string };
+  config?: { domain: string; pubsubMigrationEventsChannel: string | null };
 }) => {
   // If we've got enough stuff to assemble a pubsub, do it
-  const pubsub = !r.pubsub
-    ? null
-    : {
-        publish(msg: { action: string; resource: { type: string } }): Promise<void> {
-          const routingKey = `${r.config ? `${r.config.domain}.` : ``}${msg.action}.${
-            msg.resource.type
-          }`;
-          return r.pubsub!.publish(r.config?.pubsubDataEventsChannel || "data-events", msg, {
-            routingKey,
-          });
-        },
-      };
+  const pubsub =
+    !r.pubsub || !r.config?.pubsubMigrationEventsChannel
+      ? null
+      : {
+          publish(msg: { action: string; resource: { type: string } }): Promise<void> {
+            const routingKey = `${r.config ? `${r.config.domain}.` : ``}${msg.action}.${
+              msg.resource.type
+            }`;
+            return r.pubsub!.publish(
+              r.config?.pubsubMigrationEventsChannel || "migration-events",
+              msg,
+              {
+                routingKey,
+              }
+            );
+          },
+        };
 
   // Now return the thing
   return {
