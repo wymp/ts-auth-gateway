@@ -35,7 +35,7 @@ export const getUserEmailsHandler = (
       const userId = getDealiasedUserIdFromReq(req, log);
 
       // If the user is not requesting their own user object, then this requires authorization
-      if (userId !== undefined && userId !== req.auth.u?.id) {
+      if (userId !== req.auth.u?.id) {
         Http.authorize(req, r.authz["GET /users/:id/roles"], log);
       }
 
@@ -69,7 +69,7 @@ export const postUserEmailHandler = (
       const userId = getDealiasedUserIdFromReq(req, log);
 
       // If the user is not requesting their own user object, then this requires authorization
-      if (userId !== undefined && userId !== req.auth.u?.id) {
+      if (userId !== req.auth.u?.id) {
         Http.authorize(req, r.authz["POST /users/:id/emails"], log);
       }
 
@@ -114,7 +114,7 @@ export const deleteUserEmailHandler = (
       const userId = getDealiasedUserIdFromReq(req, log);
 
       // If the user is not requesting their own user object, then this requires authorization
-      if (userId !== undefined && userId !== req.auth.u?.id) {
+      if (userId !== req.auth.u?.id) {
         Http.authorize(req, r.authz["DELETE /users/:id/emails/:id"], log);
       }
 
@@ -158,8 +158,8 @@ export const deleteUserEmailHandler = (
   };
 };
 
-/** POST /users/:id/emails/:id/generate-verification */
-export const generateEmailVerificationHandler = (
+/** POST /users/:id/emails/:id/send-verification */
+export const sendEmailVerificationHandler = (
   r: Pick<AppDeps, "log" | "io" | "authz" | "emailer" | "config">
 ): SimpleHttpServerMiddleware => {
   return async (req, res, next) => {
@@ -172,8 +172,8 @@ export const generateEmailVerificationHandler = (
       const userId = getDealiasedUserIdFromReq(req, log);
 
       // If the user is not requesting their own user object, then this requires authorization
-      if (userId !== undefined && userId !== req.auth.u?.id) {
-        Http.authorize(req, r.authz["POST /users/:id/emails/:id/generate-verification"], log);
+      if (userId !== req.auth.u?.id) {
+        Http.authorize(req, r.authz["POST /users/:id/emails/:id/send-verification"], log);
       }
 
       // Get email from params an verify that it exists
@@ -182,7 +182,7 @@ export const generateEmailVerificationHandler = (
       if (!emailAddr) {
         throw new E.InternalServerError(
           `Programmer: This handler is intended to be hooked up to an endpoint specified as ` +
-            `follows: POST /users/:id/emails/:emailId/generate-verification. However, no emailId ` +
+            `follows: POST /users/:id/emails/:emailId/send-verification. However, no emailId ` +
             `parameter was found.`
         );
       }
@@ -222,11 +222,12 @@ export const generateEmailVerificationHandler = (
       }
 
       // Now send a verification code to the email and respond with "null"
-      await sendCode("verification", emailAddr, null, req.auth, { ...r, log });
+      await sendCode("verification", userId, emailAddr, null, req.auth, { ...r, log });
 
       const response: Auth.Api.Responses<
         ClientRoles,
         UserRoles
+        // TODO: convert to 'send-verification'
       >["POST /users/:id/emails/:id/generate-verification"] = {
         data: null,
       };
@@ -250,10 +251,8 @@ export const verifyUserEmailHandler = (
       // Get user id
       const userId = getDealiasedUserIdFromReq(req, log);
 
-      // If the user is not requesting their own user object, then this requires authorization
-      if (userId !== undefined && userId !== req.auth.u?.id) {
-        Http.authorize(req, r.authz["POST /users/:id/emails/:id/verify"], log);
-      }
+      // NOTE: There are no authorization requirements for this. It doesn't return a session, and
+      // if someone got ahold of a verification email, we're not _that_ worried about it.
 
       // Get email from params an verify that it exists
       // TODO: Make sure the incoming email address has any weird characters correctly decoded
@@ -370,7 +369,7 @@ export const addEmail = async (
 
   // Send verification code, if we have an emailer to do that with
   if (r.emailer) {
-    await sendCode("verification", email, null, auth, r);
+    await sendCode("verification", userId, email, null, auth, r);
   } else {
     r.log.warning(`No emailer configured. Not sending verificaiton code for new email.`);
   }

@@ -1,6 +1,6 @@
 {
   "name": "@wymp/auth-gateway",
-  "version": "1.0.0-alpha9",
+  "version": "1.0.0-alpha10",
   "description": "A functioning auth gateway for receiving, authenticating and proxying requests into a system.",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -39,7 +39,7 @@
     "@wymp/sql": "^1.0.0-beta12",
     "@wymp/ts-simple-interfaces": "^0.5.3",
     "@wymp/types": "0.2.0-rc2",
-    "@wymp/weenie-framework": "^0.6.0",
+    "@wymp/weenie-framework": "^0.6.1",
     "bcryptjs": "^2.4.3",
     "cidr-matcher": "^2.1.1",
     "http-proxy": "^1.18.1",

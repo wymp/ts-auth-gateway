@@ -62,16 +62,6 @@ export const AppConfigValidator = rt.Intersect(
 
     emails: rt.Record({
       from: rt.String,
-      templateFiles: rt.Record({
-        login: rt.String,
-        emailVerCode: rt.String,
-      }),
-    }),
-
-    // Urls for various verification code emails
-    verificationUrls: rt.Record({
-      emailVerify: rt.String,
-      login: rt.String,
     }),
 
     // Authentication flow throttling config
@@ -153,14 +143,25 @@ export type AppDeps = {
  * generating the login code and passing the code into the emailer to be sent.
  */
 export interface Emailer {
-  sendEmailVerificationCode(
+  sendVerificationEmail(
     codeHex: string,
+    userId: string,
     fromEmail: string,
     toEmail: string,
     log: SimpleLoggerInterface
   ): Promise<void>;
-  sendLoginCode(
+
+  sendSignupEmail(
     codeHex: string,
+    userId: string,
+    fromEmail: string,
+    toEmail: string,
+    log: SimpleLoggerInterface
+  ): Promise<void>;
+
+  sendLoginEmail(
+    codeHex: string,
+    userId: string,
     fromEmail: string,
     toEmail: string,
     log: SimpleLoggerInterface

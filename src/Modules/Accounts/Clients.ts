@@ -98,7 +98,7 @@ export const getClientsForOrgHandler = (
  * POST /organizations/:id/clients
  */
 export const postClientHandler = (
-  r: Pick<AppDeps, "log" | "io" | "authz">
+  r: Pick<AppDeps, "log" | "io" | "authz" | "config">
 ): SimpleHttpServerMiddleware => {
   return async (req, res, next) => {
     const log = Http.logger(r.log, req, res);
@@ -180,11 +180,11 @@ const PostClientValidator = rt.Record({
 export const createClient = async (
   newClient: { organizationId: string; name: string; reqsPerSec?: number },
   auth: Auth.ReqInfo,
-  r: Pick<AppDeps, "io" | "log">
+  r: Pick<AppDeps, "io" | "log" | "config">
 ): Promise<Auth.Db.Client & { secret: string }> => {
   // Create and hash a secret for this client
   r.log.debug(`Generating client secret`);
-  const secret = randomBytes(32).toString("hex");
+  const secret = `${r.config.envName}-${randomBytes(32).toString("hex")}`;
   const secretBcrypt = await bcrypt.hash(secret, 10);
 
   // Store client

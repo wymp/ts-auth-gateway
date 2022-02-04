@@ -166,10 +166,10 @@ export const register = (
   r.http.post(`/accounts/v1/users/:id/emails`, [parseBody, Emails.postUserEmailHandler(r)]);
   r.log.notice(`HTTP: DELETE /accounts/v1/users/:id/emails/:id`);
   r.http.post(`/accounts/v1/users/:id/emails/:emailId`, Emails.deleteUserEmailHandler(r));
-  r.log.notice(`HTTP: POST   /accounts/v1/users/:id/emails/:emailId/generate-verification`);
+  r.log.notice(`HTTP: POST   /accounts/v1/users/:id/emails/:emailId/send-verification`);
   r.http.post(
-    `/accounts/v1/users/:id/emails/:emailId/generate-verification`,
-    Emails.generateEmailVerificationHandler(r)
+    `/accounts/v1/users/:id/emails/:emailId/send-verification`,
+    Emails.sendEmailVerificationHandler(r)
   );
   r.log.notice(`HTTP: POST   /accounts/v1/users/:id/emails/:emailId/verify`);
   r.http.post(`/accounts/v1/users/:id/emails/:emailId/verify`, [

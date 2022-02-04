@@ -63,18 +63,27 @@ export const emailer = (): { emailer: Types.Emailer | null } => ({ emailer: null
 /* STUB EMAILER
 export const emailer = (): { emailer: Types.Emailer | null } => ({
   emailer: {
-    sendEmailVerificationCode: async (
+    sendVerificationEmail: async (
       codeHex: string,
+      userId: string,
       fromEmail: string,
       toEmail: string,
       log: SimpleLoggerInterface
     ): Promise<void> => { log.warning(`THIS IS A STUB. WOULD HAVE SENT AN EMAIL FOR VERIFICATION CODE '${codeHex}'.`); },
-    sendLoginCode: async (
+    sendSignupEmail: async (
       codeHex: string,
+      userId: string,
       fromEmail: string,
       toEmail: string,
       log: SimpleLoggerInterface
-    ): Promise<void> => { log.warning(`THIS IS A STUB. WOULD HAVE SENT AN EMAIL FOR LOGIN CODE '${codeHex}'.`); },
+    ): Promise<void> => { log.warning(`THIS IS A STUB. WOULD HAVE SENT A SIGNUP EMAIL WITH LOGIN CODE '${codeHex}'.`); },
+    sendLoginEmail: async (
+      codeHex: string,
+      userId: string,
+      fromEmail: string,
+      toEmail: string,
+      log: SimpleLoggerInterface
+    ): Promise<void> => { log.warning(`THIS IS A STUB. WOULD HAVE SENT A LOGIN EMAIL FOR LOGIN CODE '${codeHex}'.`); },
   }
 });
 */
