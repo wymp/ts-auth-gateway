@@ -79,7 +79,7 @@ export const postUserEmailHandler = (
       const emailAddr = validation.value.data.email;
 
       // Add user role
-      const email = await addEmail(emailAddr, userId, req.auth, { ...r, log });
+      const email = await addEmail(emailAddr, userId, "addition", req.auth, { ...r, log });
 
       // Get all user roles and return as response
       const response: Auth.Api.Responses<ClientRoles, UserRoles>["POST /users/:id/emails"] = {
@@ -333,6 +333,7 @@ const VerifyEmailValidator = rt.Record({
 export const addEmail = async (
   email: string,
   userId: string,
+  event: "creation" | "addition",
   auth: Auth.ReqInfo,
   r: Pick<AppDeps, "log" | "emailer" | "io" | "config">
 ): Promise<Auth.Db.Email> => {
@@ -369,7 +370,7 @@ export const addEmail = async (
 
   // Send verification code, if we have an emailer to do that with
   if (r.emailer) {
-    await sendCode("verification", userId, email, null, auth, r);
+    await sendCode(event === "creation" ? "signup" : "verification", userId, email, null, auth, r);
   } else {
     r.log.warning(`No emailer configured. Not sending verificaiton code for new email.`);
   }

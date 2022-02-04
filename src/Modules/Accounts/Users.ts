@@ -371,7 +371,7 @@ export const createUser = async (
 
   const [_a, _b, _c, session] = await Promise.all([
     // Insert login email
-    addEmail(postUser.email, user.id, auth, r),
+    addEmail(postUser.email, user.id, "creation", auth, r),
 
     // Insert default user role
     r.io.saveUserRole({ roleId: UserRoles.USER, userId: user.id }, auth, r.log),
