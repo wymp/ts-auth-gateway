@@ -685,10 +685,10 @@ export const logInWithEmail = async (
   throttle.throttle(payload.email);
 
   // Validate email
-  const user = await getAndValidateUserForEmail(payload.email, r);
+  await getAndValidateUserForEmail(payload.email, r);
 
   // Send the login code to the email
-  await sendCode("login", user.id, payload.email, payload.state, auth, r);
+  await sendCode({ type: "login", userGeneratedToken: payload.state }, payload.email, auth, r);
 
   return { data: null };
 };

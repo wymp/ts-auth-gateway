@@ -161,7 +161,7 @@ export interface Emailer {
 
   sendLoginEmail(
     codeHex: string,
-    userId: string,
+    userGeneratedToken: string,
     fromEmail: string,
     toEmail: string,
     log: SimpleLoggerInterface

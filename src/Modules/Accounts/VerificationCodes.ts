@@ -4,29 +4,49 @@ import { Auth } from "@wymp/types";
 import { AppDeps } from "../../Types";
 
 export const sendCode = async (
-  type: "signup" | "login" | "verification",
-  userId: string,
-  email: string,
-  userGeneratedToken: string | null,
+  params:
+    | {
+        type: "signup" | "verification";
+        userId: string;
+      }
+    | {
+        type: "login";
+        userGeneratedToken: string;
+      },
+  toEmail: string,
   auth: Auth.ReqInfo,
   r: Pick<AppDeps, "log" | "emailer" | "config" | "io">
 ): Promise<void> => {
   const code = await generateCode(
-    type === "verification" ? "verification" : "login",
-    email,
-    userGeneratedToken,
+    params.type === "verification" ? "verification" : "login",
+    toEmail,
+    params.type === "login" ? params.userGeneratedToken : null,
     auth,
     r
   );
 
   if (r.emailer) {
-    r.log.info(`Sending ${type} email`);
-    if (type === "login") {
-      await r.emailer.sendLoginEmail(code, userId, r.config.emails.from, email, r.log);
-    } else if (type === "signup") {
-      await r.emailer.sendSignupEmail(code, userId, r.config.emails.from, email, r.log);
+    r.log.info(`Sending ${params.type} email`);
+    if (params.type === "login") {
+      await r.emailer.sendLoginEmail(
+        code,
+        params.userGeneratedToken,
+        r.config.emails.from,
+        toEmail,
+        r.log
+      );
     } else {
-      await r.emailer.sendVerificationEmail(code, userId, r.config.emails.from, email, r.log);
+      if (params.type === "signup") {
+        await r.emailer.sendSignupEmail(code, params.userId, r.config.emails.from, toEmail, r.log);
+      } else {
+        await r.emailer.sendVerificationEmail(
+          code,
+          params.userId,
+          r.config.emails.from,
+          toEmail,
+          r.log
+        );
+      }
     }
   } else {
     r.log.warning(`No emailer configured. Not sending verificaiton code for new email.`);
