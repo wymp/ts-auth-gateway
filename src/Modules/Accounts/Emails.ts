@@ -158,7 +158,7 @@ export const deleteUserEmailHandler = (
   };
 };
 
-/** POST /users/:id/emails/:id/send-verification */
+/** POST /emails/:id/send-verification */
 export const sendEmailVerificationHandler = (
   r: Pick<AppDeps, "log" | "io" | "authz" | "emailer" | "config">
 ): SimpleHttpServerMiddleware => {
@@ -168,13 +168,8 @@ export const sendEmailVerificationHandler = (
       // Make sure it's an authd request so we can access the auth object
       Http.assertAuthdReq(req);
 
-      // Get user id
-      const userId = getDealiasedUserIdFromReq(req, log);
-
-      // If the user is not requesting their own user object, then this requires authorization
-      if (userId !== req.auth.u?.id) {
-        Http.authorize(req, r.authz["POST /users/:id/emails/:id/send-verification"], log);
-      }
+      // NOTE: There are no authorization requirements for this. It doesn't return a session, and
+      // at this time we're not worried about people verify-spamming email addresses
 
       // Get email from params an verify that it exists
       // TODO: Make sure the incoming email address has any weird characters correctly decoded
@@ -182,26 +177,16 @@ export const sendEmailVerificationHandler = (
       if (!emailAddr) {
         throw new E.InternalServerError(
           `Programmer: This handler is intended to be hooked up to an endpoint specified as ` +
-            `follows: POST /users/:id/emails/:emailId/send-verification. However, no emailId ` +
+            `follows: POST /emails/:emailId/send-verification. However, no emailId ` +
             `parameter was found.`
         );
       }
       const email = await r.io.getEmailByAddress(emailAddr, log);
       if (!email) {
         throw new E.NotFound(
-          `This email address was not found among your registered email addresses.`,
+          `This email address was not found in our system. You should create an account first.`,
           `EMAIL-GEN-VER-EMAIL-NOT-FOUND`
         );
-      }
-
-      // Verify that it's owned by the calling user, if applicable
-      if (userId !== undefined && userId === req.auth.u?.id) {
-        if (email.userId !== userId) {
-          throw new E.NotFound(
-            `This email address was not found among your registered email addresses.`,
-            `EMAIL-GEN-VER-EMAIL-NOT-FOUND`
-          );
-        }
       }
 
       // Verify that it's not already verified
@@ -222,13 +207,15 @@ export const sendEmailVerificationHandler = (
       }
 
       // Now send a verification code to the email and respond with "null"
-      await sendCode({ type: "verification", userId }, emailAddr, req.auth, { ...r, log });
+      await sendCode({ type: "verification", userId: email.userId }, emailAddr, req.auth, {
+        ...r,
+        log,
+      });
 
       const response: Auth.Api.Responses<
         ClientRoles,
         UserRoles
-        // TODO: convert to 'send-verification'
-      >["POST /users/:id/emails/:id/generate-verification"] = {
+      >["POST /emails/:id/send-verification"] = {
         data: null,
       };
       res.status(200).send(response);
@@ -238,7 +225,7 @@ export const sendEmailVerificationHandler = (
   };
 };
 
-/** POST /users/:id/emails/:id/verify */
+/** POST /emails/:id/verify */
 export const verifyUserEmailHandler = (
   r: Pick<AppDeps, "log" | "io" | "authz">
 ): SimpleHttpServerMiddleware => {
@@ -247,9 +234,6 @@ export const verifyUserEmailHandler = (
     try {
       // Make sure it's an authd request so we can access the auth object
       Http.assertAuthdReq(req);
-
-      // Get user id
-      const userId = getDealiasedUserIdFromReq(req, log);
 
       // NOTE: There are no authorization requirements for this. It doesn't return a session, and
       // if someone got ahold of a verification email, we're not _that_ worried about it.
@@ -260,25 +244,15 @@ export const verifyUserEmailHandler = (
       if (!emailAddr) {
         throw new E.InternalServerError(
           `Programmer: This handler is intended to be hooked up to an endpoint specified as ` +
-            `follows: POST /users/:id/emails/:emailId/verify. However, no emailId parameter was found.`
+            `follows: POST /emails/:emailId/verify. However, no emailId parameter was found.`
         );
       }
       const email = await r.io.getEmailByAddress(emailAddr, log);
       if (!email) {
         throw new E.NotFound(
-          `This email address was not found among your registered email addresses.`,
+          `This email address was not found in our system. You should create an account.`,
           `VERIFY-EMAIL-EMAIL-NOT-FOUND`
         );
-      }
-
-      // Verify that it's owned by the calling user, if applicable
-      if (userId !== undefined && userId === req.auth.u?.id) {
-        if (email.userId !== userId) {
-          throw new E.NotFound(
-            `This email address was not found among your registered email addresses.`,
-            `VERIFY-EMAIL-EMAIL-NOT-FOUND`
-          );
-        }
       }
 
       // Verify that it's not already verified
@@ -297,10 +271,7 @@ export const verifyUserEmailHandler = (
       // Now try to verify
       const updatedEmail = await verifyEmail(emailAddr, code, req.auth, { ...r, log });
 
-      const response: Auth.Api.Responses<
-        ClientRoles,
-        UserRoles
-      >["POST /users/:id/emails/:id/verify"] = {
+      const response: Auth.Api.Responses<ClientRoles, UserRoles>["POST /emails/:id/verify"] = {
         t: "single",
         data: T.Emails.dbToApi(updatedEmail),
       };

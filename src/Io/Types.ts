@@ -1,4 +1,4 @@
-import { SimpleLoggerInterface } from "@wymp/ts-simple-interfaces";
+import { BufferLike, SimpleLoggerInterface } from "@wymp/ts-simple-interfaces";
 import { IdConstraint, Filter, NullFilter, both, strId } from "@wymp/sql";
 import { Auth, Api, PartialSelect } from "@wymp/types";
 
@@ -125,7 +125,7 @@ export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
   };
   "verification-codes": {
     type: Auth.Db.VerificationCode;
-    constraints: { codeSha256: Buffer };
+    constraints: { codeSha256: BufferLike };
     filters: NullFilter;
     defaults: typeof Defaults["verification-codes"];
   };
@@ -140,7 +140,7 @@ export type TypeMap<ClientRoles extends string, UserRoles extends string> = {
   };
   "session-tokens": {
     type: Auth.Db.SessionToken;
-    constraints: { tokenSha256: Buffer };
+    constraints: { tokenSha256: BufferLike };
     filters: NullFilter;
     defaults: typeof Defaults["session-tokens"];
   };
@@ -342,7 +342,7 @@ export interface IoInterface<ClientRoles extends string, UserRoles extends strin
   ): Promise<Auth.Db.Session>;
 
   getSessionTokenBySha256(
-    tokenSha256: Buffer,
+    tokenSha256: BufferLike,
     log: SimpleLoggerInterface
   ): Promise<Auth.Db.SessionToken | undefined>;
   saveSessionToken(
@@ -351,7 +351,7 @@ export interface IoInterface<ClientRoles extends string, UserRoles extends strin
     log: SimpleLoggerInterface
   ): Promise<Auth.Db.SessionToken>;
   updateSessionToken(
-    tokenSha256: Buffer,
+    tokenSha256: BufferLike,
     record: Partial<Auth.Db.SessionToken>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
@@ -404,12 +404,12 @@ export interface IoInterface<ClientRoles extends string, UserRoles extends strin
   ): Promise<void>;
 
   getVerificationCodeBySha256(
-    codeSha256: Buffer,
+    codeSha256: BufferLike,
     log: SimpleLoggerInterface,
     thrw: true
   ): Promise<Auth.Db.VerificationCode>;
   getVerificationCodeBySha256(
-    codeSha256: Buffer,
+    codeSha256: BufferLike,
     log: SimpleLoggerInterface,
     thrw?: false | undefined
   ): Promise<Auth.Db.VerificationCode | undefined>;
@@ -419,7 +419,7 @@ export interface IoInterface<ClientRoles extends string, UserRoles extends strin
     log: SimpleLoggerInterface
   ): Promise<Auth.Db.VerificationCode>;
   updateVerificationCode(
-    codeSha256: Buffer,
+    codeSha256: BufferLike,
     record: Partial<Auth.Db.VerificationCode>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface

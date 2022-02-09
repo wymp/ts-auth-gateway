@@ -1,4 +1,8 @@
-import { SimpleLoggerInterface, SimpleSqlDbInterface } from "@wymp/ts-simple-interfaces";
+import {
+  BufferLike,
+  SimpleLoggerInterface,
+  SimpleSqlDbInterface,
+} from "@wymp/ts-simple-interfaces";
 import { Audit, Auth, Api, PartialSelect } from "@wymp/types";
 import { Sql } from "./Sql";
 import { CacheInterface, IoInterface, SessionAndToken, TypeMap, Defaults } from "./Types";
@@ -460,7 +464,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
    */
 
   public getSessionTokenBySha256(
-    tokenSha256: Buffer,
+    tokenSha256: BufferLike,
     log: SimpleLoggerInterface
   ): Promise<Auth.Db.SessionToken | undefined> {
     return this.sql.get("session-tokens", { tokenSha256 }, log);
@@ -475,7 +479,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   }
 
   public updateSessionToken(
-    tokenSha256: Buffer,
+    tokenSha256: BufferLike,
     record: Partial<Auth.Db.SessionToken>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
@@ -610,17 +614,17 @@ export class Io<ClientRoles extends string, UserRoles extends string>
    */
 
   public getVerificationCodeBySha256(
-    codeSha256: Buffer,
+    codeSha256: BufferLike,
     log: SimpleLoggerInterface,
     thrw: true
   ): Promise<Auth.Db.VerificationCode>;
   public getVerificationCodeBySha256(
-    codeSha256: Buffer,
+    codeSha256: BufferLike,
     log: SimpleLoggerInterface,
     thrw?: false | undefined
   ): Promise<Auth.Db.VerificationCode | undefined>;
   public getVerificationCodeBySha256(
-    codeSha256: Buffer,
+    codeSha256: BufferLike,
     log: SimpleLoggerInterface,
     thrw?: boolean
   ): Promise<Auth.Db.VerificationCode | undefined> {
@@ -638,7 +642,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   }
 
   public updateVerificationCode(
-    codeSha256: Buffer,
+    codeSha256: BufferLike,
     record: Partial<Auth.Db.VerificationCode>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
