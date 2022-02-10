@@ -131,10 +131,7 @@ export type AppDeps = {
    */
   onCreateUser?:
     | null
-    | ((
-        user: Auth.Db.User & { email: string },
-        r: { log: SimpleLoggerInterface }
-      ) => Promise<void>);
+    | ((user: Db.User & { email: string }, r: { log: SimpleLoggerInterface }) => Promise<void>);
 };
 
 /**
@@ -220,4 +217,73 @@ export interface ProxyInterface {
     opts: { target: string },
     cb: (e: Error, eReq: IncomingMessage, eRes: ServerResponse, targetUrl: string) => unknown
   ): unknown;
+}
+
+/**
+ * Database types
+ */
+export namespace Db {
+  // Apis are identified by their domain and version, so no formal "id" property here
+  export type Api = Auth.ApiAttributes & { active: 0 | 1; allowUnidentifiedReqs: 0 | 1 };
+  export type Organization = { id: string } & Auth.OrganizationAttributes;
+  export type Client = Omit<Auth.ClientAttributes<string>, "roles"> & {
+    id: string;
+    organizationId: string;
+    secretBcrypt: string;
+    deletedMs: null | number;
+  };
+  export type ClientRole<Roles extends string> = {
+    clientId: string;
+    roleId: Roles;
+  };
+  export type ClientAccessRestriction = {
+    id: string;
+    type: Auth.ClientAccessRestrictionTypes;
+    clientId: string;
+  } & Auth.ClientAccessRestrictionAttributes;
+  export type User = Omit<Auth.UserAttributes<string>, "roles"> & {
+    id: string;
+    passwordBcrypt: string | null;
+    "2fa": 0 | 1;
+  };
+  export type UserRole<Roles extends string> = {
+    userId: string;
+    roleId: Roles;
+  };
+  export type Email = { id: string; userId: string } & Auth.EmailAttributes;
+  export type VerificationCode = {
+    codeSha256: Buffer;
+    type: "login" | "verification";
+    email: string;
+    userGeneratedToken: string | null;
+    createdMs: number;
+    expiresMs: number;
+    consumedMs: number | null;
+    invalidatedMs: number | null;
+  };
+  export type Session = { id: string; userId: string } & Auth.SessionAttributes;
+  export type SessionToken = {
+    type: "session" | "refresh";
+    tokenSha256: Buffer;
+    sessionId: string;
+    createdMs: number;
+    expiresMs: number;
+    consumedMs: number | null;
+    invalidatedMs: number | null;
+  };
+
+  export type UserClient = {
+    userId: string;
+    clientId: string;
+    createdMs: number;
+  };
+  export type OrgMembership = {
+    id: string;
+    userId: string;
+    organizationId: string;
+    read: 1 | 0;
+    edit: 1 | 0;
+    manage: 1 | 0;
+    delete: 1 | 0;
+  };
 }

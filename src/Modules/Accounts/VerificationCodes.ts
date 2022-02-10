@@ -1,7 +1,7 @@
 import { randomBytes, createHash } from "crypto";
 import * as E from "@wymp/http-errors";
 import { Auth } from "@wymp/types";
-import { AppDeps } from "../../Types";
+import { AppDeps, Db } from "../../Types";
 
 export const sendCode = async (
   params:
@@ -90,7 +90,7 @@ export const verifyEmail = async (
   rawCodeHexOrBuffer: string | Buffer,
   auth: Auth.ReqInfo,
   r: Pick<AppDeps, "log" | "io">
-): Promise<Auth.Db.Email> => {
+): Promise<Db.Email> => {
   // Get the sha256 representation of the code
   const codeSha256 = createHash("sha256")
     .update(

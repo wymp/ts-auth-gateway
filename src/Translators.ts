@@ -1,8 +1,8 @@
 import { Translator as T } from "@wymp/http-utils";
 import { Auth } from "@wymp/types";
-import { ClientRoles, UserRoles } from "./Types";
+import { ClientRoles, Db, UserRoles } from "./Types";
 
-export const Organizations = new T.Translator<Auth.Db.Organization, Auth.Api.Organization>(
+export const Organizations = new T.Translator<Db.Organization, Auth.Api.Organization>(
   "/accounts/v1",
   "organizations",
   {
@@ -12,7 +12,7 @@ export const Organizations = new T.Translator<Auth.Db.Organization, Auth.Api.Org
   }
 );
 
-export const Users = new T.Translator<Auth.Db.User, Auth.Api.User<UserRoles>>(
+export const Users = new T.Translator<Db.User, Auth.Api.User<UserRoles>>(
   "/accounts/v1",
   "users",
   {
@@ -32,7 +32,7 @@ export const Users = new T.Translator<Auth.Db.User, Auth.Api.User<UserRoles>>(
   }
 );
 
-export const Emails = new T.Translator<Auth.Db.Email, Auth.Api.Email>("/accounts/v1/", "emails", {
+export const Emails = new T.Translator<Db.Email, Auth.Api.Email>("/accounts/v1/", "emails", {
   verifiedMs: "attr",
   createdMs: "attr",
   user: ["userId", "users"],
@@ -43,7 +43,7 @@ export const Emails = new T.Translator<Auth.Db.Email, Auth.Api.Email>("/accounts
  * OrgMemberships have booleans, so it's necessary to convert back and forth using a transformer
  * function. This object should be tested!!
  */
-export const OrgMemberships = new T.Translator<Auth.Db.OrgMembership, Auth.Api.OrgMembership>(
+export const OrgMemberships = new T.Translator<Db.OrgMembership, Auth.Api.OrgMembership>(
   "/accounts/v1",
   "org-memberships",
   {
@@ -65,7 +65,7 @@ export const OrgMemberships = new T.Translator<Auth.Db.OrgMembership, Auth.Api.O
 /**
  * Client translator
  */
-export const Clients = new T.Translator<Auth.Db.Client, Auth.Api.Client<ClientRoles>>(
+export const Clients = new T.Translator<Db.Client, Auth.Api.Client<ClientRoles>>(
   "/accounts/v1/",
   "clients",
   {
@@ -81,7 +81,7 @@ export const Clients = new T.Translator<Auth.Db.Client, Auth.Api.Client<ClientRo
  * Client Access Restrictions translator
  */
 export const ClientAccessRestrictions = new T.Translator<
-  Auth.Db.ClientAccessRestriction,
+  Db.ClientAccessRestriction,
   Auth.Api.ClientAccessRestriction
 >(
   "/accounts/v1",

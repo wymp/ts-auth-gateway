@@ -2,7 +2,7 @@ import { Auth } from "@wymp/types";
 import * as E from "@wymp/http-errors";
 import * as CidrMatcher from "cidr-matcher";
 import * as bcrypt from "bcryptjs";
-import { AppDeps, RateLimiterInterface } from "../../Types";
+import { AppDeps, Db, RateLimiterInterface } from "../../Types";
 
 /**
  * Parse and process credentials from request.
@@ -83,7 +83,7 @@ export const authenticateCredentials = async (
  * Enforce access restrictions for the given Client as defined in the database
  */
 export const enforceAccessRestrictions = (
-  restrictionsData: Array<Auth.Db.ClientAccessRestriction>,
+  restrictionsData: Array<Db.ClientAccessRestriction>,
   ip: string,
   host: string,
   api: string,

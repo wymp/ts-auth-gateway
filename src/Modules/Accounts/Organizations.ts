@@ -3,7 +3,7 @@ import * as E from "@wymp/http-errors";
 import * as Http from "@wymp/http-utils";
 import { SimpleHttpServerMiddleware } from "@wymp/ts-simple-interfaces";
 import { Auth } from "@wymp/types";
-import { AppDeps, UserRoles, ClientRoles } from "../../Types";
+import { AppDeps, Db, UserRoles, ClientRoles } from "../../Types";
 import * as Common from "./Common";
 
 /**
@@ -132,7 +132,7 @@ export const createOrganization = async (
   incoming: rt.Static<typeof PostOrganization>["data"],
   auth: Auth.ReqInfo,
   r: Pick<AppDeps, "log" | "io">
-): Promise<Auth.Db.Organization> => {
+): Promise<Db.Organization> => {
   const organization = await r.io.saveOrganization({ name: incoming.name }, auth, r.log);
 
   if (auth.u) {
@@ -230,7 +230,7 @@ export const updateOrganization = async (
   payload: rt.Static<typeof PatchOrganization>["data"],
   auth: Auth.ReqInfo,
   r: Pick<AppDeps, "log" | "io">
-): Promise<Auth.Db.Organization> => {
+): Promise<Db.Organization> => {
   await verifyOrganizationExistenceAndPerms(organizationId, auth, "edit" as const, r);
 
   // Do update and return result
@@ -306,7 +306,7 @@ export const verifyOrganizationExistenceAndPerms = async (
   auth: Auth.ReqInfo,
   operation: keyof OrgPerms,
   r: Pick<AppDeps, "io" | "log">
-): Promise<Auth.Db.Organization> => {
+): Promise<Db.Organization> => {
   // First verify existence (will throw if non-existent)
   const organization = await r.io.getOrganizationById(organizationId, r.log, true);
 

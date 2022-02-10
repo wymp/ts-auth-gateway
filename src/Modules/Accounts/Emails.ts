@@ -4,7 +4,7 @@ import { Auth } from "@wymp/types";
 import * as E from "@wymp/http-errors";
 import * as Http from "@wymp/http-utils";
 import * as T from "../../Translators";
-import { AppDeps, ClientRoles, UserRoles } from "../../Types";
+import { AppDeps, ClientRoles, Db, UserRoles } from "../../Types";
 import * as Common from "./Common";
 import { getDealiasedUserIdFromReq } from "./Users";
 import { sendCode, verifyEmail } from "./VerificationCodes";
@@ -307,7 +307,7 @@ export const addEmail = async (
   event: "creation" | "addition",
   auth: Auth.ReqInfo,
   r: Pick<AppDeps, "log" | "emailer" | "io" | "config">
-): Promise<Auth.Db.Email> => {
+): Promise<Db.Email> => {
   // Lower-case the incoming email address
   email = email.toLowerCase();
 

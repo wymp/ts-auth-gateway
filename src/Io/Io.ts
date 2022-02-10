@@ -1,9 +1,6 @@
-import {
-  BufferLike,
-  SimpleLoggerInterface,
-  SimpleSqlDbInterface,
-} from "@wymp/ts-simple-interfaces";
+import { SimpleLoggerInterface, SimpleSqlDbInterface } from "@wymp/ts-simple-interfaces";
 import { Audit, Auth, Api, PartialSelect } from "@wymp/types";
+import { Db } from "../Types";
 import { Sql } from "./Sql";
 import { CacheInterface, IoInterface, SessionAndToken, TypeMap, Defaults } from "./Types";
 
@@ -37,7 +34,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     domain: string,
     version: string,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.Api> {
+  ): Promise<Db.Api> {
     return this.sql.getApiConfig(domain, version, log);
   }
 
@@ -53,17 +50,17 @@ export class Io<ClientRoles extends string, UserRoles extends string>
    *
    */
 
-  public getClientById(id: string, log: SimpleLoggerInterface, thrw: true): Promise<Auth.Db.Client>;
+  public getClientById(id: string, log: SimpleLoggerInterface, thrw: true): Promise<Db.Client>;
   public getClientById(
     id: string,
     log: SimpleLoggerInterface,
     thrw?: false | undefined
-  ): Promise<Auth.Db.Client | undefined>;
+  ): Promise<Db.Client | undefined>;
   public getClientById(
     id: string,
     log: SimpleLoggerInterface,
     thrw?: boolean
-  ): Promise<Auth.Db.Client | undefined> {
+  ): Promise<Db.Client | undefined> {
     return thrw
       ? this.sql.get("clients", { id }, log, thrw)
       : this.sql.get("clients", { id }, log, thrw);
@@ -72,24 +69,24 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   public getClients(
     filter: TypeMap<ClientRoles, UserRoles>["clients"]["filters"],
     log: SimpleLoggerInterface
-  ): Promise<Api.CollectionResponse<Auth.Db.Client, any>> {
+  ): Promise<Api.CollectionResponse<Db.Client, any>> {
     return this.sql.get("clients", filter, log);
   }
 
   public saveClient(
-    record: PartialSelect<Auth.Db.Client, keyof typeof Defaults["clients"]>,
+    record: PartialSelect<Db.Client, keyof typeof Defaults["clients"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.Client> {
+  ): Promise<Db.Client> {
     return this.sql.save("clients", record, auth, log);
   }
 
   public updateClient(
     clientId: string,
-    record: Partial<Auth.Db.Client>,
+    record: Partial<Db.Client>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.Client> {
+  ): Promise<Db.Client> {
     return this.sql.update("clients", clientId, record, auth, log);
   }
 
@@ -108,15 +105,15 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   public getClientRoles(
     filter: TypeMap<ClientRoles, UserRoles>["client-roles"]["filters"],
     log: SimpleLoggerInterface
-  ): Promise<Api.CollectionResponse<Auth.Db.ClientRole<ClientRoles>, any>> {
+  ): Promise<Api.CollectionResponse<Db.ClientRole<ClientRoles>, any>> {
     return this.sql.get("client-roles", filter, log);
   }
 
   public saveClientRole(
-    record: PartialSelect<Auth.Db.ClientRole<ClientRoles>, keyof typeof Defaults["client-roles"]>,
+    record: PartialSelect<Db.ClientRole<ClientRoles>, keyof typeof Defaults["client-roles"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.ClientRole<ClientRoles>> {
+  ): Promise<Db.ClientRole<ClientRoles>> {
     return this.sql.save("client-roles", record, auth, log);
   }
 
@@ -145,17 +142,17 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     id: string,
     log: SimpleLoggerInterface,
     thrw: true
-  ): Promise<Auth.Db.ClientAccessRestriction>;
+  ): Promise<Db.ClientAccessRestriction>;
   public getClientAccessRestrictionById(
     id: string,
     log: SimpleLoggerInterface,
     thrw?: false
-  ): Promise<Auth.Db.ClientAccessRestriction | undefined>;
+  ): Promise<Db.ClientAccessRestriction | undefined>;
   public getClientAccessRestrictionById(
     id: string,
     log: SimpleLoggerInterface,
     thrw?: boolean
-  ): Promise<Auth.Db.ClientAccessRestriction | undefined> {
+  ): Promise<Db.ClientAccessRestriction | undefined> {
     return thrw
       ? this.sql.get("client-access-restrictions", { id }, log, thrw)
       : this.sql.get("client-access-restrictions", { id }, log, thrw);
@@ -165,7 +162,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     filter: undefined | TypeMap<ClientRoles, UserRoles>["client-access-restrictions"]["filters"],
     params: undefined | Api.Server.CollectionParams,
     log: SimpleLoggerInterface
-  ): Promise<Api.CollectionResponse<Auth.Db.ClientAccessRestriction, any>> {
+  ): Promise<Api.CollectionResponse<Db.ClientAccessRestriction, any>> {
     return !filter
       ? this.sql.get("client-access-restrictions", params, log)
       : this.sql.get("client-access-restrictions", filter, params, log);
@@ -173,12 +170,12 @@ export class Io<ClientRoles extends string, UserRoles extends string>
 
   public saveClientAccessRestriction(
     record: PartialSelect<
-      Auth.Db.ClientAccessRestriction,
+      Db.ClientAccessRestriction,
       keyof typeof Defaults["client-access-restrictions"]
     >,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.ClientAccessRestriction> {
+  ): Promise<Db.ClientAccessRestriction> {
     return this.sql.save("client-access-restrictions", record, auth, log);
   }
 
@@ -205,25 +202,21 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   public getEmailsForUser(
     userId: string,
     log: SimpleLoggerInterface
-  ): Promise<Api.CollectionResponse<Auth.Db.Email, any>> {
+  ): Promise<Api.CollectionResponse<Db.Email, any>> {
     return this.sql.get("emails", { _t: "filter", userId }, log);
   }
 
-  public getEmailByAddress(
-    addr: string,
-    log: SimpleLoggerInterface,
-    thrw: true
-  ): Promise<Auth.Db.Email>;
+  public getEmailByAddress(addr: string, log: SimpleLoggerInterface, thrw: true): Promise<Db.Email>;
   public getEmailByAddress(
     addr: string,
     log: SimpleLoggerInterface,
     thrw?: false
-  ): Promise<Auth.Db.Email | undefined>;
+  ): Promise<Db.Email | undefined>;
   public getEmailByAddress(
     addr: string,
     log: SimpleLoggerInterface,
     thrw?: boolean
-  ): Promise<Auth.Db.Email | undefined> {
+  ): Promise<Db.Email | undefined> {
     return thrw
       ? this.sql.get("emails", { id: addr }, log, thrw)
       : this.sql.get("emails", { id: addr }, log, thrw);
@@ -234,19 +227,19 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   }
 
   public saveEmail(
-    record: PartialSelect<Auth.Db.Email, keyof typeof Defaults["emails"]>,
+    record: PartialSelect<Db.Email, keyof typeof Defaults["emails"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.Email> {
+  ): Promise<Db.Email> {
     return this.sql.save("emails", record, auth, log);
   }
 
   public updateEmail(
     email: string,
-    record: Partial<Auth.Db.Email>,
+    record: Partial<Db.Email>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.Email> {
+  ): Promise<Db.Email> {
     return this.sql.update("emails", email, record, auth, log);
   }
 
@@ -265,17 +258,17 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     id: string,
     log: SimpleLoggerInterface,
     thrw: true
-  ): Promise<Auth.Db.Organization>;
+  ): Promise<Db.Organization>;
   public getOrganizationById(
     id: string,
     log: SimpleLoggerInterface,
     thrw?: false | undefined
-  ): Promise<Auth.Db.Organization | undefined>;
+  ): Promise<Db.Organization | undefined>;
   public getOrganizationById(
     id: string,
     log: SimpleLoggerInterface,
     thrw?: boolean
-  ): Promise<Auth.Db.Organization | undefined> {
+  ): Promise<Db.Organization | undefined> {
     return thrw
       ? this.sql.get("organizations", { id }, log, thrw)
       : this.sql.get("organizations", { id }, log, thrw);
@@ -285,26 +278,26 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     filter: undefined | TypeMap<ClientRoles, UserRoles>["organizations"]["filters"],
     params: undefined | Api.Server.CollectionParams,
     log: SimpleLoggerInterface
-  ): Promise<Api.CollectionResponse<Auth.Db.Organization, any>> {
+  ): Promise<Api.CollectionResponse<Db.Organization, any>> {
     return !filter
       ? this.sql.get("organizations", params, log)
       : this.sql.get("organizations", filter, params, log);
   }
 
   public saveOrganization(
-    record: PartialSelect<Auth.Db.Organization, keyof typeof Defaults["organizations"]>,
+    record: PartialSelect<Db.Organization, keyof typeof Defaults["organizations"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.Organization> {
+  ): Promise<Db.Organization> {
     return this.sql.save("organizations", record, auth, log);
   }
 
   public updateOrganization(
     id: string,
-    record: Partial<Auth.Db.Organization>,
+    record: Partial<Db.Organization>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.Organization> {
+  ): Promise<Db.Organization> {
     return this.sql.update("organizations", id, record, auth, log);
   }
 
@@ -332,17 +325,17 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     id: { id: string } | { userId: string; organizationId: string },
     log: SimpleLoggerInterface,
     thrw: true
-  ): Promise<Auth.Db.OrgMembership>;
+  ): Promise<Db.OrgMembership>;
   public getOrgMembershipById(
     id: { id: string } | { userId: string; organizationId: string },
     log: SimpleLoggerInterface,
     thrw?: false
-  ): Promise<Auth.Db.OrgMembership | undefined>;
+  ): Promise<Db.OrgMembership | undefined>;
   public getOrgMembershipById(
     id: { id: string } | { userId: string; organizationId: string },
     log: SimpleLoggerInterface,
     thrw?: boolean
-  ): Promise<Auth.Db.OrgMembership | undefined> {
+  ): Promise<Db.OrgMembership | undefined> {
     return thrw
       ? this.sql.get("org-memberships", id, log, thrw)
       : this.sql.get("org-memberships", id, log, thrw);
@@ -352,7 +345,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     filter: undefined | { type: "users"; id: string } | { type: "organizations"; id: string },
     params: undefined | Api.Server.CollectionParams,
     log: SimpleLoggerInterface
-  ): Promise<Api.CollectionResponse<Auth.Db.OrgMembership, any>> {
+  ): Promise<Api.CollectionResponse<Db.OrgMembership, any>> {
     return !filter
       ? this.sql.get("org-memberships", params, log)
       : filter.type === "users"
@@ -361,19 +354,19 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   }
 
   public saveOrgMembership(
-    record: PartialSelect<Auth.Db.OrgMembership, keyof typeof Defaults["org-memberships"]>,
+    record: PartialSelect<Db.OrgMembership, keyof typeof Defaults["org-memberships"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.OrgMembership> {
+  ): Promise<Db.OrgMembership> {
     return this.sql.save("org-memberships", record, auth, log);
   }
 
   public updateOrgMembership(
     id: string,
-    record: Partial<Auth.Db.OrgMembership>,
+    record: Partial<Db.OrgMembership>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.OrgMembership> {
+  ): Promise<Db.OrgMembership> {
     return this.sql.update("org-memberships", id, record, auth, log);
   }
 
@@ -397,21 +390,17 @@ export class Io<ClientRoles extends string, UserRoles extends string>
    *
    */
 
-  public getSessionById(
-    id: string,
-    log: SimpleLoggerInterface,
-    thrw: true
-  ): Promise<Auth.Db.Session>;
+  public getSessionById(id: string, log: SimpleLoggerInterface, thrw: true): Promise<Db.Session>;
   public getSessionById(
     id: string,
     log: SimpleLoggerInterface,
     thrw?: false | undefined
-  ): Promise<Auth.Db.Session | undefined>;
+  ): Promise<Db.Session | undefined>;
   public getSessionById(
     id: string,
     log: SimpleLoggerInterface,
     thrw?: boolean
-  ): Promise<Auth.Db.Session | undefined> {
+  ): Promise<Db.Session | undefined> {
     return thrw
       ? this.sql.get("sessions", { id }, log, thrw)
       : this.sql.get("sessions", { id }, log, thrw);
@@ -428,26 +417,26 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     filter: undefined | TypeMap<ClientRoles, UserRoles>["sessions"]["filters"],
     params: undefined | Api.Server.CollectionParams,
     log: SimpleLoggerInterface
-  ): Promise<Api.CollectionResponse<Auth.Db.Session, any>> {
+  ): Promise<Api.CollectionResponse<Db.Session, any>> {
     return !filter
       ? this.sql.get("sessions", params, log)
       : this.sql.get("sessions", filter, params, log);
   }
 
   public saveSession(
-    record: PartialSelect<Auth.Db.Session, keyof typeof Defaults["sessions"]>,
+    record: PartialSelect<Db.Session, keyof typeof Defaults["sessions"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.Session> {
+  ): Promise<Db.Session> {
     return this.sql.save("sessions", record, auth, log);
   }
 
   public updateSession(
     id: string,
-    record: Partial<Auth.Db.Session>,
+    record: Partial<Db.Session>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.Session> {
+  ): Promise<Db.Session> {
     return this.sql.update("sessions", id, record, auth, log);
   }
 
@@ -464,26 +453,26 @@ export class Io<ClientRoles extends string, UserRoles extends string>
    */
 
   public getSessionTokenBySha256(
-    tokenSha256: BufferLike,
+    tokenSha256: Buffer,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.SessionToken | undefined> {
+  ): Promise<Db.SessionToken | undefined> {
     return this.sql.get("session-tokens", { tokenSha256 }, log);
   }
 
   public saveSessionToken(
-    record: PartialSelect<Auth.Db.SessionToken, keyof typeof Defaults["session-tokens"]>,
+    record: PartialSelect<Db.SessionToken, keyof typeof Defaults["session-tokens"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.SessionToken> {
+  ): Promise<Db.SessionToken> {
     return this.sql.save("session-tokens", record, auth, log);
   }
 
   public updateSessionToken(
-    tokenSha256: BufferLike,
-    record: Partial<Auth.Db.SessionToken>,
+    tokenSha256: Buffer,
+    record: Partial<Db.SessionToken>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.SessionToken> {
+  ): Promise<Db.SessionToken> {
     return this.sql.update("session-tokens", tokenSha256, record, auth, log);
   }
 
@@ -499,17 +488,17 @@ export class Io<ClientRoles extends string, UserRoles extends string>
    *
    */
 
-  public getUserById(id: string, log: SimpleLoggerInterface, thrw: true): Promise<Auth.Db.User>;
+  public getUserById(id: string, log: SimpleLoggerInterface, thrw: true): Promise<Db.User>;
   public getUserById(
     id: string,
     log: SimpleLoggerInterface,
     thrw?: false | undefined
-  ): Promise<Auth.Db.User | undefined>;
+  ): Promise<Db.User | undefined>;
   public getUserById(
     id: string,
     log: SimpleLoggerInterface,
     thrw?: boolean
-  ): Promise<Auth.Db.User | undefined> {
+  ): Promise<Db.User | undefined> {
     return thrw
       ? this.sql.get("users", { id }, log, thrw)
       : this.sql.get("users", { id }, log, thrw);
@@ -519,26 +508,26 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     filter: undefined | TypeMap<ClientRoles, UserRoles>["users"]["filters"],
     params: Api.Server.CollectionParams,
     log: SimpleLoggerInterface
-  ): Promise<Api.CollectionResponse<Auth.Db.User, any>> {
+  ): Promise<Api.CollectionResponse<Db.User, any>> {
     return !filter
       ? this.sql.get("users", params, log)
       : this.sql.get("users", filter, params, log);
   }
 
   public saveUser(
-    record: PartialSelect<Auth.Db.User, keyof typeof Defaults["users"]>,
+    record: PartialSelect<Db.User, keyof typeof Defaults["users"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.User> {
+  ): Promise<Db.User> {
     return this.sql.save("users", record, auth, log);
   }
 
   public updateUser(
     id: string,
-    record: Partial<Auth.Db.User>,
+    record: Partial<Db.User>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.User> {
+  ): Promise<Db.User> {
     return this.sql.update("users", id, record, auth, log);
   }
 
@@ -555,10 +544,10 @@ export class Io<ClientRoles extends string, UserRoles extends string>
    */
 
   public saveUserClient(
-    record: PartialSelect<Auth.Db.UserClient, keyof typeof Defaults["user-clients"]>,
+    record: PartialSelect<Db.UserClient, keyof typeof Defaults["user-clients"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.UserClient> {
+  ): Promise<Db.UserClient> {
     return this.sql.save("user-clients", record, auth, log);
   }
 
@@ -578,17 +567,17 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     filter: undefined | TypeMap<ClientRoles, UserRoles>["user-roles"]["filters"],
     params: undefined | Api.Server.CollectionParams,
     log: SimpleLoggerInterface
-  ): Promise<Api.CollectionResponse<Auth.Db.UserRole<UserRoles>, any>> {
+  ): Promise<Api.CollectionResponse<Db.UserRole<UserRoles>, any>> {
     return !filter
       ? this.sql.get("user-roles", params, log)
       : this.sql.get("user-roles", filter, params, log);
   }
 
   public saveUserRole(
-    record: PartialSelect<Auth.Db.UserRole<UserRoles>, keyof typeof Defaults["user-roles"]>,
+    record: PartialSelect<Db.UserRole<UserRoles>, keyof typeof Defaults["user-roles"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.UserRole<UserRoles>> {
+  ): Promise<Db.UserRole<UserRoles>> {
     return this.sql.save("user-roles", record, auth, log);
   }
 
@@ -614,39 +603,39 @@ export class Io<ClientRoles extends string, UserRoles extends string>
    */
 
   public getVerificationCodeBySha256(
-    codeSha256: BufferLike,
+    codeSha256: Buffer,
     log: SimpleLoggerInterface,
     thrw: true
-  ): Promise<Auth.Db.VerificationCode>;
+  ): Promise<Db.VerificationCode>;
   public getVerificationCodeBySha256(
-    codeSha256: BufferLike,
+    codeSha256: Buffer,
     log: SimpleLoggerInterface,
     thrw?: false | undefined
-  ): Promise<Auth.Db.VerificationCode | undefined>;
+  ): Promise<Db.VerificationCode | undefined>;
   public getVerificationCodeBySha256(
-    codeSha256: BufferLike,
+    codeSha256: Buffer,
     log: SimpleLoggerInterface,
     thrw?: boolean
-  ): Promise<Auth.Db.VerificationCode | undefined> {
+  ): Promise<Db.VerificationCode | undefined> {
     return thrw
       ? this.sql.get("verification-codes", { codeSha256 }, log, thrw)
       : this.sql.get("verification-codes", { codeSha256 }, log, thrw);
   }
 
   public saveVerificationCode(
-    record: PartialSelect<Auth.Db.VerificationCode, keyof typeof Defaults["verification-codes"]>,
+    record: PartialSelect<Db.VerificationCode, keyof typeof Defaults["verification-codes"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.VerificationCode> {
+  ): Promise<Db.VerificationCode> {
     return this.sql.save("verification-codes", record, auth, log);
   }
 
   public updateVerificationCode(
-    codeSha256: BufferLike,
-    record: Partial<Auth.Db.VerificationCode>,
+    codeSha256: Buffer,
+    record: Partial<Db.VerificationCode>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.VerificationCode> {
+  ): Promise<Db.VerificationCode> {
     return this.sql.update("verification-codes", codeSha256, record, auth, log);
   }
 }

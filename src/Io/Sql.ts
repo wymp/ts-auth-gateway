@@ -3,6 +3,7 @@ import { SimpleSqlDbInterface, SimpleLoggerInterface } from "@wymp/ts-simple-int
 import { AbstractSql, Query } from "@wymp/sql";
 import { Audit, Auth } from "@wymp/types";
 import * as E from "@wymp/http-errors";
+import { Db } from "../Types";
 import { CacheInterface, TypeMap, Defaults, SessionAndToken } from "./Types";
 
 /**
@@ -82,9 +83,9 @@ export class Sql<ClientRoles extends string, UserRoles extends string> extends A
     domain: string,
     version: string,
     log: SimpleLoggerInterface
-  ): Promise<Auth.Db.Api> {
+  ): Promise<Db.Api> {
     log.debug(`Getting config for API '/${domain}/${version}'`);
-    return await this.cache.get<Auth.Db.Api>(
+    return await this.cache.get<Db.Api>(
       `api-${domain}-${version}`,
       async () => {
         const { data: versions } = await this.get("apis", { _t: "filter", domain }, log);
@@ -126,7 +127,7 @@ export class Sql<ClientRoles extends string, UserRoles extends string> extends A
         const tokenSha256 = createHash("sha256").update(tokenStr).digest();
 
         const [{ rows: sessions }, token] = await Promise.all([
-          this.db.query<Auth.Db.Session>(
+          this.db.query<Db.Session>(
             "SELECT `s`.* " +
               "FROM `sessions` `s` JOIN `session-tokens` `t` ON (`s`.`id` = `t`.`sessionId`)" +
               "WHERE `tokenSha256` = ?",

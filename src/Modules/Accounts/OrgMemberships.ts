@@ -4,7 +4,7 @@ import * as Http from "@wymp/http-utils";
 import { SimpleHttpServerMiddleware } from "@wymp/ts-simple-interfaces";
 import { Api, Auth } from "@wymp/types";
 import * as T from "../../Translators";
-import { AppDeps, UserRoles, ClientRoles } from "../../Types";
+import { AppDeps, Db, UserRoles, ClientRoles } from "../../Types";
 import * as Common from "./Common";
 import { getDealiasedUserIdFromReq } from "./Users";
 
@@ -59,7 +59,7 @@ export const getByUserId = async (
   auth: Auth.ReqInfoString,
   collectionParams: Api.Server.CollectionParams,
   r: Pick<AppDeps, "io" | "log">
-): Promise<Api.CollectionResponse<Auth.Db.OrgMembership, any>> => {
+): Promise<Api.CollectionResponse<Db.OrgMembership, any>> => {
   // Authorize - must be an authenticated internal system client, or the user id must match the
   // calling user, or the calling user must be a sysadmin or employee
   const proceed =
@@ -144,7 +144,7 @@ export const getByOrganizationId = async (
   auth: Auth.ReqInfoString,
   collectionParams: Api.Server.CollectionParams,
   r: Pick<AppDeps, "io" | "log">
-): Promise<Api.CollectionResponse<Auth.Db.OrgMembership, any>> => {
+): Promise<Api.CollectionResponse<Db.OrgMembership, any>> => {
   // Authorize - must be an authenticated internal system client, or the calling user must be a
   // sysadmin or employee, or the calling user must be a privileged memeber of the organization
   await authorizeCallerForRole(organizationId, auth, "read", "GET-MEMBERSHIPS-BY-ORG-ID", r);
@@ -238,7 +238,7 @@ const addNewOrgMembership = async (
   incoming: rt.Static<typeof PostOrgMembership>["data"],
   auth: Auth.ReqInfoString,
   r: Pick<AppDeps, "io" | "log">
-): Promise<Auth.Db.OrgMembership> => {
+): Promise<Db.OrgMembership> => {
   // Authorize
   await authorizeCallerForRole(organizationId, auth, "manage", "ADD-NEW-ORG-MEMBERSHIP", r);
 
@@ -358,7 +358,7 @@ const updateOrgMembership = async (
   incoming: rt.Static<typeof PatchOrgMembership>["data"],
   auth: Auth.ReqInfoString,
   r: Pick<AppDeps, "io" | "log">
-): Promise<Auth.Db.OrgMembership> => {
+): Promise<Db.OrgMembership> => {
   // Get membership
   let membership = await r.io.getOrgMembershipById({ id: membershipId }, r.log, true);
 

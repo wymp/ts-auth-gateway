@@ -6,7 +6,7 @@ import * as Http from "@wymp/http-utils";
 import { SimpleHttpServerMiddleware } from "@wymp/ts-simple-interfaces";
 import { Auth } from "@wymp/types";
 import { Throttle } from "../../Throttle";
-import { AppDeps, ClientRoles, UserRoles } from "../../Types";
+import { AppDeps, ClientRoles, Db, UserRoles } from "../../Types";
 import * as Common from "./Common";
 import { sendCode, generateCode } from "./VerificationCodes";
 
@@ -605,7 +605,7 @@ export const invalidateSession = async (
 
   // Parallelize invalidation operations
   const p: Array<Promise<unknown>> = payload.map(async (val) => {
-    let token: undefined | Auth.Db.SessionToken = undefined;
+    let token: undefined | Db.SessionToken = undefined;
 
     // Normalize to session id
     let sessionId: string;
@@ -775,7 +775,7 @@ export const logInWithTotp = async (
 const getAndValidateUserForEmail = async (
   _email: string,
   r: Pick<AppDeps, "io" | "log">
-): Promise<Auth.Db.User> => {
+): Promise<Db.User> => {
   // Verify that the email exists
   const email = await r.io.getEmailByAddress(_email, r.log);
   if (!email) {
@@ -803,7 +803,7 @@ const getAndValidateUserForLoginCode = async (
   _code: string,
   state: string,
   r: Pick<AppDeps, "io" | "log">
-): Promise<[Auth.Db.User, Auth.Db.Email]> => {
+): Promise<[Db.User, Db.Email]> => {
   // Validate code
   if (!_code.match(/^[a-fA-F0-9]{64}$/)) {
     r.log.warning(

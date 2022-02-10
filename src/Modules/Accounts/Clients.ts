@@ -6,7 +6,7 @@ import { Auth } from "@wymp/types";
 import * as E from "@wymp/http-errors";
 import * as Http from "@wymp/http-utils";
 import * as T from "../../Translators";
-import { AppDeps, ClientRoles, UserRoles } from "../../Types";
+import { AppDeps, ClientRoles, Db, UserRoles } from "../../Types";
 import * as Common from "./Common";
 import { authorizeCallerForRole } from "./OrgMemberships";
 
@@ -181,7 +181,7 @@ export const createClient = async (
   newClient: { organizationId: string; name: string; reqsPerSec?: number },
   auth: Auth.ReqInfo,
   r: Pick<AppDeps, "io" | "log" | "config">
-): Promise<Auth.Db.Client & { secret: string }> => {
+): Promise<Db.Client & { secret: string }> => {
   // Create and hash a secret for this client
   r.log.debug(`Generating client secret`);
   const secret = `${r.config.envName}-${randomBytes(32).toString("hex")}`;
@@ -260,7 +260,7 @@ export const patchClientHandler = (
       }
 
       // Update client if necessary
-      let client: Auth.Db.Client;
+      let client: Db.Client;
       if ((!clientData.name || !clientData.name.trim()) && clientData.reqsPerSec === undefined) {
         client = existing;
       } else {
