@@ -145,7 +145,6 @@ export type AppDeps = {
 export interface Emailer {
   sendVerificationEmail(
     codeHex: string,
-    userId: string,
     fromEmail: string,
     toEmail: string,
     log: SimpleLoggerInterface
@@ -153,7 +152,6 @@ export interface Emailer {
 
   sendSignupEmail(
     codeHex: string,
-    userId: string,
     fromEmail: string,
     toEmail: string,
     log: SimpleLoggerInterface

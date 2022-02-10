@@ -5,10 +5,7 @@ import { AppDeps } from "../../Types";
 
 export const sendCode = async (
   params:
-    | {
-        type: "signup" | "verification";
-        userId: string;
-      }
+    | { type: "signup" | "verification" }
     | {
         type: "login";
         userGeneratedToken: string;
@@ -18,7 +15,7 @@ export const sendCode = async (
   r: Pick<AppDeps, "log" | "emailer" | "config" | "io">
 ): Promise<void> => {
   const code = await generateCode(
-    params.type === "verification" ? "verification" : "login",
+    params.type === "login" ? "login" : "verification",
     toEmail,
     params.type === "login" ? params.userGeneratedToken : null,
     auth,
@@ -37,15 +34,9 @@ export const sendCode = async (
       );
     } else {
       if (params.type === "signup") {
-        await r.emailer.sendSignupEmail(code, params.userId, r.config.emails.from, toEmail, r.log);
+        await r.emailer.sendSignupEmail(code, r.config.emails.from, toEmail, r.log);
       } else {
-        await r.emailer.sendVerificationEmail(
-          code,
-          params.userId,
-          r.config.emails.from,
-          toEmail,
-          r.log
-        );
+        await r.emailer.sendVerificationEmail(code, r.config.emails.from, toEmail, r.log);
       }
     }
   } else {

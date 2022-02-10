@@ -207,7 +207,7 @@ export const sendEmailVerificationHandler = (
       }
 
       // Now send a verification code to the email and respond with "null"
-      await sendCode({ type: "verification", userId: email.userId }, emailAddr, req.auth, {
+      await sendCode({ type: "verification" }, emailAddr, req.auth, {
         ...r,
         log,
       });
@@ -341,12 +341,7 @@ export const addEmail = async (
 
   // Send verification code, if we have an emailer to do that with
   if (r.emailer) {
-    await sendCode(
-      { type: event === "creation" ? "signup" : "verification", userId },
-      email,
-      auth,
-      r
-    );
+    await sendCode({ type: event === "creation" ? "signup" : "verification" }, email, auth, r);
   } else {
     r.log.warning(`No emailer configured. Not sending verificaiton code for new email.`);
   }
