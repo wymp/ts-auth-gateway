@@ -113,7 +113,7 @@ describe("End-to-End Tests of Auth Service", () => {
   // Close connections after tests
   afterAll(async () => {
     (r.sql as any).close();
-    r.getTcpListeners().map((l: any) => {
+    r.getTcpListeners()?.map((l: any) => {
       l.close();
     });
   });

@@ -4,6 +4,16 @@ Auth Gateway
 **WARNING: THIS IS AN EXPERIMENT IN EARLY DEVELOPMENT. IT IS SUBJECT TO BREAKING CHANGES AND IS NOT
 GUARANTEED TO WORK WELL OR EVEN AT ALL.**
 
+**ADDITIONAL WARNING and TODO:** This codebase was created several years ago. It has some valid concepts
+in it, but it was designed to actually act as the gateway through which requests passed, meaning it
+contains extraneous logic for rate-limiting and (optionally) load balancing. Now, with the availability
+of modern components such as [Traefik](https://traefik.io/traefik/), you should absolutely NOT use this
+service as a true gateway. It should instead be used as an authentication plugin for Traefik and as
+a user registration/login endpoint. However, it has not yet been modified to actually function as an
+auth plugin for Traefik (that's the to-do).
+
+---------------------------------------------------------------------------------------------------
+
 This is a library and reference implementation for a production-grade Authn/z gateway (similar in
 concept to AWS's API Gateway). It performs
 the following functions:

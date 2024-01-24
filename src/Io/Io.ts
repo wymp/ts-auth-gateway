@@ -74,7 +74,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   }
 
   public saveClient(
-    record: PartialSelect<Db.Client, keyof typeof Defaults["clients"]>,
+    record: PartialSelect<Db.Client, keyof (typeof Defaults)["clients"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<Db.Client> {
@@ -110,7 +110,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   }
 
   public saveClientRole(
-    record: PartialSelect<Db.ClientRole<ClientRoles>, keyof typeof Defaults["client-roles"]>,
+    record: PartialSelect<Db.ClientRole<ClientRoles>, keyof (typeof Defaults)["client-roles"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<Db.ClientRole<ClientRoles>> {
@@ -171,7 +171,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   public saveClientAccessRestriction(
     record: PartialSelect<
       Db.ClientAccessRestriction,
-      keyof typeof Defaults["client-access-restrictions"]
+      keyof (typeof Defaults)["client-access-restrictions"]
     >,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
@@ -184,7 +184,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<void> {
-    return this.sql.delete("client-access-restrictions", restrictionId, auth, log);
+    return this.sql.delete("client-access-restrictions", { id: restrictionId }, auth, log);
   }
 
   /**
@@ -223,11 +223,11 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   }
 
   public deleteEmail(addr: string, auth: Auth.ReqInfo, log: SimpleLoggerInterface): Promise<void> {
-    return this.sql.delete("emails", addr, auth, log);
+    return this.sql.delete("emails", { id: addr }, auth, log);
   }
 
   public saveEmail(
-    record: PartialSelect<Db.Email, keyof typeof Defaults["emails"]>,
+    record: PartialSelect<Db.Email, keyof (typeof Defaults)["emails"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<Db.Email> {
@@ -285,7 +285,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   }
 
   public saveOrganization(
-    record: PartialSelect<Db.Organization, keyof typeof Defaults["organizations"]>,
+    record: PartialSelect<Db.Organization, keyof (typeof Defaults)["organizations"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<Db.Organization> {
@@ -306,7 +306,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<void> {
-    return this.sql.delete("organizations", id, auth, log);
+    return this.sql.delete("organizations", { id }, auth, log);
   }
 
   /**
@@ -349,12 +349,12 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     return !filter
       ? this.sql.get("org-memberships", params, log)
       : filter.type === "users"
-      ? this.sql.get("org-memberships", { _t: "filter", userId: filter.id }, params, log)
-      : this.sql.get("org-memberships", { _t: "filter", organizationId: filter.id }, params, log);
+        ? this.sql.get("org-memberships", { _t: "filter", userId: filter.id }, params, log)
+        : this.sql.get("org-memberships", { _t: "filter", organizationId: filter.id }, params, log);
   }
 
   public saveOrgMembership(
-    record: PartialSelect<Db.OrgMembership, keyof typeof Defaults["org-memberships"]>,
+    record: PartialSelect<Db.OrgMembership, keyof (typeof Defaults)["org-memberships"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<Db.OrgMembership> {
@@ -375,7 +375,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<void> {
-    return this.sql.delete("org-memberships", id, auth, log);
+    return this.sql.delete("org-memberships", { id }, auth, log);
   }
 
   /**
@@ -424,7 +424,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   }
 
   public saveSession(
-    record: PartialSelect<Db.Session, keyof typeof Defaults["sessions"]>,
+    record: PartialSelect<Db.Session, keyof (typeof Defaults)["sessions"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<Db.Session> {
@@ -460,7 +460,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   }
 
   public saveSessionToken(
-    record: PartialSelect<Db.SessionToken, keyof typeof Defaults["session-tokens"]>,
+    record: PartialSelect<Db.SessionToken, keyof (typeof Defaults)["session-tokens"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<Db.SessionToken> {
@@ -515,7 +515,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   }
 
   public saveUser(
-    record: PartialSelect<Db.User, keyof typeof Defaults["users"]>,
+    record: PartialSelect<Db.User, keyof (typeof Defaults)["users"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<Db.User> {
@@ -544,7 +544,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
    */
 
   public saveUserClient(
-    record: PartialSelect<Db.UserClient, keyof typeof Defaults["user-clients"]>,
+    record: PartialSelect<Db.UserClient, keyof (typeof Defaults)["user-clients"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<Db.UserClient> {
@@ -574,7 +574,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   }
 
   public saveUserRole(
-    record: PartialSelect<Db.UserRole<UserRoles>, keyof typeof Defaults["user-roles"]>,
+    record: PartialSelect<Db.UserRole<UserRoles>, keyof (typeof Defaults)["user-roles"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<Db.UserRole<UserRoles>> {
@@ -623,7 +623,7 @@ export class Io<ClientRoles extends string, UserRoles extends string>
   }
 
   public saveVerificationCode(
-    record: PartialSelect<Db.VerificationCode, keyof typeof Defaults["verification-codes"]>,
+    record: PartialSelect<Db.VerificationCode, keyof (typeof Defaults)["verification-codes"]>,
     auth: Auth.ReqInfo,
     log: SimpleLoggerInterface
   ): Promise<Db.VerificationCode> {
